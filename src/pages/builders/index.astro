@@ -1,0 +1,69 @@
+---
+import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
+import BuilderCard from "../../components/BuilderCard.astro";
+import { getAllBuilders } from "../../lib/supabase";
+
+const builders = await getAllBuilders();
+
+// Group by state for the state picker
+const byState = new Map<string, number>();
+for (const b of builders) {
+  byState.set(b.state, (byState.get(b.state) ?? 0) + 1);
+}
+const states = [...byState.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+---
+
+<DirectoryLayout
+  title="Van Builder Directory"
+  description="Browse custom van conversion shops across the United States. Filter by state, platform, and price tier."
+  eyebrow="Directory"
+  heading="Every custom van builder, in one place."
+  intro="An independent directory of US van conversion shops. No paid placements — the ranking is neutral."
+>
+  {builders.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <div class="eyebrow mb-3">Coming soon</div>
+      <h2 class="text-2xl mb-3">Directory is being built</h2>
+      <p class="max-w-xl mx-auto" style="color: var(--color-text-muted);">
+        We're gathering data on hundreds of US van conversion shops. This page will populate automatically as listings are added.
+      </p>
+    </div>
+  ) : (
+    <>
+      {states.length > 0 && (
+        <div class="mb-10">
+          <div class="eyebrow mb-4">Browse by state</div>
+          <div class="flex flex-wrap gap-2">
+            {states.map(([state, count]) => (
+              <a
+                href={`/builders/${state.toLowerCase().replace(/\s+/g, "-")}/`}
+                class="px-3 py-1.5 font-sans-ui text-sm border no-underline"
+                style="border-color: var(--color-border-strong); border-radius: 999px; color: var(--color-text);"
+              >
+                {state} <span style="color: var(--color-text-subtle);">({count})</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {builders.map((b) => (
+          <BuilderCard
+            name={b.name}
+            slug={b.slug}
+            state={b.state}
+            city={b.city ?? undefined}
+            platforms={b.platforms}
+            priceTier={b.price_tier ?? undefined}
+            description={b.description ?? undefined}
+            logoUrl={b.logo_url ?? undefined}
+            verified={b.verified}
+          />
+        ))}
+      </div>
+    </>
+  )}
+</DirectoryLayout>

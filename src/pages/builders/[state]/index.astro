@@ -1,0 +1,68 @@
+---
+import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
+import BuilderCard from "../../../components/BuilderCard.astro";
+import { getAllBuilders } from "../../../lib/supabase";
+
+export async function getStaticPaths() {
+  const builders = await getAllBuilders();
+  const states = new Set(builders.map((b) => b.state));
+  // Seed a few US states so the route exists even before the scraper runs.
+  const seed = ["California", "Colorado", "Oregon", "Utah", "Arizona", "Texas", "Washington", "Florida"];
+  seed.forEach((s) => states.add(s));
+
+  return [...states].map((state) => ({
+    params: { state: state.toLowerCase().replace(/\s+/g, "-") },
+    props: { stateName: state },
+  }));
+}
+
+interface Props {
+  stateName: string;
+}
+const { stateName } = Astro.props;
+
+const all = await getAllBuilders();
+const builders = all.filter(
+  (b) => b.state.toLowerCase() === stateName.toLowerCase(),
+);
+---
+
+<DirectoryLayout
+  title={`Van Builders in ${stateName}`}
+  description={`Custom van conversion shops in ${stateName}. Independent directory, no paid placements.`}
+  eyebrow="Directory"
+  heading={`Van builders in ${stateName}`}
+  intro={`${builders.length} ${builders.length === 1 ? "shop" : "shops"} currently listed in ${stateName}.`}
+>
+  {builders.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <h2 class="text-xl mb-2">No listings yet</h2>
+      <p style="color: var(--color-text-muted);">
+        We're still building out the {stateName} directory. Check back soon, or
+        <a href="/contact/">tell us about a shop we should add</a>.
+      </p>
+    </div>
+  ) : (
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {builders.map((b) => (
+        <BuilderCard
+          name={b.name}
+          slug={b.slug}
+          state={b.state}
+          city={b.city ?? undefined}
+          platforms={b.platforms}
+          priceTier={b.price_tier ?? undefined}
+          description={b.description ?? undefined}
+          logoUrl={b.logo_url ?? undefined}
+          verified={b.verified}
+        />
+      ))}
+    </div>
+  )}
+  <div class="mt-10">
+    <a href="/builders/" class="font-sans-ui text-sm">← All states</a>
+  </div>
+</DirectoryLayout>

@@ -1,0 +1,34 @@
+---
+import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
+
+const tools = [
+  {
+    href: "/tools/van-insurance-finder/",
+    name: "Van Insurance Finder",
+    description: "Answer a few questions and get a shortlist of carriers that actually cover custom conversion vans.",
+    status: "Coming soon",
+  },
+];
+---
+
+<DirectoryLayout
+  title="Tools"
+  description="Free interactive tools for van owners and shoppers."
+  eyebrow="Tools"
+  heading="Browser-based calculators, finders, and estimators."
+  intro="Free to use, no email required. Built to save you an afternoon of research."
+>
+  <div class="grid gap-5 md:grid-cols-2">
+    {tools.map((t) => (
+      <a
+        href={t.href}
+        class="block p-6 no-underline border"
+        style="background: var(--color-surface); border-color: var(--color-border); border-radius: var(--radius-lg);"
+      >
+        <div class="eyebrow mb-3">{t.status}</div>
+        <h3 class="text-xl mb-2">{t.name}</h3>
+        <p style="color: var(--color-text-muted);">{t.description}</p>
+      </a>
+    ))}
+  </div>
+</DirectoryLayout>

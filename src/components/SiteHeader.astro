@@ -1,0 +1,60 @@
+---
+const pathname = Astro.url.pathname;
+const isActive = (prefix: string) =>
+  prefix === "/" ? pathname === "/" : pathname.startsWith(prefix);
+
+const links = [
+  { href: "/builders/", label: "Builders" },
+  { href: "/insurance/", label: "Insurance" },
+  { href: "/registration/", label: "Registration" },
+  { href: "/tools/", label: "Tools" },
+  { href: "/guide/", label: "Guide" },
+  { href: "/blog/", label: "Blog" },
+];
+---
+
+<header class="border-b" style="border-color: var(--color-border); background: var(--color-bg);">
+  <div class="container-wide flex items-center justify-between py-5">
+    <a href="/" class="flex items-baseline gap-2 no-underline">
+      <span
+        class="text-2xl font-semibold tracking-tight"
+        style="font-family: var(--font-display); color: var(--color-primary);"
+      >
+        The Van Guide
+      </span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 font-sans-ui text-sm">
+      {links.map((l) => (
+        <a
+          href={l.href}
+          class="no-underline transition-colors"
+          style={`color: ${isActive(l.href) ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${isActive(l.href) ? 600 : 500};`}
+        >
+          {l.label}
+        </a>
+      ))}
+    </nav>
+    <a href="/builders/" class="btn btn-primary hidden md:inline-block text-sm">Find a builder</a>
+    <button
+      id="tvg-menu-btn"
+      class="md:hidden font-sans-ui text-sm px-3 py-2 border"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-md);"
+      aria-label="Open navigation"
+    >
+      Menu
+    </button>
+  </div>
+  <div id="tvg-mobile-nav" class="md:hidden hidden border-t" style="border-color: var(--color-border);">
+    <nav class="container-wide flex flex-col py-4 gap-3 font-sans-ui text-base">
+      {links.map((l) => (
+        <a href={l.href} class="no-underline py-1" style="color: var(--color-text);">{l.label}</a>
+      ))}
+    </nav>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById("tvg-menu-btn");
+  const nav = document.getElementById("tvg-mobile-nav");
+  btn?.addEventListener("click", () => nav?.classList.toggle("hidden"));
+</script>

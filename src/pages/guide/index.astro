@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import EmailCapture from "../../components/EmailCapture.astro";
+---
+
+<BaseLayout
+  title="The Van Owner's Guide"
+  description="A practical, no-jargon guide to buying, building, and insuring a custom van conversion."
+>
+  <section style="background: var(--color-surface); border-bottom: 1px solid var(--color-border);">
+    <div class="container-wide py-16 md:py-24 max-w-4xl">
+      <div class="eyebrow mb-4">Paid guide · Coming soon</div>
+      <h1 class="text-4xl md:text-6xl leading-tight mb-5">The Van Owner's Guide</h1>
+      <p class="text-xl leading-relaxed" style="color: var(--color-text-muted);">
+        A single, practical reference for anyone buying or owning a custom van conversion. No fluff, no affiliate links, no "10 best" listicles. Just the things you actually need to know.
+      </p>
+      <div class="mt-8 text-2xl font-semibold" style="color: var(--color-primary);">$29 · one-time</div>
+    </div>
+  </section>
+  <section class="container-wide py-16 max-w-3xl">
+    <h2 class="text-3xl mb-6">What's inside</h2>
+    <ul class="space-y-3 text-lg leading-relaxed">
+      <li>→ How to evaluate a custom van builder (red flags, green flags, contract essentials)</li>
+      <li>→ Insurance types explained: what actually covers a conversion</li>
+      <li>→ State-by-state registration quirks that bite first-time owners</li>
+      <li>→ Realistic build cost ranges by platform and scope</li>
+      <li>→ The questions to ask at every stage of the buying process</li>
+    </ul>
+    <div class="mt-12">
+      <EmailCapture
+        heading="Get notified when it's released"
+        subheading="We'll send you a single email when the guide goes live. Nothing else."
+        cta="Notify me"
+        list="guide-waitlist"
+      />
+    </div>
+  </section>
+</BaseLayout>

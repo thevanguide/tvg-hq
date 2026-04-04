@@ -1,0 +1,32 @@
+---
+import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
+import ArticleCard from "../../components/ArticleCard.astro";
+import { getCollection } from "astro:content";
+
+const entries = (await getCollection("insurance", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
+---
+
+<DirectoryLayout
+  title="Van Insurance Guide"
+  description="Plain-English guides to insuring a custom van conversion. What policies cover, what they don't, and what to ask."
+  eyebrow="Insurance"
+  heading="Van insurance, without the jargon."
+  intro="Insuring a conversion van isn't like insuring a car. Here's what actually matters — coverage types, policy gaps, and the questions to ask before you sign."
+>
+  {entries.length === 0 ? (
+    <p style="color: var(--color-text-muted);">Articles coming soon.</p>
+  ) : (
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {entries.map((entry) => (
+        <ArticleCard
+          href={`/insurance/${entry.slug}/`}
+          title={entry.data.title}
+          description={entry.data.description}
+          publishDate={entry.data.publishDate}
+          category={entry.data.category}
+        />
+      ))}
+    </div>
+  )}
+</DirectoryLayout>

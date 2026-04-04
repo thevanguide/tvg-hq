@@ -13,15 +13,22 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.0",
+    "@astrojs/mdx": "^4.3.14",
+    "@astrojs/react": "^5.0.2",
     "@astrojs/sitemap": "^3.3.0",
+    "@supabase/supabase-js": "^2.101.1",
     "@tailwindcss/vite": "^4.0.0",
     "astro": "^5.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "sharp": "^0.33.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260317.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "wrangler": "^3.90.0"
   }
 }

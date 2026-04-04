@@ -1,0 +1,30 @@
+---
+interface Props {
+  type?: "tip" | "warning" | "note" | "key";
+  title?: string;
+}
+const { type = "note", title } = Astro.props;
+
+const styles: Record<string, { bg: string; border: string; label: string; color: string }> = {
+  tip: { bg: "#EBF2ED", border: "var(--color-primary)", label: "Tip", color: "var(--color-primary-dark)" },
+  warning: { bg: "#F7E8E4", border: "var(--color-accent)", label: "Warning", color: "var(--color-accent-dark)" },
+  note: { bg: "var(--color-bg-alt)", border: "var(--color-border-strong)", label: "Note", color: "var(--color-text)" },
+  key: { bg: "var(--color-surface)", border: "var(--color-primary)", label: "Key takeaway", color: "var(--color-primary-dark)" },
+};
+const s = styles[type];
+---
+
+<aside
+  class="my-6 p-5 border-l-4"
+  style={`background: ${s.bg}; border-color: ${s.border}; border-radius: var(--radius-md);`}
+>
+  <div
+    class="eyebrow mb-2"
+    style={`color: ${s.color};`}
+  >
+    {title ?? s.label}
+  </div>
+  <div class="text-base leading-relaxed">
+    <slot />
+  </div>
+</aside>

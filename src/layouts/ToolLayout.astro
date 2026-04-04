@@ -1,0 +1,27 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  heading: string;
+  intro?: string;
+}
+
+const { title, description, heading, intro } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="container-wide py-10 md:py-14">
+    <div class="eyebrow mb-3">Tool</div>
+    <h1 class="text-3xl md:text-4xl max-w-2xl leading-tight">{heading}</h1>
+    {intro && (
+      <p class="mt-4 max-w-2xl text-base leading-relaxed" style="color: var(--color-text-muted);">
+        {intro}
+      </p>
+    )}
+    <div class="mt-10">
+      <slot />
+    </div>
+  </section>
+</BaseLayout>
