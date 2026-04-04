@@ -6,7 +6,23 @@ import mdx from '@astrojs/mdx';
 
 export default defineConfig({
   site: 'https://thevanguide.com',
-  integrations: [mdx(), react(), sitemap()],
+  integrations: [
+    mdx(),
+    react(),
+    sitemap({
+      // Exclude URLs that are noindex, placeholder, or not meant for organic discovery yet.
+      filter: (page) => {
+        const path = new URL(page).pathname;
+        // Homepage is noindex until launch
+        if (path === "/") return false;
+        // Seeded state index pages without real listings
+        if (/^\/builders\/[^/]+\/$/.test(path)) return false;
+        // Placeholder tool pages
+        if (path.startsWith("/tools/van-insurance-finder")) return false;
+        return true;
+      },
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },
