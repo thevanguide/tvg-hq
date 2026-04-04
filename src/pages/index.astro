@@ -10,30 +10,41 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <main class="min-h-screen flex items-center justify-center px-6 py-16 text-center">
     <div class="max-w-xl">
       <div
-        class="inline-block text-xs tracking-[0.2em] uppercase mb-6"
-        style="color: var(--color-accent)"
+        class="inline-block text-xs tracking-[0.25em] uppercase mb-8 font-sans"
+        style="color: var(--color-accent); font-family: -apple-system, sans-serif;"
       >
-        Launching 2026
+        — Launching 2026 —
       </div>
-      <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-4">
-        The <span style="color: var(--color-accent)">Van</span> Guide
-      </h1>
-      <p
-        class="text-lg leading-relaxed mb-4"
-        style="color: var(--color-muted)"
+      <h1
+        class="text-5xl md:text-7xl font-bold leading-[1.05] mb-6"
+        style="color: var(--color-primary);"
       >
-        Your resource for finding van builders, comparing builds, and
-        navigating the custom van world.
+        The Van Guide
+      </h1>
+      <div
+        class="w-16 h-[2px] mx-auto mb-6"
+        style="background: var(--color-accent);"
+      >
+      </div>
+      <p
+        class="text-lg md:text-xl leading-relaxed mb-4 italic"
+        style="color: var(--color-text);"
+      >
+        A neutral resource for finding van builders, comparing conversions,
+        and navigating the custom van buying journey.
       </p>
-      <p class="text-base" style="color: var(--color-muted)">
+      <p class="text-base mt-6" style="color: var(--color-muted)">
         We're putting something great together. Check back soon.
       </p>
-      <footer class="mt-12 text-sm" style="color: var(--color-muted)">
+      <footer
+        class="mt-16 text-sm font-sans"
+        style="color: var(--color-muted); font-family: -apple-system, sans-serif;"
+      >
         Questions?
         <a
           href="mailto:hello@thevanguide.com"
-          style="color: var(--color-accent)"
-          class="no-underline hover:underline">hello@thevanguide.com</a
+          style="color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px;"
+          >hello@thevanguide.com</a
         >
       </footer>
     </div>
