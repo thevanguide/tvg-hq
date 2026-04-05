@@ -3,11 +3,21 @@ import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
+import rehypeExternalLinks from 'rehype-external-links';
 
 export default defineConfig({
   site: 'https://thevanguide.com',
+  markdown: {
+    rehypePlugins: [
+      [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+    ],
+  },
   integrations: [
-    mdx(),
+    mdx({
+      rehypePlugins: [
+        [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+      ],
+    }),
     react(),
     sitemap({
       // Exclude URLs that are noindex, placeholder, or not meant for organic discovery yet.
