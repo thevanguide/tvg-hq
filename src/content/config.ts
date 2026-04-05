@@ -1,12 +1,14 @@
 import { defineCollection, z } from "astro:content";
 
-const articleSchema = z.object({
+const referenceSchema = z.object({
   title: z.string(),
   description: z.string(),
-  publishDate: z.coerce.date(),
-  updatedDate: z.coerce.date().optional(),
+  lastUpdated: z.coerce.date(),
   author: z.string().default("The Van Guide"),
   category: z.string().optional(),
+  cluster: z.string().optional(),
+  pillar: z.boolean().default(false),
+  order: z.number().optional(),
   keywords: z.array(z.string()).default([]),
   ogImage: z.string().optional(),
   draft: z.boolean().default(false),
@@ -15,19 +17,24 @@ const articleSchema = z.object({
 
 const insurance = defineCollection({
   type: "content",
-  schema: articleSchema,
+  schema: referenceSchema,
 });
 
 const registration = defineCollection({
   type: "content",
-  schema: articleSchema.extend({
+  schema: referenceSchema.extend({
     state: z.string().optional(),
   }),
 });
 
-const blog = defineCollection({
+const certification = defineCollection({
   type: "content",
-  schema: articleSchema,
+  schema: referenceSchema,
 });
 
-export const collections = { insurance, registration, blog };
+const blog = defineCollection({
+  type: "content",
+  schema: referenceSchema,
+});
+
+export const collections = { insurance, registration, certification, blog };

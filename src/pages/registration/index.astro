@@ -1,32 +1,69 @@
 ---
-import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArticleCard from "../../components/ArticleCard.astro";
 import { getCollection } from "astro:content";
 
-const entries = (await getCollection("registration", ({ data }) => !data.draft))
-  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
+const all = await getCollection("registration", ({ data }) => !data.draft);
+const pillar = all.find((e) => e.data.pillar);
+const others = all
+  .filter((e) => !e.data.pillar)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const { Content: PillarContent } = pillar
+  ? await pillar.render()
+  : { Content: null };
+
+const title = pillar?.data.title ?? "Van Registration Guide";
+const description =
+  pillar?.data.description ??
+  "State-by-state titling and registration guides for van conversions.";
+const lastUpdated = pillar?.data.lastUpdated;
+
+const fmtDate = (d: Date) =>
+  d.toLocaleDateString("en-US", { year: "numeric", month: "long" });
 ---
 
-<DirectoryLayout
-  title="Van Registration Guide"
-  description="State-by-state registration and titling guides for custom van conversions."
-  eyebrow="Registration"
-  heading="Registering a custom van, state by state."
-  intro="Some states make it easy. Others make it a nightmare. Here's what you need to know about titling, RV reclassification, and registration for conversion vans."
->
-  {entries.length === 0 ? (
-    <p style="color: var(--color-text-muted);">State guides coming soon.</p>
-  ) : (
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {entries.map((entry) => (
-        <ArticleCard
-          href={`/registration/${entry.slug}/`}
-          title={entry.data.title}
-          description={entry.data.description}
-          publishDate={entry.data.publishDate}
-          category={entry.data.category}
-        />
-      ))}
-    </div>
+<BaseLayout title={title} description={description} ogType="article">
+  <article class="py-14 md:py-20">
+    <header class="container-read mb-10">
+      <div class="eyebrow mb-4">Registration</div>
+      <h1 class="text-4xl md:text-5xl leading-tight mb-5">{title}</h1>
+      <p class="text-xl leading-relaxed" style="color: var(--color-text-muted);">
+        {description}
+      </p>
+      {lastUpdated && (
+        <div class="mt-6 font-sans-ui text-sm" style="color: var(--color-text-subtle);">
+          <time datetime={lastUpdated.toISOString()}>Last updated {fmtDate(lastUpdated)}</time>
+        </div>
+      )}
+      <hr />
+    </header>
+    {PillarContent && (
+      <div class="container-read prose">
+        <PillarContent />
+      </div>
+    )}
+  </article>
+
+  {others.length > 0 && (
+    <section class="border-t py-14 md:py-20" style="border-color: var(--color-border); background: var(--color-surface);">
+      <div class="container-wide">
+        <h2 class="text-3xl md:text-4xl mb-3">State guides</h2>
+        <p class="text-lg mb-10 max-w-2xl" style="color: var(--color-text-muted);">
+          Detailed retitling walkthroughs for each US state.
+        </p>
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {others.map((entry) => (
+            <ArticleCard
+              href={`/registration/${entry.slug}/`}
+              title={entry.data.title}
+              description={entry.data.description}
+              lastUpdated={entry.data.lastUpdated}
+              cluster={entry.data.cluster}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   )}
-</DirectoryLayout>
+</BaseLayout>

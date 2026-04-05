@@ -3,14 +3,16 @@ interface Props {
   href: string;
   title: string;
   description?: string;
-  publishDate?: Date;
+  lastUpdated?: Date;
   category?: string;
+  cluster?: string;
   readingTime?: string;
 }
 
-const { href, title, description, publishDate, category, readingTime } = Astro.props;
+const { href, title, description, lastUpdated, category, cluster, readingTime } = Astro.props;
 const fmtDate = (d: Date) =>
-  d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+const eyebrow = cluster ?? category;
 ---
 
 <a
@@ -18,7 +20,7 @@ const fmtDate = (d: Date) =>
   class="block p-6 no-underline border transition-all hover:-translate-y-0.5 h-full"
   style="background: var(--color-surface); border-color: var(--color-border); border-radius: var(--radius-lg);"
 >
-  {category && <div class="eyebrow mb-3">{category}</div>}
+  {eyebrow && <div class="eyebrow mb-3">{eyebrow}</div>}
   <h3 class="text-xl leading-snug mb-2">{title}</h3>
   {description && (
     <p class="text-sm leading-relaxed line-clamp-3" style="color: var(--color-text-muted);">
@@ -26,7 +28,7 @@ const fmtDate = (d: Date) =>
     </p>
   )}
   <div class="mt-4 font-sans-ui text-xs flex gap-3" style="color: var(--color-text-subtle);">
-    {publishDate && <time datetime={publishDate.toISOString()}>{fmtDate(publishDate)}</time>}
+    {lastUpdated && <time datetime={lastUpdated.toISOString()}>Updated {fmtDate(lastUpdated)}</time>}
     {readingTime && (
       <>
         <span aria-hidden="true">·</span>
