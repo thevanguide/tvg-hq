@@ -2,41 +2,42 @@
 
 @theme {
   /* ---------- Color tokens ---------- */
-  /* Warm cream background — editorial, not stark white */
-  --color-bg: #F5F0E6;
-  --color-bg-alt: #EDE6D6;
-  --color-surface: #FBF8F0;
+  /* White editorial ground — utility/Wirecutter direction */
+  --color-bg: #FFFFFF;
+  --color-bg-alt: #F5F5F5;
+  --color-surface: #FAFAFA;
 
-  /* Deep forest green — primary */
-  --color-primary: #2D5A3D;
-  --color-primary-dark: #1F4029;
-  --color-primary-light: #3F7A53;
+  /* Near-black — primary text + buttons */
+  --color-primary: #111111;
+  --color-primary-dark: #000000;
+  --color-primary-light: #333333;
 
-  /* Terracotta — accent for CTAs / highlights */
-  --color-accent: #C44536;
-  --color-accent-dark: #A13527;
+  /* Forest green — single accent */
+  --color-accent: #2D5A3D;
+  --color-accent-dark: #1F4029;
 
   /* Text */
-  --color-text: #1F2421;
-  --color-text-muted: #6B7068;
-  --color-text-subtle: #9AA09A;
+  --color-text: #111111;
+  --color-text-muted: #5A5A5A;
+  --color-text-subtle: #8A8A8A;
 
   /* Lines / dividers */
-  --color-border: #D9D1BE;
-  --color-border-strong: #B8AE96;
+  --color-border: #E5E5E5;
+  --color-border-strong: #C8C8C8;
 
   /* ---------- Typography ---------- */
+  /* Serif headline + sans body */
+  --font-display: "Fraunces", "Source Serif 4", Georgia, serif;
   --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  --font-display: "Fraunces", "Source Serif 4", Georgia, serif;
 
   /* ---------- Radius / shadow ---------- */
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
-  --shadow-sm: 0 1px 2px rgba(31, 36, 33, 0.06);
-  --shadow-md: 0 4px 12px rgba(31, 36, 33, 0.08);
-  --shadow-lg: 0 12px 32px rgba(31, 36, 33, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
 
   /* ---------- Content width ---------- */
   --content-width: 72ch;
@@ -46,7 +47,7 @@
 html, body {
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -72,18 +73,18 @@ a:hover { color: var(--color-accent); }
 
 /* Prose / article body styles */
 .prose {
-  font-family: var(--font-serif);
-  font-size: 1.125rem;
-  line-height: 1.75;
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.7;
   color: var(--color-text);
   max-width: var(--content-width);
 }
-.prose h2 { font-size: 1.875rem; margin-top: 2.5rem; margin-bottom: 1rem; }
-.prose h3 { font-size: 1.375rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+.prose h2 { font-family: var(--font-display); font-size: 1.875rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+.prose h3 { font-family: var(--font-display); font-size: 1.375rem; margin-top: 2rem; margin-bottom: 0.75rem; }
 .prose p { margin-bottom: 1.25rem; }
 .prose ul, .prose ol { margin: 1.25rem 0; padding-left: 1.5rem; }
 .prose li { margin-bottom: 0.5rem; }
-.prose a { color: var(--color-primary); text-decoration: underline; }
+.prose a { color: var(--color-accent); text-decoration: underline; }
 .prose blockquote {
   border-left: 3px solid var(--color-accent);
   padding-left: 1.25rem;
@@ -129,14 +130,14 @@ a:hover { color: var(--color-accent); }
 }
 .btn-primary {
   background: var(--color-primary);
-  color: var(--color-bg);
+  color: #ffffff;
 }
-.btn-primary:hover { background: var(--color-primary-dark); color: var(--color-bg); }
+.btn-primary:hover { background: var(--color-primary-dark); color: #ffffff; }
 .btn-accent {
   background: var(--color-accent);
-  color: #fff;
+  color: #ffffff;
 }
-.btn-accent:hover { background: var(--color-accent-dark); color: #fff; }
+.btn-accent:hover { background: var(--color-accent-dark); color: #ffffff; }
 .btn-ghost {
   border: 1px solid var(--color-border-strong);
   color: var(--color-text);
