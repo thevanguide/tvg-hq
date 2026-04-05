@@ -1,0 +1,73 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+const lastUpdated = "April 2026";
+---
+
+<BaseLayout
+  title="Editorial Standards"
+  description="How The Van Guide researches, sources, and fact-checks every article and listing."
+>
+  <section class="container-read py-16 md:py-24">
+    <div class="eyebrow mb-4">Editorial Standards</div>
+    <h1 class="text-4xl md:text-5xl leading-tight mb-6">How this site gets written.</h1>
+    <p class="font-sans-ui text-sm mb-10" style="color: var(--color-text-subtle);">Last updated: {lastUpdated}</p>
+    <div class="prose">
+      <p>
+        Most online content about van conversions, insurance, and registration is wrong in small but consequential ways. The claims are plausible, the authors are confident, and the sources — when they exist — trace back to other blog posts that also didn't check.
+      </p>
+      <p>
+        The Van Guide is built on the opposite assumption: every factual claim must come from a primary source, every carrier quote must come from the carrier's own materials, and every state DMV rule must come from the DMV's own handbook. When the primary source is unclear or the situation is genuinely ambiguous, the article says so — plainly — rather than inventing certainty.
+      </p>
+
+      <h2>The source hierarchy</h2>
+      <p>
+        Every factual claim in an article is evaluated against this hierarchy, in order:
+      </p>
+      <ol>
+        <li>
+          <strong>Primary sources.</strong> Official carrier websites, state DMV handbooks, statutes and bills, federal agency announcements, manufacturer documentation, court decisions. These are always preferred.
+        </li>
+        <li>
+          <strong>Direct attribution.</strong> Named quotes from company representatives in press releases or verified trade coverage (RVBusiness, RVIA bulletins, specialty trade publications).
+        </li>
+        <li>
+          <strong>Owner reports.</strong> Forum posts and first-person owner experiences. Used sparingly and always labeled as anecdotal.
+        </li>
+        <li>
+          <strong>Never cited as fact.</strong> Other SEO blogs, content farms, AI-generated summaries, or unattributed forum consensus.
+        </li>
+      </ol>
+
+      <h2>What articles do and don't do</h2>
+      <ul>
+        <li><strong>Every carrier article</strong> links to the carrier's own published materials or a quoted representative. If a claim can't be sourced, it isn't made.</li>
+        <li><strong>Every state registration article</strong> links to the state DMV handbook, the relevant form, or the specific statute. Rules that have changed are dated.</li>
+        <li><strong>Every long-form article</strong> includes a "Sources and verification" section at the bottom with direct links.</li>
+        <li><strong>Articles are dated</strong> at both first publication and last substantive update. When a fact changes, the article is updated and re-dated — not buried.</li>
+      </ul>
+
+      <h2>Builder directory standards</h2>
+      <p>
+        Listings in the builder directory are based on public information about each shop: website, platforms built on, years in business, verified location, and any public documentation of their work. We do not accept payment for a listing, and we do not rank by who pays. Listings may note whether a builder has been reviewed in depth, whether they're RVIA-certified or equivalent, and whether they meet our minimum criteria for public visibility.
+      </p>
+      <p>
+        A listing is not a recommendation. Before committing money to any build, verify licensing, get references, visit in person if possible, and read the contract carefully.
+      </p>
+
+      <h2>Affiliate and sponsorship disclosure</h2>
+      <p>
+        Some outbound links — particularly to insurance carriers — may be affiliate links that earn The Van Guide a commission. When they are, the article discloses it clearly at the top. Affiliate relationships never influence which carriers we recommend or how we rank them. If a paid partner is genuinely not the best option for a given situation, the article will say so.
+      </p>
+
+      <h2>Corrections</h2>
+      <p>
+        If you find an error — a date that's wrong, a carrier rule that's out of date, a statute that's been superseded — email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> with the URL and the specific claim. Corrections are made promptly and noted at the bottom of the affected article.
+      </p>
+
+      <h2>Why this matters</h2>
+      <p>
+        Insurance claims get denied over misapplied policy wording. DMV applications get rejected over wrong form numbers. Build budgets blow up over assumed specs that weren't verified. The cost of wrong information in this space is real. The Van Guide exists to be the resource that actually checks.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
