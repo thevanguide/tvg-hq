@@ -13,6 +13,13 @@ const referenceSchema = z.object({
   ogImage: z.string().optional(),
   draft: z.boolean().default(false),
   featured: z.boolean().default(false),
+  // Programmatic SEO fields — additive, all optional.
+  // Used by future template-driven pages (state landing pages, carrier profiles, etc.)
+  stateCode: z.string().optional(),
+  carrierSlug: z.string().optional(),
+  topicCluster: z.string().optional(),
+  targetKeyword: z.string().optional(),
+  pageType: z.enum(["hub", "spoke", "programmatic"]).optional(),
 });
 
 const insurance = defineCollection({

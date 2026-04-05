@@ -1,0 +1,49 @@
+---
+// Visual breadcrumbs + BreadcrumbList JSON-LD.
+// Pass items as [{ label, href }]. The last item is rendered unlinked (current page).
+
+interface Crumb {
+  label: string;
+  href: string;
+}
+
+interface Props {
+  items: Crumb[];
+}
+
+const { items } = Astro.props;
+const site = Astro.site?.toString().replace(/\/$/, "") || "https://thevanguide.com";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: items.map((item, idx) => ({
+    "@type": "ListItem",
+    position: idx + 1,
+    name: item.label,
+    item: `${site}${item.href}`,
+  })),
+};
+---
+
+<nav class="font-sans-ui text-xs mb-6" aria-label="Breadcrumb">
+  <ol class="flex flex-wrap items-center gap-1.5">
+    {items.map((item, idx) => {
+      const isLast = idx === items.length - 1;
+      return (
+        <li class="flex items-center gap-1.5">
+          {isLast ? (
+            <span style="color: var(--color-text-muted);" aria-current="page">{item.label}</span>
+          ) : (
+            <a href={item.href} class="no-underline hover:underline" style="color: var(--color-text-muted);">{item.label}</a>
+          )}
+          {!isLast && (
+            <span aria-hidden="true" style="color: var(--color-text-subtle);">/</span>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />

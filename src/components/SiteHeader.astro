@@ -1,60 +1,227 @@
 ---
+// Mega-menu nav sized for SEO scale. Hover dropdowns on desktop, accordion on mobile.
 const pathname = Astro.url.pathname;
-const isActive = (prefix: string) =>
-  prefix === "/" ? pathname === "/" : pathname.startsWith(prefix);
 
-const links = [
-  { href: "/builders/", label: "Builders" },
-  { href: "/insurance/", label: "Insurance" },
-  { href: "/registration/", label: "Registration" },
-  { href: "/tools/", label: "Tools" },
-  { href: "/guide/", label: "Guide" },
-  { href: "/blog/", label: "Blog" },
+interface NavDropdownItem {
+  label: string;
+  href: string;
+  description?: string;
+}
+interface NavItem {
+  label: string;
+  href?: string;
+  items?: NavDropdownItem[];
+}
+
+const navItems: NavItem[] = [
+  {
+    label: "Find a Builder",
+    items: [
+      { label: "Browse all builders", href: "/builders/" },
+      { label: "California", href: "/builders/california/" },
+      { label: "Colorado", href: "/builders/colorado/" },
+      { label: "Texas", href: "/builders/texas/" },
+      { label: "Oregon", href: "/builders/oregon/" },
+      { label: "Washington", href: "/builders/washington/" },
+      { label: "Arizona", href: "/builders/arizona/" },
+      { label: "Florida", href: "/builders/florida/" },
+      { label: "How we review builders", href: "/builders/how-we-review/" },
+    ],
+  },
+  {
+    label: "Insurance",
+    items: [
+      { label: "Insurance overview", href: "/insurance/" },
+      { label: "Best carriers for van conversions", href: "/insurance/best-for-van-conversions/" },
+      { label: "Roamly", href: "/insurance/carriers/roamly/" },
+      { label: "Good Sam", href: "/insurance/carriers/good-sam/" },
+      { label: "Progressive", href: "/insurance/carriers/progressive/" },
+      { label: "Sprinter insurance", href: "/insurance/by-vehicle/sprinter/" },
+      { label: "Full-time van life insurance", href: "/insurance/by-use/full-time/" },
+      { label: "Van Insurance Finder tool", href: "/tools/van-insurance-finder/" },
+    ],
+  },
+  {
+    label: "Registration",
+    items: [
+      { label: "Registration overview", href: "/registration/" },
+      { label: "California", href: "/registration/california/" },
+      { label: "Texas", href: "/registration/texas/" },
+      { label: "Colorado", href: "/registration/colorado/" },
+      { label: "Florida", href: "/registration/florida/" },
+      { label: "Vermont loophole (debunked)", href: "/registration/vermont-loophole/" },
+      { label: "RVIA certification", href: "/certification/rvia/" },
+      { label: "Self-certification & DMV", href: "/certification/" },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { label: "All tools", href: "/tools/" },
+      { label: "Van Insurance Finder", href: "/tools/van-insurance-finder/" },
+      { label: "State retitling lookup", href: "/tools/retitling-lookup/" },
+      { label: "Cost calculator", href: "/tools/cost-calculator/" },
+      { label: "Build budget estimator", href: "/tools/budget-estimator/" },
+    ],
+  },
+  {
+    label: "Guides",
+    items: [
+      { label: "All guides", href: "/guides/" },
+      { label: "Buying a van", href: "/guides/buying-a-van/" },
+      { label: "Cost of conversion", href: "/guides/cost-of-conversion/" },
+      { label: "DIY vs professional", href: "/guides/diy-vs-professional/" },
+      { label: "Van life basics", href: "/guides/van-life-basics/" },
+      { label: "Legal & tax", href: "/guides/legal-and-tax/" },
+      { label: "Full-time vs weekend", href: "/guides/full-time-vs-weekend/" },
+    ],
+  },
+  { label: "Blog", href: "/blog/" },
 ];
+
+function isActive(item: NavItem): boolean {
+  if (item.href) {
+    return item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href.replace(/\/$/, "") + "/");
+  }
+  if (item.items) {
+    return item.items.some((sub) => pathname === sub.href || pathname.startsWith(sub.href.replace(/\/$/, "") + "/"));
+  }
+  return false;
+}
 ---
 
-<header class="border-b" style="border-color: var(--color-border); background: var(--color-bg);">
-  <div class="container-wide flex items-center justify-between py-5">
-    <a href="/" class="flex items-baseline gap-2 no-underline">
-      <span
-        class="text-2xl font-semibold tracking-tight"
-        style="font-family: var(--font-display); color: var(--color-primary);"
-      >
-        The Van Guide
-      </span>
+<header class="sticky top-0 z-50 border-b" style="border-color: var(--color-border); background: var(--color-bg); backdrop-filter: saturate(180%) blur(6px);">
+  <div class="container-wide flex items-center justify-between gap-6 py-4">
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-2 no-underline shrink-0" aria-label="The Van Guide — home">
+      <img src="/logo.svg" alt="The Van Guide" width="220" height="36" class="h-8 md:h-9 w-auto" />
     </a>
-    <nav class="hidden md:flex items-center gap-7 font-sans-ui text-sm">
-      {links.map((l) => (
-        <a
-          href={l.href}
-          class="no-underline transition-colors"
-          style={`color: ${isActive(l.href) ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${isActive(l.href) ? 600 : 500};`}
-        >
-          {l.label}
-        </a>
+
+    <!-- Desktop nav -->
+    <nav class="hidden lg:flex items-center gap-1 font-sans-ui" aria-label="Main navigation">
+      {navItems.map((item) => (
+        item.href ? (
+          <a
+            href={item.href}
+            class="no-underline px-3 py-2 text-sm transition-colors"
+            style={`color: ${isActive(item) ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${isActive(item) ? 600 : 500};`}
+          >
+            {item.label}
+          </a>
+        ) : (
+          <div class="relative group" data-dropdown>
+            <button
+              class="px-3 py-2 text-sm font-medium flex items-center gap-1 transition-colors bg-transparent border-0 cursor-pointer"
+              style={`color: ${isActive(item) ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${isActive(item) ? 600 : 500}; font-family: var(--font-sans);`}
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              {item.label}
+              <svg class="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div class="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
+              <div class="py-2 min-w-[260px]" style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                {item.items?.map((sub) => (
+                  <a
+                    href={sub.href}
+                    class="block px-4 py-2 text-sm no-underline transition-colors"
+                    style={`color: ${pathname === sub.href ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${pathname === sub.href ? 600 : 400};`}
+                  >
+                    {sub.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
       ))}
     </nav>
-    <a href="/builders/" class="btn btn-primary hidden md:inline-block text-sm">Find a builder</a>
-    <button
-      id="tvg-menu-btn"
-      class="md:hidden font-sans-ui text-sm px-3 py-2 border"
-      style="border-color: var(--color-border-strong); border-radius: var(--radius-md);"
-      aria-label="Open navigation"
-    >
-      Menu
-    </button>
+
+    <!-- CTA + mobile toggle -->
+    <div class="flex items-center gap-3">
+      <a href="/guide/" class="hidden md:inline-block btn btn-accent text-sm !py-2 !px-4">Get the Playbook</a>
+      <button
+        id="tvg-menu-btn"
+        class="lg:hidden p-2 bg-transparent border-0 cursor-pointer"
+        style="color: var(--color-primary);"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="tvg-mobile-nav"
+      >
+        <svg id="tvg-menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <svg id="tvg-close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
   </div>
-  <div id="tvg-mobile-nav" class="md:hidden hidden border-t" style="border-color: var(--color-border);">
-    <nav class="container-wide flex flex-col py-4 gap-3 font-sans-ui text-base">
-      {links.map((l) => (
-        <a href={l.href} class="no-underline py-1" style="color: var(--color-text);">{l.label}</a>
+
+  <!-- Mobile nav -->
+  <nav id="tvg-mobile-nav" class="lg:hidden hidden border-t" style="border-color: var(--color-border); background: var(--color-bg);" aria-label="Mobile navigation">
+    <div class="container-wide py-3">
+      {navItems.map((item) => (
+        item.href ? (
+          <a
+            href={item.href}
+            class="block py-3 text-base no-underline border-b"
+            style={`color: ${isActive(item) ? "var(--color-accent)" : "var(--color-text)"}; border-color: var(--color-border); font-weight: ${isActive(item) ? 600 : 500}; font-family: var(--font-sans);`}
+          >
+            {item.label}
+          </a>
+        ) : (
+          <details class="border-b group" style="border-color: var(--color-border);">
+            <summary
+              class="py-3 text-base cursor-pointer flex items-center justify-between list-none"
+              style={`color: ${isActive(item) ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${isActive(item) ? 600 : 500}; font-family: var(--font-sans);`}
+            >
+              {item.label}
+              <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div class="pb-3 pl-3">
+              {item.items?.map((sub) => (
+                <a
+                  href={sub.href}
+                  class="block py-2 text-sm no-underline"
+                  style={`color: ${pathname === sub.href ? "var(--color-accent)" : "var(--color-text-muted)"}; font-weight: ${pathname === sub.href ? 600 : 400}; font-family: var(--font-sans);`}
+                >
+                  {sub.label}
+                </a>
+              ))}
+            </div>
+          </details>
+        )
       ))}
-    </nav>
-  </div>
+      <a href="/guide/" class="btn btn-accent block text-center mt-4 mb-2">Get the Playbook</a>
+    </div>
+  </nav>
 </header>
 
 <script>
   const btn = document.getElementById("tvg-menu-btn");
   const nav = document.getElementById("tvg-mobile-nav");
-  btn?.addEventListener("click", () => nav?.classList.toggle("hidden"));
+  const menuIcon = document.getElementById("tvg-menu-icon");
+  const closeIcon = document.getElementById("tvg-close-icon");
+
+  btn?.addEventListener("click", () => {
+    const isOpen = nav?.classList.toggle("hidden") === false;
+    btn.setAttribute("aria-expanded", String(isOpen));
+    menuIcon?.classList.toggle("hidden", isOpen);
+    closeIcon?.classList.toggle("hidden", !isOpen);
+  });
+
+  // Close on Esc
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && nav && !nav.classList.contains("hidden")) {
+      nav.classList.add("hidden");
+      btn?.setAttribute("aria-expanded", "false");
+      menuIcon?.classList.remove("hidden");
+      closeIcon?.classList.add("hidden");
+    }
+  });
 </script>

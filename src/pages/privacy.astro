@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+const lastUpdated = "April 2026";
+---
+
+<BaseLayout
+  title="Privacy Policy"
+  description="How The Van Guide handles visitor data — short, plain-English version."
+>
+  <section class="container-read py-16 md:py-24">
+    <div class="eyebrow mb-4">Privacy</div>
+    <h1 class="text-4xl md:text-5xl leading-tight mb-6">Privacy Policy</h1>
+    <p class="font-sans-ui text-sm mb-10" style="color: var(--color-text-subtle);">Last updated: {lastUpdated}</p>
+    <div class="prose">
+      <p>
+        The Van Guide collects the minimum amount of data needed to run an editorial website. No tracking cookies, no cross-site tracking, no ad networks, no data sales. Ever.
+      </p>
+
+      <h2>What gets collected</h2>
+      <ul>
+        <li><strong>Anonymous visit stats</strong> via Cloudflare Web Analytics — privacy-first, no cookies, no fingerprinting, no personal data. This tells us aggregate visit counts and which pages are popular so we can prioritize what to write next.</li>
+        <li><strong>Your email address</strong>, only if you voluntarily subscribe to the newsletter. Stored in a secure database (Supabase) used solely to send the newsletter. Unsubscribe anytime.</li>
+        <li><strong>Your message</strong>, if you email us. Standard email handling — we don't share it.</li>
+      </ul>
+
+      <h2>What doesn't get collected</h2>
+      <ul>
+        <li>No Google Analytics, Facebook Pixel, or any third-party ad tracker.</li>
+        <li>No cookies used for tracking (the site may set a first-party session cookie purely for technical function).</li>
+        <li>No cross-site profiling.</li>
+        <li>No sale or sharing of email lists.</li>
+      </ul>
+
+      <h2>Affiliate links</h2>
+      <p>
+        Some outbound links — particularly to insurance carriers and builder directories — may be affiliate links. When they are, the page that contains them discloses it clearly at the top of the article. Editorial recommendations are never influenced by affiliate status.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        You can request deletion of your newsletter subscription or any data we hold about you at any time by emailing <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a>. If you're in California, the EU, or the UK, this request is processed within the timelines required by applicable law.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        This policy may change as the site grows. Material changes will be noted at the top of this page with a revised date.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

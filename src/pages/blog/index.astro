@@ -1,10 +1,16 @@
 ---
 import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
 import ArticleCard from "../../components/ArticleCard.astro";
+import EmailCapture from "../../components/EmailCapture.astro";
 import { getCollection } from "astro:content";
 
 const entries = (await getCollection("blog", ({ data }) => !data.draft))
   .sort((a, b) => b.data.lastUpdated.getTime() - a.data.lastUpdated.getTime());
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Blog", href: "/blog/" },
+];
 ---
 
 <DirectoryLayout
@@ -13,9 +19,23 @@ const entries = (await getCollection("blog", ({ data }) => !data.draft))
   eyebrow="Blog"
   heading="Editorial coverage from The Van Guide."
   intro="Longer pieces on van ownership, builder profiles, and the van conversion industry."
+  breadcrumbs={breadcrumbs}
 >
   {entries.length === 0 ? (
-    <p style="color: var(--color-text-muted);">Posts coming soon.</p>
+    <div class="max-w-2xl">
+      <div class="p-8 md:p-10 border" style="background: var(--color-surface); border-color: var(--color-border); border-radius: var(--radius-lg);">
+        <div class="eyebrow mb-3">Coming soon</div>
+        <h2 class="text-2xl mb-3">The first posts are being drafted.</h2>
+        <p class="leading-relaxed mb-6" style="color: var(--color-text-muted);">
+          Blog coverage launches alongside the builder directory. While you wait, the Insurance and Registration sections already have in-depth guides — or subscribe below and the first post will land in your inbox.
+        </p>
+        <div class="flex flex-wrap gap-3 mb-8">
+          <a href="/insurance/" class="btn btn-primary text-sm">Read insurance guides</a>
+          <a href="/registration/" class="btn btn-ghost text-sm">Registration guides</a>
+        </div>
+        <EmailCapture variant="inline" />
+      </div>
+    </div>
   ) : (
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {entries.map((entry) => (

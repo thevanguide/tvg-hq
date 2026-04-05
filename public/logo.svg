@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 44" role="img" aria-label="The Van Guide">
+  <style>
+    .tvg-word { font-family: "Fraunces", "Source Serif 4", Georgia, serif; font-weight: 600; font-size: 30px; letter-spacing: -0.3px; fill: #14331E; }
+    .tvg-dot { fill: #A87E3B; }
+  </style>
+  <text x="0" y="32" class="tvg-word">The Van Guide</text>
+  <circle cx="253" cy="32" r="3" class="tvg-dot" />
+</svg>
