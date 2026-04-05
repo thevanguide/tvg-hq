@@ -29,9 +29,10 @@ const fullTitle = title.includes("The Van Guide") ? title : `${title} — The Va
 
 // SEO infrastructure — read from env at build time.
 // Set PUBLIC_CF_ANALYTICS_TOKEN for Cloudflare Web Analytics.
-// Set PUBLIC_GOOGLE_SITE_VERIFICATION for Google Search Console meta verification.
+// Google Search Console verification token is hardcoded below because the
+// build runs in GitHub Actions, not Cloudflare Pages, so the Pages dashboard
+// env var never reaches the build. The token is public by design.
 const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
-const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 
 // Organization JSON-LD — emitted only on the homepage.
 const isHomepage = Astro.url.pathname === "/";
@@ -56,9 +57,7 @@ const orgJsonLd = {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
-    {googleSiteVerification && (
-      <meta name="google-site-verification" content={googleSiteVerification} />
-    )}
+    <meta name="google-site-verification" content="sxRnNZ9uz4X0cbyqH286LfEpP-OwXY1EgQEB4yIXaOs" />
     <link rel="canonical" href={canonicalUrl} />
 
     <!-- Open Graph -->
