@@ -87,11 +87,12 @@ const orgJsonLd = {
     <title>{fullTitle}</title>
 
     {isHomepage && (
-      <script type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
     )}
 
     {cfAnalyticsToken && (
       <script
+        is:inline
         defer
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon={`{"token": "${cfAnalyticsToken}"}`}
