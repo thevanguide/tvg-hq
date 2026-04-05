@@ -1,5 +1,11 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+
+interface Crumb {
+  label: string;
+  href: string;
+}
 
 interface Props {
   title: string;
@@ -10,6 +16,7 @@ interface Props {
   cluster?: string;
   ogImage?: string;
   keywords?: string[];
+  breadcrumbs?: Crumb[];
 }
 
 const {
@@ -21,6 +28,7 @@ const {
   cluster,
   ogImage,
   keywords = [],
+  breadcrumbs,
 } = Astro.props;
 
 const fmtDate = (d: Date) =>
@@ -48,6 +56,7 @@ const eyebrow = cluster ?? category;
   <script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(jsonLd)} />
   <article class="py-14 md:py-20">
     <header class="container-read mb-10">
+      {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
       {eyebrow && <div class="eyebrow mb-4">{eyebrow}</div>}
       <h1 class="text-4xl md:text-5xl leading-tight mb-5">{title}</h1>
       <p class="text-xl leading-relaxed" style="color: var(--color-text-muted);">
