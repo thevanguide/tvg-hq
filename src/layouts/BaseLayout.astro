@@ -26,6 +26,27 @@ const {
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site).toString();
 const ogImageUrl = new URL(ogImage, Astro.site).toString();
 const fullTitle = title.includes("The Van Guide") ? title : `${title} — The Van Guide`;
+
+// SEO infrastructure — read from env at build time.
+// Set PUBLIC_CF_ANALYTICS_TOKEN for Cloudflare Web Analytics.
+// Set PUBLIC_GOOGLE_SITE_VERIFICATION for Google Search Console meta verification.
+const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
+
+// Organization JSON-LD — emitted only on the homepage.
+const isHomepage = Astro.url.pathname === "/";
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") || "https://thevanguide.com";
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "The Van Guide",
+  alternateName: "TVG",
+  url: siteUrl,
+  logo: `${siteUrl}/logo.svg`,
+  description:
+    "Independent editorial resource for van conversion owners and shoppers. Builder directory, insurance and registration guides, and tools — grounded in primary sources.",
+  email: "hello@thevanguide.com",
+};
 ---
 
 <!doctype html>
@@ -35,6 +56,9 @@ const fullTitle = title.includes("The Van Guide") ? title : `${title} — The Va
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {googleSiteVerification && (
+      <meta name="google-site-verification" content={googleSiteVerification} />
+    )}
     <link rel="canonical" href={canonicalUrl} />
 
     <!-- Open Graph -->
@@ -61,6 +85,19 @@ const fullTitle = title.includes("The Van Guide") ? title : `${title} — The Va
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{fullTitle}</title>
+
+    {isHomepage && (
+      <script type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
+    )}
+
+    {cfAnalyticsToken && (
+      <script
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${cfAnalyticsToken}"}`}
+      />
+    )}
+
     <slot name="head" />
   </head>
   <body class="min-h-screen flex flex-col">
