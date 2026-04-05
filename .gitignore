@@ -27,3 +27,6 @@ pnpm-debug.log*
 # wrangler
 .wrangler/
 .dev.vars
+
+# claude code session tooling
+.claude/
