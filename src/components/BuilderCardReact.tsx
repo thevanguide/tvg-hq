@@ -161,7 +161,7 @@ export default function BuilderCardReact({
                 fontFamily: "var(--font-sans)",
               }}
             >
-              {priceTier}
+              {priceTier === "Budget" ? "$ Budget" : priceTier === "Mid" ? "$$ Mid-range" : priceTier === "Premium" ? "$$$ Premium" : priceTier === "Luxury" ? "$$$$ Luxury" : priceTier}
             </a>
           )}
         </div>

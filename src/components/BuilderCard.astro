@@ -128,7 +128,7 @@ function renderStars(rating: number): string {
           class="text-[11px] font-sans-ui px-2 py-0.5 rounded-full no-underline transition-colors"
           style="background: var(--color-bg-alt); color: var(--color-primary);"
         >
-          {priceTier}
+          {priceTier === "Budget" ? "$ Budget" : priceTier === "Mid" ? "$$ Mid-range" : priceTier === "Premium" ? "$$$ Premium" : priceTier === "Luxury" ? "$$$$ Luxury" : priceTier}
         </a>
       )}
     </div>
