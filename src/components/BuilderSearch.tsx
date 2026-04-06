@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import BuilderCardReact from "./BuilderCardReact";
+import BuilderMap from "./BuilderMap";
 
-// Minimal Builder shape for the search island (matches serialized props)
+// Builder shape for the search island (matches serialized props from Astro)
 interface BuilderData {
   id: string;
   name: string;
@@ -20,6 +21,8 @@ interface BuilderData {
   website: string | null;
   year_founded: number | null;
   build_style: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface Props {
@@ -27,6 +30,7 @@ interface Props {
 }
 
 type SortOption = "rating" | "reviews" | "alpha" | "newest";
+type ViewMode = "list" | "map";
 
 export default function BuilderSearch({ builders }: Props) {
   // Read initial state from URL params
@@ -53,6 +57,16 @@ export default function BuilderSearch({ builders }: Props) {
     (initParams.get("sort") as SortOption) || "rating",
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<ViewMode>("list");
+
+  // Track window width for responsive layout
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1280);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Derive filter options from data
   const states = useMemo(() => {
@@ -114,7 +128,6 @@ export default function BuilderSearch({ builders }: Props) {
   const results = useMemo(() => {
     let filtered = builders;
 
-    // Text search
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       filtered = filtered.filter(
@@ -126,40 +139,34 @@ export default function BuilderSearch({ builders }: Props) {
       );
     }
 
-    // State
     if (selectedState) {
       filtered = filtered.filter((b) => b.state === selectedState);
     }
 
-    // Platforms
     if (selectedPlatforms.size > 0) {
       filtered = filtered.filter((b) =>
         b.platforms.some((p) => selectedPlatforms.has(p)),
       );
     }
 
-    // Tiers
     if (selectedTiers.size > 0) {
       filtered = filtered.filter(
         (b) => b.price_tier && selectedTiers.has(b.price_tier),
       );
     }
 
-    // Style
     if (selectedStyle) {
       filtered = filtered.filter(
         (b) => b.build_style && b.build_style.toLowerCase() === selectedStyle.toLowerCase(),
       );
     }
 
-    // Services
     if (selectedServices.size > 0) {
       filtered = filtered.filter((b) =>
         b.services.some((s) => selectedServices.has(s)),
       );
     }
 
-    // Sort
     const sorted = [...filtered];
     switch (sort) {
       case "rating":
@@ -184,6 +191,23 @@ export default function BuilderSearch({ builders }: Props) {
     return sorted;
   }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort]);
 
+  // Map pins derived from filtered results
+  const mapPins = useMemo(
+    () =>
+      results.map((b) => ({
+        id: b.id,
+        name: b.name,
+        slug: b.slug,
+        state: b.state,
+        city: b.city,
+        latitude: b.latitude,
+        longitude: b.longitude,
+        review_rating: b.review_rating,
+        review_count: b.review_count,
+      })),
+    [results],
+  );
+
   function toggleSet<T>(set: Set<T>, value: T): Set<T> {
     const next = new Set(set);
     if (next.has(value)) next.delete(value);
@@ -204,273 +228,363 @@ export default function BuilderSearch({ builders }: Props) {
     setSort("rating");
   }
 
-  return (
-    <div className="mb-10">
-      {/* Search bar + filter toggle */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search builders by name, city, or keyword..."
-            className="w-full px-4 py-2.5 text-sm border rounded-md outline-none"
-            style={{
-              borderColor: "var(--color-border-strong)",
-              background: "var(--color-bg)",
-              color: "var(--color-text)",
-              fontFamily: "var(--font-sans)",
-            }}
-          />
+  // ---------- Shared UI pieces ----------
+
+  const searchBar = (
+    <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="flex-1 relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search builders by name, city, or keyword..."
+          className="w-full px-4 py-2.5 text-sm border rounded-md outline-none"
+          style={{
+            borderColor: "var(--color-border-strong)",
+            background: "var(--color-bg)",
+            color: "var(--color-text)",
+            fontFamily: "var(--font-sans)",
+          }}
+        />
+      </div>
+      <div className="flex gap-2">
+        {/* Mobile-only List/Map toggle */}
+        {!isDesktop && (
+          <div
+            className="inline-flex rounded-md overflow-hidden border"
+            style={{ borderColor: "var(--color-border-strong)" }}
+          >
+            <button
+              onClick={() => setMobileView("list")}
+              className="px-3 py-2.5 text-sm cursor-pointer border-0"
+              style={{
+                background: mobileView === "list" ? "var(--color-primary)" : "var(--color-bg)",
+                color: mobileView === "list" ? "#fff" : "var(--color-text)",
+                fontFamily: "var(--font-sans)",
+                fontWeight: 500,
+              }}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setMobileView("map")}
+              className="px-3 py-2.5 text-sm cursor-pointer border-0"
+              style={{
+                background: mobileView === "map" ? "var(--color-primary)" : "var(--color-bg)",
+                color: mobileView === "map" ? "#fff" : "var(--color-text)",
+                fontFamily: "var(--font-sans)",
+                fontWeight: 500,
+                borderLeft: "1px solid var(--color-border-strong)",
+              }}
+            >
+              Map ({mapPins.filter((b) => b.latitude != null).length})
+            </button>
+          </div>
+        )}
+        <button
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="px-4 py-2.5 text-sm border rounded-md cursor-pointer"
+          style={{
+            borderColor: "var(--color-border-strong)",
+            background: filtersOpen ? "var(--color-primary)" : "var(--color-bg)",
+            color: filtersOpen ? "#fff" : "var(--color-text)",
+            fontFamily: "var(--font-sans)",
+            fontWeight: 500,
+          }}
+        >
+          Filters {hasActiveFilters ? "●" : ""}
+        </button>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortOption)}
+          className="px-3 py-2.5 text-sm border rounded-md cursor-pointer"
+          style={{
+            borderColor: "var(--color-border-strong)",
+            background: "var(--color-bg)",
+            color: "var(--color-text)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          <option value="rating">Highest rated</option>
+          <option value="reviews">Most reviewed</option>
+          <option value="alpha">Alphabetical</option>
+          <option value="newest">Newest</option>
+        </select>
+      </div>
+    </div>
+  );
+
+  const filterPanel = filtersOpen ? (
+    <div
+      className="p-5 mb-6 border rounded-lg grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      style={{
+        borderColor: "var(--color-border)",
+        background: "var(--color-surface)",
+      }}
+    >
+      {/* State */}
+      <div>
+        <label
+          className="block text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          State
+        </label>
+        <select
+          value={selectedState}
+          onChange={(e) => setSelectedState(e.target.value)}
+          className="w-full px-3 py-2 text-sm border rounded-md"
+          style={{
+            borderColor: "var(--color-border-strong)",
+            background: "var(--color-bg)",
+            color: "var(--color-text)",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          <option value="">All states</option>
+          {states.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Platforms */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Platform
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFiltersOpen((v) => !v)}
-            className="px-4 py-2.5 text-sm border rounded-md cursor-pointer"
-            style={{
-              borderColor: "var(--color-border-strong)",
-              background: filtersOpen ? "var(--color-primary)" : "var(--color-bg)",
-              color: filtersOpen ? "#fff" : "var(--color-text)",
-              fontFamily: "var(--font-sans)",
-              fontWeight: 500,
-            }}
-          >
-            Filters {hasActiveFilters ? "●" : ""}
-          </button>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortOption)}
-            className="px-3 py-2.5 text-sm border rounded-md cursor-pointer"
-            style={{
-              borderColor: "var(--color-border-strong)",
-              background: "var(--color-bg)",
-              color: "var(--color-text)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            <option value="rating">Highest rated</option>
-            <option value="reviews">Most reviewed</option>
-            <option value="alpha">Alphabetical</option>
-            <option value="newest">Newest</option>
-          </select>
+        <div className="space-y-1.5">
+          {allPlatforms.map((p) => (
+            <label
+              key={p}
+              className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedPlatforms.has(p)}
+                onChange={() => setSelectedPlatforms(toggleSet(selectedPlatforms, p))}
+                className="accent-current"
+                style={{ accentColor: "var(--color-primary)" }}
+              />
+              {p}
+            </label>
+          ))}
         </div>
       </div>
 
-      {/* Filter panel */}
-      {filtersOpen && (
+      {/* Price tier */}
+      <div>
         <div
-          className="p-5 mb-6 border rounded-lg grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          style={{
-            borderColor: "var(--color-border)",
-            background: "var(--color-surface)",
-          }}
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
         >
-          {/* State */}
-          <div>
+          Price range
+        </div>
+        <div className="space-y-1.5">
+          {allTiers.map((t) => (
             <label
-              className="block text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+              key={t}
+              className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
             >
-              State
+              <input
+                type="checkbox"
+                checked={selectedTiers.has(t)}
+                onChange={() => setSelectedTiers(toggleSet(selectedTiers, t))}
+                style={{ accentColor: "var(--color-primary)" }}
+              />
+              {t}
             </label>
-            <select
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
-              className="w-full px-3 py-2 text-sm border rounded-md"
-              style={{
-                borderColor: "var(--color-border-strong)",
-                background: "var(--color-bg)",
-                color: "var(--color-text)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              <option value="">All states</option>
-              {states.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Platforms */}
-          <div>
+      {/* Style + services */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Build style
+        </div>
+        <div className="space-y-1.5 mb-4">
+          {["Custom", "Standard"].map((s) => (
+            <label
+              key={s}
+              className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
+            >
+              <input
+                type="radio"
+                name="style"
+                checked={selectedStyle === s}
+                onChange={() => setSelectedStyle(selectedStyle === s ? "" : s)}
+                style={{ accentColor: "var(--color-primary)" }}
+              />
+              {s}
+            </label>
+          ))}
+        </div>
+
+        {topServices.length > 0 && (
+          <>
             <div
               className="text-xs font-semibold uppercase tracking-wider mb-2"
               style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
             >
-              Platform
+              Services
             </div>
             <div className="space-y-1.5">
-              {allPlatforms.map((p) => (
-                <label
-                  key={p}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                  style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedPlatforms.has(p)}
-                    onChange={() => setSelectedPlatforms(toggleSet(selectedPlatforms, p))}
-                    className="accent-current"
-                    style={{ accentColor: "var(--color-primary)" }}
-                  />
-                  {p}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Price tier */}
-          <div>
-            <div
-              className="text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-            >
-              Price range
-            </div>
-            <div className="space-y-1.5">
-              {allTiers.map((t) => (
-                <label
-                  key={t}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                  style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedTiers.has(t)}
-                    onChange={() => setSelectedTiers(toggleSet(selectedTiers, t))}
-                    style={{ accentColor: "var(--color-primary)" }}
-                  />
-                  {t}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Style + services */}
-          <div>
-            <div
-              className="text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-            >
-              Build style
-            </div>
-            <div className="space-y-1.5 mb-4">
-              {["Custom", "Standard"].map((s) => (
+              {topServices.map((s) => (
                 <label
                   key={s}
                   className="flex items-center gap-2 text-sm cursor-pointer"
                   style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
                 >
                   <input
-                    type="radio"
-                    name="style"
-                    checked={selectedStyle === s}
-                    onChange={() => setSelectedStyle(selectedStyle === s ? "" : s)}
+                    type="checkbox"
+                    checked={selectedServices.has(s)}
+                    onChange={() => setSelectedServices(toggleSet(selectedServices, s))}
                     style={{ accentColor: "var(--color-primary)" }}
                   />
                   {s}
                 </label>
               ))}
             </div>
-
-            {topServices.length > 0 && (
-              <>
-                <div
-                  className="text-xs font-semibold uppercase tracking-wider mb-2"
-                  style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-                >
-                  Services
-                </div>
-                <div className="space-y-1.5">
-                  {topServices.map((s) => (
-                    <label
-                      key={s}
-                      className="flex items-center gap-2 text-sm cursor-pointer"
-                      style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedServices.has(s)}
-                        onChange={() => setSelectedServices(toggleSet(selectedServices, s))}
-                        style={{ accentColor: "var(--color-primary)" }}
-                      />
-                      {s}
-                    </label>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Clear all */}
-          {hasActiveFilters && (
-            <div className="sm:col-span-2 lg:col-span-4">
-              <button
-                onClick={clearAll}
-                className="text-sm underline cursor-pointer bg-transparent border-0"
-                style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Result count */}
-      <div
-        className="text-sm mb-6"
-        style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
-      >
-        {results.length === builders.length
-          ? `${results.length} builders`
-          : `${results.length} of ${builders.length} builders`}
+          </>
+        )}
       </div>
 
-      {/* Results grid */}
-      {results.length === 0 ? (
-        <div
-          className="p-10 text-center border border-dashed rounded-lg"
-          style={{
-            borderColor: "var(--color-border-strong)",
-            background: "var(--color-surface)",
-          }}
-        >
-          <p
-            className="text-lg mb-2"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--color-text)" }}
+      {/* Clear all */}
+      {hasActiveFilters && (
+        <div className="sm:col-span-2 lg:col-span-4">
+          <button
+            onClick={clearAll}
+            className="text-sm underline cursor-pointer bg-transparent border-0"
+            style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
           >
-            No builders match your filters
-          </p>
-          <p
-            className="text-sm"
-            style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
-          >
-            Try broadening your search or removing some filters.
-          </p>
+            Clear all filters
+          </button>
         </div>
-      ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {results.map((b) => (
-            <BuilderCardReact
-              key={b.id}
-              name={b.name}
-              slug={b.slug}
-              state={b.state}
-              city={b.city ?? undefined}
-              tagline={b.tagline ?? undefined}
-              platforms={b.platforms}
-              priceTier={b.price_tier ?? undefined}
-              description={b.description ?? undefined}
-              logoUrl={b.logo_url ?? undefined}
-              verified={b.verified}
-              reviewRating={b.review_rating ?? undefined}
-              reviewCount={b.review_count ?? undefined}
-              website={b.website ?? undefined}
-            />
-          ))}
+      )}
+    </div>
+  ) : null;
+
+  const resultCount = (
+    <div
+      className="text-sm mb-4"
+      style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
+    >
+      {results.length === builders.length
+        ? `${results.length} builders`
+        : `${results.length} of ${builders.length} builders`}
+    </div>
+  );
+
+  const cardGrid = results.length === 0 ? (
+    <div
+      className="p-10 text-center border border-dashed rounded-lg"
+      style={{
+        borderColor: "var(--color-border-strong)",
+        background: "var(--color-surface)",
+      }}
+    >
+      <p
+        className="text-lg mb-2"
+        style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--color-text)" }}
+      >
+        No builders match your filters
+      </p>
+      <p
+        className="text-sm"
+        style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
+      >
+        Try broadening your search or removing some filters.
+      </p>
+    </div>
+  ) : (
+    <div className={isDesktop ? "grid gap-4 grid-cols-1 xl:grid-cols-2" : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"}>
+      {results.map((b) => (
+        <BuilderCardReact
+          key={b.id}
+          name={b.name}
+          slug={b.slug}
+          state={b.state}
+          city={b.city ?? undefined}
+          tagline={b.tagline ?? undefined}
+          platforms={b.platforms}
+          priceTier={b.price_tier ?? undefined}
+          description={b.description ?? undefined}
+          logoUrl={b.logo_url ?? undefined}
+          verified={b.verified}
+          reviewRating={b.review_rating ?? undefined}
+          reviewCount={b.review_count ?? undefined}
+          website={b.website ?? undefined}
+        />
+      ))}
+    </div>
+  );
+
+  const mapView = (
+    <BuilderMap builders={mapPins} />
+  );
+
+  // ---------- Layout ----------
+
+  if (isDesktop) {
+    // Side-by-side: 60% list left, 40% sticky map right
+    return (
+      <div className="mb-10">
+        {searchBar}
+        {filterPanel}
+        {resultCount}
+        <div className="flex gap-6" style={{ alignItems: "flex-start" }}>
+          {/* List panel */}
+          <div style={{ flex: "0 0 60%", minWidth: 0 }}>
+            {cardGrid}
+          </div>
+          {/* Sticky map panel */}
+          <div
+            style={{
+              flex: "0 0 38%",
+              position: "sticky",
+              top: 16,
+              alignSelf: "flex-start",
+              height: "calc(100vh - 32px)",
+              maxHeight: 800,
+              minHeight: 400,
+            }}
+          >
+            <div
+              className="rounded-lg overflow-hidden"
+              style={{
+                height: "100%",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              {mapView}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile/tablet: toggle between list and map
+  return (
+    <div className="mb-10">
+      {searchBar}
+      {filterPanel}
+      {resultCount}
+      {mobileView === "list" ? cardGrid : (
+        <div style={{ height: 250 }}>
+          {mapView}
         </div>
       )}
     </div>

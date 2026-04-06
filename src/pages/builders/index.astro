@@ -1,20 +1,10 @@
 ---
 import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
-import BuilderCard from "../../components/BuilderCard.astro";
 import BuilderSearch from "../../components/BuilderSearch";
-import BuilderMapToggle from "../../components/BuilderMapToggle";
 import { getAllBuilders, getDistinctStates, stateToSlug } from "../../lib/supabase";
 
 const builders = await getAllBuilders();
 const states = await getDistinctStates();
-
-// Sort by review_rating desc, review_count as tiebreaker
-const sorted = [...builders].sort((a, b) => {
-  const rA = a.review_rating ?? 0;
-  const rB = b.review_rating ?? 0;
-  if (rB !== rA) return rB - rA;
-  return (b.review_count ?? 0) - (a.review_count ?? 0);
-});
 
 // State counts for quick-links
 const stateCounts = new Map<string, number>();
@@ -31,7 +21,7 @@ const breadcrumbs = [
   { label: "Builders", href: "/builders/" },
 ];
 
-// Serialize builder data for the React search island
+// Serialize builder data for the React search island (includes lat/lng for map)
 const searchData = builders.map((b) => ({
   id: b.id,
   name: b.name,
@@ -52,19 +42,6 @@ const searchData = builders.map((b) => ({
   build_style: b.build_style,
   latitude: b.latitude,
   longitude: b.longitude,
-}));
-
-// Map data — lighter shape for the map component
-const mapData = builders.map((b) => ({
-  id: b.id,
-  name: b.name,
-  slug: b.slug,
-  state: b.state,
-  city: b.city,
-  latitude: b.latitude,
-  longitude: b.longitude,
-  review_rating: b.review_rating,
-  review_count: b.review_count,
 }));
 ---
 
@@ -91,11 +68,7 @@ const mapData = builders.map((b) => ({
     </div>
   ) : (
     <>
-      {/* Map / List toggle */}
-      <BuilderMapToggle client:load builders={mapData} />
-
-      {/* React search island — client-side filtering */}
-      <div id="builder-list">
+      {/* Unified search + map island */}
       <BuilderSearch client:load builders={searchData} />
 
       {/* State quick-links */}
@@ -151,40 +124,6 @@ const mapData = builders.map((b) => ({
           </ul>
         </div>
       </section>
-
-      {/* All builders grid */}
-      <section>
-        <h2 class="text-2xl mb-6">All builders</h2>
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {sorted.map((b) => (
-            <BuilderCard
-              name={b.name}
-              slug={b.slug}
-              state={b.state}
-              city={b.city ?? undefined}
-              tagline={b.tagline ?? undefined}
-              platforms={b.platforms}
-              priceTier={b.price_tier ?? undefined}
-              description={b.description ?? undefined}
-              logoUrl={b.logo_url ?? undefined}
-              verified={b.verified}
-              reviewRating={b.review_rating ?? undefined}
-              reviewCount={b.review_count ?? undefined}
-              website={b.website ?? undefined}
-            />
-          ))}
-        </div>
-      </section>
-      </div>{/* close #builder-list */}
     </>
   )}
 </DirectoryLayout>
-
-<script>
-  document.addEventListener("tvg-view", (e: Event) => {
-    const list = document.getElementById("builder-list");
-    if (!list) return;
-    const detail = (e as CustomEvent).detail;
-    list.hidden = detail === "map";
-  });
-</script>

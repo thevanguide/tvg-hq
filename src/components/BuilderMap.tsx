@@ -193,7 +193,8 @@ export default function BuilderMap({
         style={{
           background: "var(--color-bg-alt)",
           border: "1px dashed var(--color-border-strong)",
-          height: singlePin ? 200 : 300,
+          height: singlePin ? 200 : "100%",
+          minHeight: singlePin ? undefined : 250,
         }}
       >
         <p
@@ -212,8 +213,9 @@ export default function BuilderMap({
       className="rounded-lg overflow-hidden"
       style={{
         width: "100%",
-        height: singlePin ? 200 : 400,
-        border: "1px solid var(--color-border)",
+        height: singlePin ? 200 : "100%",
+        minHeight: singlePin ? undefined : 250,
+        border: singlePin ? "1px solid var(--color-border)" : undefined,
         opacity: loaded ? 1 : 0.5,
         transition: "opacity 0.3s",
       }}
