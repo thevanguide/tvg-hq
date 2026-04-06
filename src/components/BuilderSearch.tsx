@@ -512,23 +512,7 @@ export default function BuilderSearch({ builders }: Props) {
       </div>
 
       <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Build style
-        </div>
-        <div className="space-y-1.5 mb-4">
-          {["Custom", "Standard"].map((s) => (
-            <label key={s} className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input type="radio" name="style" checked={selectedStyle === s}
-                onChange={() => setSelectedStyle(selectedStyle === s ? "" : s)}
-                style={{ accentColor: "var(--color-primary)" }} />
-              {s}
-            </label>
-          ))}
-        </div>
+        {/* Build style filter hidden until data is populated */}
 
         {topServices.length > 0 && (
           <>
@@ -593,12 +577,30 @@ export default function BuilderSearch({ builders }: Props) {
         onMouseEnter={() => setHoveredBuilderId(b.id)}
         onMouseLeave={() => setHoveredBuilderId(null)}
         style={{
+          position: "relative",
           transform: isHovered ? "scale(1.02)" : undefined,
           transition: "transform 0.15s, box-shadow 0.15s",
           boxShadow: isHovered ? "0 4px 16px rgba(0,0,0,0.12)" : undefined,
           borderRadius: "var(--radius-lg)",
         }}
       >
+        {dist != null && (
+          <div
+            className="text-[11px] px-2 py-0.5 rounded-full"
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              background: "var(--color-primary)",
+              color: "var(--color-bg)",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 500,
+              zIndex: 1,
+            }}
+          >
+            {dist < 1 ? "< 1 mi" : `${Math.round(dist)} mi`}
+          </div>
+        )}
         <BuilderCardReact
           name={b.name}
           slug={b.slug}
@@ -614,14 +616,6 @@ export default function BuilderSearch({ builders }: Props) {
           reviewCount={b.review_count ?? undefined}
           website={b.website ?? undefined}
         />
-        {dist != null && (
-          <div
-            className="px-5 pb-3 -mt-2 text-xs"
-            style={{ color: "var(--color-text-subtle)", fontFamily: "var(--font-sans)" }}
-          >
-            {dist < 1 ? "< 1 mile away" : `${Math.round(dist)} miles away`}
-          </div>
-        )}
       </div>
     );
   }
