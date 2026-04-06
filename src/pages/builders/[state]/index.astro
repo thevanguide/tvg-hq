@@ -1,6 +1,6 @@
 ---
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
-import BuilderCard from "../../../components/BuilderCard.astro";
+import BuilderSearch from "../../../components/BuilderSearch";
 import {
   getAllBuilders,
   getDistinctCities,
@@ -36,14 +36,6 @@ const builders = all.filter(
   (b) => b.state.toLowerCase() === stateName.toLowerCase(),
 );
 
-// Sort by review_rating desc
-const sorted = [...builders].sort((a, b) => {
-  const rA = a.review_rating ?? 0;
-  const rB = b.review_rating ?? 0;
-  if (rB !== rA) return rB - rA;
-  return (b.review_count ?? 0) - (a.review_count ?? 0);
-});
-
 const cities = await getDistinctCities(stateName);
 const meta = stateMeta(stateName, builders.length);
 
@@ -54,6 +46,27 @@ const breadcrumbs = [
 ];
 
 const stateSlug = stateToSlug(stateName);
+
+// Serialize builder data for the React search island (state-scoped)
+const searchData = builders.map((b) => ({
+  id: b.id,
+  name: b.name,
+  slug: b.slug,
+  state: b.state,
+  city: b.city,
+  tagline: b.tagline,
+  platforms: b.platforms,
+  services: b.services,
+  price_tier: b.price_tier,
+  description: b.description,
+  logo_url: b.logo_url,
+  verified: b.verified,
+  review_rating: b.review_rating,
+  review_count: b.review_count,
+  website: b.website,
+  year_founded: b.year_founded,
+  build_style: b.build_style,
+}));
 ---
 
 <DirectoryLayout
@@ -96,26 +109,8 @@ const stateSlug = stateToSlug(stateName);
         </section>
       )}
 
-      {/* Builder grid */}
-      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {sorted.map((b) => (
-          <BuilderCard
-            name={b.name}
-            slug={b.slug}
-            state={b.state}
-            city={b.city ?? undefined}
-            tagline={b.tagline ?? undefined}
-            platforms={b.platforms}
-            priceTier={b.price_tier ?? undefined}
-            description={b.description ?? undefined}
-            logoUrl={b.logo_url ?? undefined}
-            verified={b.verified}
-            reviewRating={b.review_rating ?? undefined}
-            reviewCount={b.review_count ?? undefined}
-            website={b.website ?? undefined}
-          />
-        ))}
-      </div>
+      {/* React search island — scoped to this state's builders */}
+      <BuilderSearch client:load builders={searchData} />
     </>
   )}
 
