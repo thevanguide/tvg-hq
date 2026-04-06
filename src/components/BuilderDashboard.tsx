@@ -244,15 +244,15 @@ function DashboardInner() {
             <img
               src={logoUrl}
               alt={`${builder.name} logo`}
-              className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg shrink-0"
-              style={{ background: "var(--color-bg-alt)" }}
+              className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg shrink-0 p-1.5"
+              style={{ background: "var(--color-logo-bg)" }}
             />
           ) : (
             <div
               className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg shrink-0"
-              style={{ background: "var(--color-bg-alt)" }}
+              style={{ background: "var(--color-logo-bg)" }}
             >
-              <img src="/images/van-icon.svg" alt="" className="w-10 h-10 opacity-50" />
+              <img src="/images/van-icon.svg" alt="" className="w-10 h-10 opacity-50 invert" />
             </div>
           )}
           <div className="flex-1 min-w-0">
@@ -413,8 +413,8 @@ function DashboardInner() {
               <img
                 src={logoUrl}
                 alt="Current logo"
-                className="w-20 h-20 object-contain rounded-lg"
-                style={{ background: "var(--color-bg-alt)" }}
+                className="w-20 h-20 object-contain rounded-lg p-2"
+                style={{ background: "var(--color-logo-bg)" }}
               />
             </div>
           )}

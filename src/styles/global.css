@@ -7,6 +7,9 @@
   --color-bg-alt: #EFEBE0;
   --color-surface: #F6F3EA;
 
+  /* Logo background — dark enough for white logos, neutral enough for all */
+  --color-logo-bg: #1E293B;
+
   /* Deep pine — primary brand color (nav, buttons, brand accents) */
   --color-primary: #14331E;
   --color-primary-dark: #0A1F11;

@@ -62,16 +62,16 @@ function renderStars(rating: number): string {
       <img
         src={logoUrl}
         alt={`${name} logo`}
-        class="w-14 h-14 object-contain rounded shrink-0"
-        style="background: var(--color-bg-alt);"
+        class="w-14 h-14 object-contain rounded shrink-0 p-1.5"
+        style="background: var(--color-logo-bg);"
         loading="lazy"
       />
     ) : (
       <div
         class="w-14 h-14 flex items-center justify-center rounded shrink-0"
-        style="background: var(--color-bg-alt);"
+        style="background: var(--color-logo-bg);"
       >
-        <img src="/images/van-icon.svg" alt="" class="w-9 h-9 opacity-50" />
+        <img src="/images/van-icon.svg" alt="" class="w-9 h-9 opacity-50 invert" />
       </div>
     )}
     <div class="flex-1 min-w-0">
