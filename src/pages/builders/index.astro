@@ -1,6 +1,7 @@
 ---
 import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../components/BuilderCard.astro";
+import BuilderSearch from "../../components/BuilderSearch";
 import { getAllBuilders, getDistinctStates, stateToSlug } from "../../lib/supabase";
 
 const builders = await getAllBuilders();
@@ -28,6 +29,27 @@ const breadcrumbs = [
   { label: "Home", href: "/" },
   { label: "Builders", href: "/builders/" },
 ];
+
+// Serialize builder data for the React search island
+const searchData = builders.map((b) => ({
+  id: b.id,
+  name: b.name,
+  slug: b.slug,
+  state: b.state,
+  city: b.city,
+  tagline: b.tagline,
+  platforms: b.platforms,
+  services: b.services,
+  price_tier: b.price_tier,
+  description: b.description,
+  logo_url: b.logo_url,
+  verified: b.verified,
+  review_rating: b.review_rating,
+  review_count: b.review_count,
+  website: b.website,
+  year_founded: b.year_founded,
+  build_style: b.build_style,
+}));
 ---
 
 <DirectoryLayout
@@ -53,7 +75,8 @@ const breadcrumbs = [
     </div>
   ) : (
     <>
-      {/* React search island will be inserted here in Phase 3 */}
+      {/* React search island — client-side filtering */}
+      <BuilderSearch client:load builders={searchData} />
 
       {/* State quick-links */}
       {stateEntries.length > 0 && (
