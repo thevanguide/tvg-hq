@@ -79,7 +79,7 @@ const insurance = (await getCollection("insurance", ({ data }) => !data.draft))
 
   <!-- Recent articles -->
   {insurance.length > 0 && (
-    <section class="container-wide pb-16 md:pb-20">
+    <section class="container-wide py-16 md:py-20">
       <div class="flex items-baseline justify-between mb-8">
         <h2 class="text-3xl md:text-4xl">Latest</h2>
         <a href="/insurance/" class="font-sans-ui text-sm">All articles →</a>

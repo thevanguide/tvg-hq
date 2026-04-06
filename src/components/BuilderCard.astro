@@ -68,10 +68,10 @@ function renderStars(rating: number): string {
       />
     ) : (
       <div
-        class="w-14 h-14 flex items-center justify-center font-semibold text-xl rounded shrink-0"
-        style="background: var(--color-bg-alt); color: var(--color-primary); font-family: var(--font-display);"
+        class="w-14 h-14 flex items-center justify-center rounded shrink-0"
+        style="background: var(--color-bg-alt);"
       >
-        {name.charAt(0)}
+        <img src="/images/van-icon.svg" alt="" class="w-9 h-9 opacity-50" />
       </div>
     )}
     <div class="flex-1 min-w-0">
