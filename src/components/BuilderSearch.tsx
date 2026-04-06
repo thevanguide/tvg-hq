@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import BuilderCardReact from "./BuilderCardReact";
 import BuilderMap from "./BuilderMap";
 
-// Builder shape for the search island (matches serialized props from Astro)
 interface BuilderData {
   id: string;
   name: string;
@@ -29,11 +28,22 @@ interface Props {
   builders: BuilderData[];
 }
 
-type SortOption = "rating" | "reviews" | "alpha" | "newest";
+type SortOption = "rating" | "reviews" | "alpha" | "newest" | "distance";
 type ViewMode = "list" | "map";
 
+// Haversine distance in miles
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function BuilderSearch({ builders }: Props) {
-  // Read initial state from URL params
   const getInitialParams = () => {
     if (typeof window === "undefined") return new URLSearchParams();
     return new URLSearchParams(window.location.search);
@@ -58,6 +68,14 @@ export default function BuilderSearch({ builders }: Props) {
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileView, setMobileView] = useState<ViewMode>("list");
+
+  // Cross-highlighting state
+  const [hoveredBuilderId, setHoveredBuilderId] = useState<string | null>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Near Me state
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locatingUser, setLocatingUser] = useState(false);
 
   // Track window width for responsive layout
   const [isDesktop, setIsDesktop] = useState(false);
@@ -168,30 +186,55 @@ export default function BuilderSearch({ builders }: Props) {
     }
 
     const sorted = [...filtered];
-    switch (sort) {
-      case "rating":
-        sorted.sort((a, b) => {
-          const rA = a.review_rating ?? 0;
-          const rB = b.review_rating ?? 0;
-          if (rB !== rA) return rB - rA;
-          return (b.review_count ?? 0) - (a.review_count ?? 0);
-        });
-        break;
-      case "reviews":
-        sorted.sort((a, b) => (b.review_count ?? 0) - (a.review_count ?? 0));
-        break;
-      case "alpha":
-        sorted.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "newest":
-        sorted.sort((a, b) => (b.year_founded ?? 0) - (a.year_founded ?? 0));
-        break;
+
+    if (sort === "distance" && userLocation) {
+      sorted.sort((a, b) => {
+        const dA = a.latitude != null && a.longitude != null
+          ? haversine(userLocation[0], userLocation[1], a.latitude, a.longitude)
+          : Infinity;
+        const dB = b.latitude != null && b.longitude != null
+          ? haversine(userLocation[0], userLocation[1], b.latitude, b.longitude)
+          : Infinity;
+        return dA - dB;
+      });
+    } else {
+      switch (sort) {
+        case "rating":
+          sorted.sort((a, b) => {
+            const rA = a.review_rating ?? 0;
+            const rB = b.review_rating ?? 0;
+            if (rB !== rA) return rB - rA;
+            return (b.review_count ?? 0) - (a.review_count ?? 0);
+          });
+          break;
+        case "reviews":
+          sorted.sort((a, b) => (b.review_count ?? 0) - (a.review_count ?? 0));
+          break;
+        case "alpha":
+          sorted.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case "newest":
+          sorted.sort((a, b) => (b.year_founded ?? 0) - (a.year_founded ?? 0));
+          break;
+      }
     }
 
     return sorted;
-  }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort]);
+  }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, userLocation]);
 
-  // Map pins derived from filtered results
+  // Distances from user (for display on cards)
+  const distances = useMemo(() => {
+    if (!userLocation) return new Map<string, number>();
+    const map = new Map<string, number>();
+    for (const b of results) {
+      if (b.latitude != null && b.longitude != null) {
+        map.set(b.id, haversine(userLocation[0], userLocation[1], b.latitude, b.longitude));
+      }
+    }
+    return map;
+  }, [results, userLocation]);
+
+  // Map pins from filtered results
   const mapPins = useMemo(
     () =>
       results.map((b) => ({
@@ -207,6 +250,68 @@ export default function BuilderSearch({ builders }: Props) {
       })),
     [results],
   );
+
+  // When a pin is hovered on the map, scroll the corresponding card into view (desktop only)
+  const handlePinHover = useCallback(
+    (id: string | null) => {
+      setHoveredBuilderId(id);
+      if (id && isDesktop) {
+        const el = cardRefs.current.get(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+    },
+    [isDesktop],
+  );
+
+  // Near Me: get user location
+  async function handleNearMe() {
+    if (userLocation) {
+      // Toggle off
+      setUserLocation(null);
+      if (sort === "distance") setSort("rating");
+      return;
+    }
+
+    setLocatingUser(true);
+
+    // Try browser geolocation first
+    if ("geolocation" in navigator) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 5000,
+            maximumAge: 300000,
+          });
+        });
+        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+        setSort("distance");
+        setLocatingUser(false);
+        return;
+      } catch {
+        // Fall through to IP geolocation
+      }
+    }
+
+    // Fallback: IP-based geolocation
+    try {
+      const res = await fetch("https://ipapi.co/json/");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          setUserLocation([data.latitude, data.longitude]);
+          setSort("distance");
+          setLocatingUser(false);
+          return;
+        }
+      }
+    } catch {
+      // silently fail
+    }
+
+    setLocatingUser(false);
+  }
 
   function toggleSet<T>(set: Set<T>, value: T): Set<T> {
     const next = new Set(set);
@@ -226,9 +331,10 @@ export default function BuilderSearch({ builders }: Props) {
     setSelectedStyle("");
     setSelectedServices(new Set());
     setSort("rating");
+    setUserLocation(null);
   }
 
-  // ---------- Shared UI pieces ----------
+  // ---------- Shared UI ----------
 
   const searchBar = (
     <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -247,7 +353,24 @@ export default function BuilderSearch({ builders }: Props) {
           }}
         />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        {/* Near Me */}
+        <button
+          onClick={handleNearMe}
+          disabled={locatingUser}
+          className="px-3 py-2.5 text-sm border rounded-md cursor-pointer"
+          style={{
+            borderColor: userLocation ? "var(--color-accent)" : "var(--color-border-strong)",
+            background: userLocation ? "var(--color-accent)" : "var(--color-bg)",
+            color: userLocation ? "#fff" : "var(--color-text)",
+            fontFamily: "var(--font-sans)",
+            fontWeight: 500,
+            opacity: locatingUser ? 0.6 : 1,
+          }}
+        >
+          {locatingUser ? "Locating..." : userLocation ? "Near me ✕" : "Near me"}
+        </button>
+
         {/* Mobile-only List/Map toggle */}
         {!isDesktop && (
           <div
@@ -309,6 +432,7 @@ export default function BuilderSearch({ builders }: Props) {
           <option value="reviews">Most reviewed</option>
           <option value="alpha">Alphabetical</option>
           <option value="newest">Newest</option>
+          {userLocation && <option value="distance">Nearest</option>}
         </select>
       </div>
     </div>
@@ -322,7 +446,6 @@ export default function BuilderSearch({ builders }: Props) {
         background: "var(--color-surface)",
       }}
     >
-      {/* State */}
       <div>
         <label
           className="block text-xs font-semibold uppercase tracking-wider mb-2"
@@ -343,14 +466,11 @@ export default function BuilderSearch({ builders }: Props) {
         >
           <option value="">All states</option>
           {states.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
       </div>
 
-      {/* Platforms */}
       <div>
         <div
           className="text-xs font-semibold uppercase tracking-wider mb-2"
@@ -360,25 +480,17 @@ export default function BuilderSearch({ builders }: Props) {
         </div>
         <div className="space-y-1.5">
           {allPlatforms.map((p) => (
-            <label
-              key={p}
-              className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-            >
-              <input
-                type="checkbox"
-                checked={selectedPlatforms.has(p)}
+            <label key={p} className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input type="checkbox" checked={selectedPlatforms.has(p)}
                 onChange={() => setSelectedPlatforms(toggleSet(selectedPlatforms, p))}
-                className="accent-current"
-                style={{ accentColor: "var(--color-primary)" }}
-              />
+                className="accent-current" style={{ accentColor: "var(--color-primary)" }} />
               {p}
             </label>
           ))}
         </div>
       </div>
 
-      {/* Price tier */}
       <div>
         <div
           className="text-xs font-semibold uppercase tracking-wider mb-2"
@@ -388,24 +500,17 @@ export default function BuilderSearch({ builders }: Props) {
         </div>
         <div className="space-y-1.5">
           {allTiers.map((t) => (
-            <label
-              key={t}
-              className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-            >
-              <input
-                type="checkbox"
-                checked={selectedTiers.has(t)}
+            <label key={t} className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input type="checkbox" checked={selectedTiers.has(t)}
                 onChange={() => setSelectedTiers(toggleSet(selectedTiers, t))}
-                style={{ accentColor: "var(--color-primary)" }}
-              />
+                style={{ accentColor: "var(--color-primary)" }} />
               {t}
             </label>
           ))}
         </div>
       </div>
 
-      {/* Style + services */}
       <div>
         <div
           className="text-xs font-semibold uppercase tracking-wider mb-2"
@@ -415,18 +520,11 @@ export default function BuilderSearch({ builders }: Props) {
         </div>
         <div className="space-y-1.5 mb-4">
           {["Custom", "Standard"].map((s) => (
-            <label
-              key={s}
-              className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-            >
-              <input
-                type="radio"
-                name="style"
-                checked={selectedStyle === s}
+            <label key={s} className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input type="radio" name="style" checked={selectedStyle === s}
                 onChange={() => setSelectedStyle(selectedStyle === s ? "" : s)}
-                style={{ accentColor: "var(--color-primary)" }}
-              />
+                style={{ accentColor: "var(--color-primary)" }} />
               {s}
             </label>
           ))}
@@ -442,17 +540,11 @@ export default function BuilderSearch({ builders }: Props) {
             </div>
             <div className="space-y-1.5">
               {topServices.map((s) => (
-                <label
-                  key={s}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                  style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedServices.has(s)}
+                <label key={s} className="flex items-center gap-2 text-sm cursor-pointer"
+                  style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+                  <input type="checkbox" checked={selectedServices.has(s)}
                     onChange={() => setSelectedServices(toggleSet(selectedServices, s))}
-                    style={{ accentColor: "var(--color-primary)" }}
-                  />
+                    style={{ accentColor: "var(--color-primary)" }} />
                   {s}
                 </label>
               ))}
@@ -461,7 +553,6 @@ export default function BuilderSearch({ builders }: Props) {
         )}
       </div>
 
-      {/* Clear all */}
       {hasActiveFilters && (
         <div className="sm:col-span-2 lg:col-span-4">
           <button
@@ -487,6 +578,54 @@ export default function BuilderSearch({ builders }: Props) {
     </div>
   );
 
+  // Card with hover linkage
+  function renderCard(b: BuilderData) {
+    const dist = distances.get(b.id);
+    const isHovered = hoveredBuilderId === b.id;
+
+    return (
+      <div
+        key={b.id}
+        ref={(el) => {
+          if (el) cardRefs.current.set(b.id, el);
+          else cardRefs.current.delete(b.id);
+        }}
+        onMouseEnter={() => setHoveredBuilderId(b.id)}
+        onMouseLeave={() => setHoveredBuilderId(null)}
+        style={{
+          transform: isHovered ? "scale(1.02)" : undefined,
+          transition: "transform 0.15s, box-shadow 0.15s",
+          boxShadow: isHovered ? "0 4px 16px rgba(0,0,0,0.12)" : undefined,
+          borderRadius: "var(--radius-lg)",
+        }}
+      >
+        <BuilderCardReact
+          name={b.name}
+          slug={b.slug}
+          state={b.state}
+          city={b.city ?? undefined}
+          tagline={b.tagline ?? undefined}
+          platforms={b.platforms}
+          priceTier={b.price_tier ?? undefined}
+          description={b.description ?? undefined}
+          logoUrl={b.logo_url ?? undefined}
+          verified={b.verified}
+          reviewRating={b.review_rating ?? undefined}
+          reviewCount={b.review_count ?? undefined}
+          website={b.website ?? undefined}
+        />
+        {dist != null && (
+          <div
+            className="px-5 pb-3 -mt-2 text-xs"
+            style={{ color: "var(--color-text-subtle)", fontFamily: "var(--font-sans)" }}
+          >
+            {dist < 1 ? "< 1 mile away" : `${Math.round(dist)} miles away`}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const cardGrid = results.length === 0 ? (
     <div
       className="p-10 text-center border border-dashed rounded-lg"
@@ -510,46 +649,31 @@ export default function BuilderSearch({ builders }: Props) {
     </div>
   ) : (
     <div className={isDesktop ? "grid gap-4 grid-cols-1 xl:grid-cols-2" : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"}>
-      {results.map((b) => (
-        <BuilderCardReact
-          key={b.id}
-          name={b.name}
-          slug={b.slug}
-          state={b.state}
-          city={b.city ?? undefined}
-          tagline={b.tagline ?? undefined}
-          platforms={b.platforms}
-          priceTier={b.price_tier ?? undefined}
-          description={b.description ?? undefined}
-          logoUrl={b.logo_url ?? undefined}
-          verified={b.verified}
-          reviewRating={b.review_rating ?? undefined}
-          reviewCount={b.review_count ?? undefined}
-          website={b.website ?? undefined}
-        />
-      ))}
+      {results.map(renderCard)}
     </div>
   );
 
   const mapView = (
-    <BuilderMap builders={mapPins} />
+    <BuilderMap
+      builders={mapPins}
+      highlightedId={hoveredBuilderId}
+      onPinHover={handlePinHover}
+      userLocation={userLocation}
+    />
   );
 
   // ---------- Layout ----------
 
   if (isDesktop) {
-    // Side-by-side: 60% list left, 40% sticky map right
     return (
       <div className="mb-10">
         {searchBar}
         {filterPanel}
         {resultCount}
         <div className="flex gap-6" style={{ alignItems: "flex-start" }}>
-          {/* List panel */}
           <div style={{ flex: "0 0 60%", minWidth: 0 }}>
             {cardGrid}
           </div>
-          {/* Sticky map panel */}
           <div
             style={{
               flex: "0 0 38%",
@@ -563,10 +687,7 @@ export default function BuilderSearch({ builders }: Props) {
           >
             <div
               className="rounded-lg overflow-hidden"
-              style={{
-                height: "100%",
-                border: "1px solid var(--color-border)",
-              }}
+              style={{ height: "100%", border: "1px solid var(--color-border)" }}
             >
               {mapView}
             </div>
@@ -576,7 +697,6 @@ export default function BuilderSearch({ builders }: Props) {
     );
   }
 
-  // Mobile/tablet: toggle between list and map
   return (
     <div className="mb-10">
       {searchBar}
