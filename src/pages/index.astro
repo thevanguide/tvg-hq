@@ -16,63 +16,64 @@ const insurance = (await getCollection("insurance", ({ data }) => !data.draft))
   <!-- Hero -->
   <section style="background: var(--color-surface); border-bottom: 1px solid var(--color-border);">
     <div class="container-wide py-20 md:py-28">
-      <div class="eyebrow mb-5">Independent · Editorial · Not for sale</div>
       <h1 class="text-5xl md:text-7xl max-w-4xl leading-[1.05]">
-        A plain-English guide to building, owning, and insuring a custom van.
+        Find a van builder. Figure out the insurance. Skip the guesswork.
       </h1>
       <p class="mt-6 max-w-2xl text-xl leading-relaxed" style="color: var(--color-text-muted);">
-        The Van Guide is an editorial resource — not a builder. Search hundreds of van conversion shops across the US, navigate the insurance and registration maze, and understand what a real build actually costs.
+        A directory of van conversion shops across the US, plus guides to insurance, registration, and everything else that gets complicated after you decide to buy one.
       </p>
       <div class="mt-9 flex flex-wrap gap-3">
-        <a href="/builders/" class="btn btn-primary">Find a builder</a>
-        <a href="/insurance/" class="btn btn-ghost">Start with insurance</a>
-      </div>
-      <div class="mt-10 pt-8 border-t flex flex-wrap gap-x-8 gap-y-3 font-sans-ui text-sm" style="border-color: var(--color-border); color: var(--color-text-muted);">
-        <span><strong style="color: var(--color-primary);">Every fact</strong> traces to a primary source.</span>
-        <span><strong style="color: var(--color-primary);">No pay-to-play</strong> ranking in the directory.</span>
-        <span><strong style="color: var(--color-primary);">Affiliate links</strong> disclosed on every page.</span>
+        <a href="/builders/" class="btn btn-primary">Search builders</a>
+        <a href="/insurance/" class="btn btn-ghost">Insurance guides</a>
       </div>
     </div>
   </section>
 
-  <!-- Three pillars -->
+  <!-- Two pillars -->
   <section class="container-wide py-16 md:py-20">
-    <div class="eyebrow mb-4">What's here</div>
-    <h2 class="text-3xl md:text-4xl max-w-2xl mb-12">Three things we do, nothing else.</h2>
-    <div class="grid md:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-2 gap-6">
       <a
         href="/builders/"
         class="block p-8 no-underline border transition-all hover:-translate-y-1"
         style="background: var(--color-surface); border-color: var(--color-border); border-radius: var(--radius-lg);"
       >
-        <div class="eyebrow mb-3">01 — Directory</div>
-        <h3 class="text-2xl mb-3">Find a van builder</h3>
+        <div class="eyebrow mb-3">Directory</div>
+        <h3 class="text-2xl mb-3">Van conversion builders across the US</h3>
         <p class="text-base leading-relaxed" style="color: var(--color-text-muted);">
-          Searchable directory of custom van conversion shops across the US. Filter by platform, price tier, and location. No pay-to-play rankings.
+          Search by state, city, platform, price range, and services offered. Every shop is listed on the same terms — no one pays for a better position. Filter, compare, and contact builders directly.
         </p>
+        <span class="inline-block mt-4 font-sans-ui text-sm" style="color: var(--color-primary);">Browse builders →</span>
       </a>
       <a
         href="/insurance/"
         class="block p-8 no-underline border transition-all hover:-translate-y-1"
         style="background: var(--color-surface); border-color: var(--color-border); border-radius: var(--radius-lg);"
       >
-        <div class="eyebrow mb-3">02 — Learn</div>
-        <h3 class="text-2xl mb-3">Insurance &amp; registration</h3>
+        <div class="eyebrow mb-3">Guides</div>
+        <h3 class="text-2xl mb-3">Insurance, registration, and certification</h3>
         <p class="text-base leading-relaxed" style="color: var(--color-text-muted);">
-          Clear, up-to-date guides on insuring and registering a custom van conversion — including the state-by-state quirks nobody warns you about.
+          Which carriers actually write policies on converted vans. How to retitle in your state. What RVIA certification means and when you need it. Every claim traced to the carrier's own documents or the relevant statute.
         </p>
+        <span class="inline-block mt-4 font-sans-ui text-sm" style="color: var(--color-primary);">Read the guides →</span>
       </a>
-      <a
-        href="/tools/"
-        class="block p-8 no-underline border transition-all hover:-translate-y-1"
-        style="background: var(--color-surface); border-color: var(--color-border); border-radius: var(--radius-lg);"
-      >
-        <div class="eyebrow mb-3">03 — Tools</div>
-        <h3 class="text-2xl mb-3">Interactive calculators</h3>
-        <p class="text-base leading-relaxed" style="color: var(--color-text-muted);">
-          Free, browser-based tools: the Van Insurance Finder, build cost estimators, and more. No email required.
-        </p>
-      </a>
+    </div>
+  </section>
+
+  <!-- Trust strip -->
+  <section class="border-y" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-10 md:py-12 grid sm:grid-cols-3 gap-8 text-center font-sans-ui text-sm" style="color: var(--color-text-muted);">
+      <div>
+        <strong class="block text-base mb-1" style="color: var(--color-text);">Source-verified</strong>
+        Every factual claim links to an official carrier site, state statute, or agency document.
+      </div>
+      <div>
+        <strong class="block text-base mb-1" style="color: var(--color-text);">No paid placements</strong>
+        Directory rankings are never sold. Builders appear based on location and data, not ad spend.
+      </div>
+      <div>
+        <strong class="block text-base mb-1" style="color: var(--color-text);">Always disclosed</strong>
+        If a page includes an affiliate link or sponsored content, it says so at the top.
+      </div>
     </div>
   </section>
 

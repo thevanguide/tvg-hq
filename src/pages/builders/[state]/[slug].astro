@@ -211,7 +211,7 @@ function platformSlug(p: string): string {
             class="w-24 h-24 mx-auto mb-3 opacity-40"
             loading="lazy"
           />
-          <p class="font-sans-ui text-sm">Photos available when this builder claims their profile</p>
+          <p class="font-sans-ui text-sm">Photos will appear here once this builder claims their profile</p>
         </div>
       </div>
     </section>
@@ -265,7 +265,7 @@ function platformSlug(p: string): string {
       <section class="mb-12">
         <h2 class="text-2xl mb-4">Pricing</h2>
         <p class="font-sans-ui">
-          This builder is in the <strong>{builder.price_tier.toLowerCase()}</strong> price range.
+          Based on publicly available information, this builder falls in the <strong>{builder.price_tier.toLowerCase()}</strong> price range.
         </p>
         {builder.price_evidence && (
           <p class="mt-2 text-sm" style="color: var(--color-text-muted);">
@@ -273,7 +273,7 @@ function platformSlug(p: string): string {
           </p>
         )}
         <p class="mt-3 text-sm" style="color: var(--color-text-muted);">
-          Contact them directly for a quote.
+          Pricing varies by platform, layout, and options. Contact this builder directly for an accurate quote.
         </p>
       </section>
     )}
@@ -394,28 +394,28 @@ function platformSlug(p: string): string {
 
     {/* Cross-links */}
     <section class="pt-8 border-t" style="border-color: var(--color-border);">
-      <h2 class="text-xl mb-4">Related resources</h2>
+      <h2 class="text-xl mb-4">Related</h2>
       <ul class="space-y-2 font-sans-ui text-sm">
         <li>
-          <a href="/insurance/best-for-van-conversions/">Planning a build? Here's how to insure it</a>
+          <a href="/insurance/best-for-van-conversions/">Van conversion insurance: which carriers write these policies</a>
         </li>
         {builder.state === "California" && (
           <li>
-            <a href="/registration/california/">Need to register your converted van in California?</a>
+            <a href="/registration/california/">How to register a converted van in California</a>
           </li>
         )}
         {builder.platforms.length > 0 && (
           <li>
             <a href={`/builders/platform/${platformSlug(builder.platforms[0])}/`}>
-              Compare {builder.platforms[0]} builders
+              All {builder.platforms[0]} builders in the directory
             </a>
           </li>
         )}
         <li>
-          <a href={`/builders/${stateSlug}/`}>More builders in {builder.state}</a>
+          <a href={`/builders/${stateSlug}/`}>All builders in {builder.state}</a>
         </li>
         <li>
-          <a href="/builders/">Browse all builders</a>
+          <a href="/builders/">Full builder directory</a>
         </li>
       </ul>
     </section>
