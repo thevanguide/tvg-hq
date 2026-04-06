@@ -58,31 +58,25 @@ export default function BuilderMap({
       // Dynamic imports to avoid SSR issues
       const L = (await import("leaflet")).default;
 
-      // Load Leaflet CSS dynamically
-      if (!document.querySelector('link[href*="leaflet"]')) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-        document.head.appendChild(link);
+      // Load Leaflet CSS and wait for it before initializing the map.
+      // Without Leaflet CSS, tiles stack in a corner instead of filling the container.
+      async function loadCSS(href: string): Promise<void> {
+        if (document.querySelector(`link[href="${href}"]`)) return;
+        return new Promise((resolve) => {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = href;
+          link.onload = () => resolve();
+          link.onerror = () => resolve(); // don't block if CDN fails
+          document.head.appendChild(link);
+        });
       }
 
-      // Load markercluster CSS
-      if (!document.querySelector('link[href*="MarkerCluster"]')) {
-        const link1 = document.createElement("link");
-        link1.rel = "stylesheet";
-        link1.href =
-          "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css";
-        document.head.appendChild(link1);
-
-        const link2 = document.createElement("link");
-        link2.rel = "stylesheet";
-        link2.href =
-          "https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css";
-        document.head.appendChild(link2);
-      }
-
-      // Wait a tick for CSS to load
-      await new Promise((r) => setTimeout(r, 50));
+      await loadCSS("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
+      await Promise.all([
+        loadCSS("https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"),
+        loadCSS("https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"),
+      ]);
 
       if (cleanup || !mapRef.current) return;
 
