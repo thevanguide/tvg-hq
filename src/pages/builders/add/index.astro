@@ -1,0 +1,66 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import BuilderAddForm from "../../../components/BuilderAddForm";
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Add your shop", href: "/builders/add/" },
+];
+---
+
+<BaseLayout
+  title="Add Your Shop to the Directory"
+  description="Van conversion builders: submit your shop to The Van Guide directory. Free listing with photos, reviews, and a verified profile."
+>
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-10 md:py-20 max-w-3xl">
+      <Breadcrumbs items={breadcrumbs} />
+      <div class="eyebrow mb-4">For builders</div>
+      <h1 class="text-3xl md:text-5xl leading-tight mb-5">Add Your Shop</h1>
+      <p class="text-lg leading-relaxed" style="color: var(--color-text-muted);">
+        Don't see your business in the directory? Submit it here and we'll add you within a few business days.
+      </p>
+    </div>
+  </section>
+
+  <div class="container-wide py-12 md:py-16 max-w-3xl">
+    <!-- What you get -->
+    <section class="mb-12">
+      <h2 class="text-2xl mb-4">What's included</h2>
+      <ul class="space-y-2 text-base leading-relaxed">
+        <li><strong>A profile page</strong> with your shop's name, location, platforms, services, and contact info</li>
+        <li><strong>Appear in search results</strong> when potential customers browse by state, city, platform, or price range</li>
+        <li><strong>Upload photos</strong> of your builds once your listing is live</li>
+        <li><strong>Google review integration</strong> — your rating and review count display automatically</li>
+      </ul>
+    </section>
+
+    <!-- Pricing note -->
+    <section class="mb-12 p-6 border" style="border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
+      <p class="text-base" style="color: var(--color-text-muted);">
+        <strong style="color: var(--color-primary);">Listings are free.</strong>
+        We're building the most comprehensive van builder directory in the US. There's no charge for a basic listing. Optional premium features may be available in the future.
+      </p>
+    </section>
+
+    <!-- Add form (React island) -->
+    <section>
+      <h2 class="text-2xl mb-6">Submit your shop</h2>
+      <BuilderAddForm client:idle />
+      <p class="mt-6 font-sans-ui text-sm" style="color: var(--color-text-subtle);">
+        We review submissions manually to keep the directory accurate. Most listings go live within 2-3 business days.
+      </p>
+    </section>
+
+    <!-- Already listed? -->
+    <section class="mt-12 pt-8 border-t" style="border-color: var(--color-border);">
+      <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+        Already see your shop in the directory?
+        <a href="/builders/claim/" style="color: var(--color-primary);">Claim your existing listing</a>
+        to take control of how it appears.
+      </p>
+    </section>
+  </div>
+</BaseLayout>

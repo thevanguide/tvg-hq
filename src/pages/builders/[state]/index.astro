@@ -116,8 +116,25 @@ const searchData = builders.map((b) => ({
     </>
   )}
 
+  {/* Builder CTA */}
+  <section
+    class="mt-12 p-6 border flex flex-col sm:flex-row sm:items-center gap-4"
+    style="border-color: var(--color-primary); border-radius: var(--radius-lg); background: var(--color-surface);"
+  >
+    <div class="flex-1">
+      <div class="eyebrow mb-2">For builders</div>
+      <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+        Own a van conversion shop in {stateName}? Get listed in the directory for free.
+      </p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <a href="/builders/claim/" class="btn btn-accent text-sm">Claim listing</a>
+      <a href="/builders/add/" class="btn btn-ghost text-sm">Add shop</a>
+    </div>
+  </section>
+
   {/* Cross-links */}
-  <nav class="mt-12 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
+  <nav class="mt-8 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
     <a href="/builders/">← All states</a>
     <a href="/builders/platform/sprinter/">Sprinter builders</a>
     <a href="/builders/platform/promaster/">ProMaster builders</a>

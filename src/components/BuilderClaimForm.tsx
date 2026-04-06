@@ -250,11 +250,10 @@ function ClaimFormInner({ builderSlug }: Props) {
               </div>
             ) : filteredBuilders.length === 0 ? (
               <div className="px-4 py-3 font-sans-ui text-sm" style={{ color: "var(--color-text-muted)" }}>
-                No builders found. Try a different search, or{" "}
-                <a href="mailto:hello@thevanguide.com" style={{ color: "var(--color-primary)" }}>
-                  contact us
-                </a>{" "}
-                to add your business.
+                No builders found matching that search. Try a different name, or{" "}
+                <a href="/builders/add/" style={{ color: "var(--color-primary)" }}>
+                  add your shop to the directory
+                </a>.
               </div>
             ) : (
               filteredBuilders.map((b) => {

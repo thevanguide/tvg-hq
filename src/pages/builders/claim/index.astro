@@ -58,8 +58,17 @@ const stateSlug = Astro.url.searchParams.get("state") || undefined;
       </p>
     </section>
 
+    <!-- Not listed? -->
+    <section class="mt-12 p-6 border" style="border-color: var(--color-primary); border-radius: var(--radius-lg); background: var(--color-surface);">
+      <h3 class="text-lg mb-2">Don't see your shop listed?</h3>
+      <p class="font-sans-ui text-sm mb-3" style="color: var(--color-text-muted);">
+        If your business isn't in the directory yet, you can submit it for free.
+      </p>
+      <a href="/builders/add/" class="btn btn-ghost text-sm">Add your shop →</a>
+    </section>
+
     <!-- Already claimed? -->
-    <section class="mt-12 pt-8 border-t" style="border-color: var(--color-border);">
+    <section class="mt-8 pt-8 border-t" style="border-color: var(--color-border);">
       <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
         Already claimed your listing?
         <a href="/builders/dashboard/" style="color: var(--color-primary);">Go to your dashboard</a>

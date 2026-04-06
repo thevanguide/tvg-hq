@@ -89,6 +89,24 @@ const searchData = builders.map((b) => ({
         </section>
       )}
 
+      {/* Builder CTA banner */}
+      <section
+        class="mb-12 p-6 sm:p-8 border flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
+        style="border-color: var(--color-primary); border-radius: var(--radius-lg); background: var(--color-surface);"
+      >
+        <div class="flex-1">
+          <div class="eyebrow mb-2">For builders</div>
+          <h2 class="text-xl sm:text-2xl mb-2">Own a van conversion shop?</h2>
+          <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+            Claim your existing listing or add your shop to the directory. Free profiles with photos, reviews, and direct customer inquiries.
+          </p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+          <a href="/builders/claim/" class="btn btn-accent text-center">Claim your listing</a>
+          <a href="/builders/add/" class="btn btn-ghost text-center">Add your shop</a>
+        </div>
+      </section>
+
       {/* Category quick-links */}
       <section class="mb-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
