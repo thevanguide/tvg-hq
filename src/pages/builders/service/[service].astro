@@ -1,0 +1,104 @@
+---
+import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
+import BuilderCard from "../../../components/BuilderCard.astro";
+import { getAllBuilders } from "../../../lib/supabase";
+import { serviceMeta } from "../../../lib/seo";
+
+export async function getStaticPaths() {
+  const builders = await getAllBuilders();
+  const services = new Set<string>();
+  for (const b of builders) {
+    for (const s of b.services) {
+      services.add(s);
+    }
+  }
+  // Seed common services so routes exist
+  ["Off-grid", "Solar", "Electrical", "Plumbing", "Full custom"].forEach((s) =>
+    services.add(s),
+  );
+
+  return [...services].map((service) => ({
+    params: { service: service.toLowerCase().replace(/\s+/g, "-") },
+    props: { serviceName: service },
+  }));
+}
+
+interface Props {
+  serviceName: string;
+}
+const { serviceName } = Astro.props;
+
+const all = await getAllBuilders();
+const serviceSlug = serviceName.toLowerCase().replace(/\s+/g, "-");
+const builders = all.filter((b) =>
+  b.services.some(
+    (s) => s.toLowerCase().replace(/\s+/g, "-") === serviceSlug,
+  ),
+);
+
+const sorted = [...builders].sort((a, b) => {
+  const rA = a.review_rating ?? 0;
+  const rB = b.review_rating ?? 0;
+  if (rB !== rA) return rB - rA;
+  return (b.review_count ?? 0) - (a.review_count ?? 0);
+});
+
+const meta = serviceMeta(serviceName, builders.length);
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Service", href: "/builders/" },
+  { label: serviceName, href: `/builders/service/${serviceSlug}/` },
+];
+---
+
+<DirectoryLayout
+  title={meta.title}
+  description={meta.description}
+  eyebrow="Service"
+  heading={`${serviceName} Van Builders`}
+  intro={builders.length > 0
+    ? `${builders.length} van conversion ${builders.length === 1 ? "builder" : "builders"} offering ${serviceName.toLowerCase()} services.`
+    : `No builders offering ${serviceName.toLowerCase()} listed yet.`}
+  breadcrumbs={breadcrumbs}
+>
+  {builders.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <h2 class="text-xl mb-2">No listings yet</h2>
+      <p style="color: var(--color-text-muted);">
+        We're still categorizing builder services.
+      </p>
+    </div>
+  ) : (
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {sorted.map((b) => (
+        <BuilderCard
+          name={b.name}
+          slug={b.slug}
+          state={b.state}
+          city={b.city ?? undefined}
+          tagline={b.tagline ?? undefined}
+          platforms={b.platforms}
+          priceTier={b.price_tier ?? undefined}
+          description={b.description ?? undefined}
+          logoUrl={b.logo_url ?? undefined}
+          verified={b.verified}
+          reviewRating={b.review_rating ?? undefined}
+          reviewCount={b.review_count ?? undefined}
+          website={b.website ?? undefined}
+        />
+      ))}
+    </div>
+  )}
+
+  <nav class="mt-12 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
+    <a href="/builders/">← All builders</a>
+    <a href="/builders/platform/sprinter/">Sprinter builders</a>
+    <a href="/builders/tier/premium/">Premium builders</a>
+    <a href="/builders/style/custom/">Custom builds</a>
+  </nav>
+</DirectoryLayout>

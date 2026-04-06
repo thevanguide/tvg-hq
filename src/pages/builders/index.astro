@@ -1,24 +1,44 @@
 ---
 import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../components/BuilderCard.astro";
-import { getAllBuilders } from "../../lib/supabase";
+import { getAllBuilders, getDistinctStates, stateToSlug } from "../../lib/supabase";
 
 const builders = await getAllBuilders();
+const states = await getDistinctStates();
 
-// Group by state for the state picker
-const byState = new Map<string, number>();
+// Sort by review_rating desc, review_count as tiebreaker
+const sorted = [...builders].sort((a, b) => {
+  const rA = a.review_rating ?? 0;
+  const rB = b.review_rating ?? 0;
+  if (rB !== rA) return rB - rA;
+  return (b.review_count ?? 0) - (a.review_count ?? 0);
+});
+
+// State counts for quick-links
+const stateCounts = new Map<string, number>();
 for (const b of builders) {
-  byState.set(b.state, (byState.get(b.state) ?? 0) + 1);
+  stateCounts.set(b.state, (stateCounts.get(b.state) ?? 0) + 1);
 }
-const states = [...byState.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+const stateEntries = [...stateCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+const builderCount = builders.length;
+const stateCount = states.length;
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+];
 ---
 
 <DirectoryLayout
   title="Van Builder Directory"
-  description="Browse custom van conversion shops across the United States. Filter by state, platform, and price tier."
+  description={`Browse ${builderCount || ""} custom van conversion shops across ${stateCount || "the"} US states. Filter by platform, price range, services, and more.`.replace("  ", " ")}
   eyebrow="Directory"
-  heading="Every custom van builder, in one place."
-  intro="An independent directory of US van conversion shops. No paid placements — the ranking is neutral."
+  heading="Find a Van Conversion Builder"
+  intro={builderCount > 0
+    ? `Browse ${builderCount} van conversion shops across ${stateCount} states. Filter by platform, price range, services, and more.`
+    : "An independent directory of US van conversion shops. No paid placements."}
+  breadcrumbs={breadcrumbs}
 >
   {builders.length === 0 ? (
     <div
@@ -33,37 +53,85 @@ const states = [...byState.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     </div>
   ) : (
     <>
-      {states.length > 0 && (
-        <div class="mb-10">
+      {/* React search island will be inserted here in Phase 3 */}
+
+      {/* State quick-links */}
+      {stateEntries.length > 0 && (
+        <section class="mb-12">
           <div class="eyebrow mb-4">Browse by state</div>
           <div class="flex flex-wrap gap-2">
-            {states.map(([state, count]) => (
+            {stateEntries.map(([state, count]) => (
               <a
-                href={`/builders/${state.toLowerCase().replace(/\s+/g, "-")}/`}
-                class="px-3 py-1.5 font-sans-ui text-sm border no-underline"
+                href={`/builders/${stateToSlug(state)}/`}
+                class="px-3 py-1.5 font-sans-ui text-sm border no-underline transition-colors hover:border-current"
                 style="border-color: var(--color-border-strong); border-radius: 999px; color: var(--color-text);"
               >
                 {state} <span style="color: var(--color-text-subtle);">({count})</span>
               </a>
             ))}
           </div>
-        </div>
+        </section>
       )}
-      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {builders.map((b) => (
-          <BuilderCard
-            name={b.name}
-            slug={b.slug}
-            state={b.state}
-            city={b.city ?? undefined}
-            platforms={b.platforms}
-            priceTier={b.price_tier ?? undefined}
-            description={b.description ?? undefined}
-            logoUrl={b.logo_url ?? undefined}
-            verified={b.verified}
-          />
-        ))}
-      </div>
+
+      {/* Category quick-links */}
+      <section class="mb-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <div class="eyebrow mb-3">By platform</div>
+          <ul class="space-y-1 font-sans-ui text-sm">
+            <li><a href="/builders/platform/sprinter/">Sprinter</a></li>
+            <li><a href="/builders/platform/promaster/">ProMaster</a></li>
+            <li><a href="/builders/platform/transit/">Transit</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="eyebrow mb-3">By price range</div>
+          <ul class="space-y-1 font-sans-ui text-sm">
+            <li><a href="/builders/tier/budget/">Budget</a></li>
+            <li><a href="/builders/tier/mid/">Mid-range</a></li>
+            <li><a href="/builders/tier/premium/">Premium</a></li>
+            <li><a href="/builders/tier/luxury/">Luxury</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="eyebrow mb-3">By style</div>
+          <ul class="space-y-1 font-sans-ui text-sm">
+            <li><a href="/builders/style/custom/">Custom builds</a></li>
+            <li><a href="/builders/style/standard/">Standard builds</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="eyebrow mb-3">Popular services</div>
+          <ul class="space-y-1 font-sans-ui text-sm">
+            <li><a href="/builders/service/off-grid/">Off-grid</a></li>
+            <li><a href="/builders/service/solar/">Solar</a></li>
+            <li><a href="/builders/service/electrical/">Electrical</a></li>
+          </ul>
+        </div>
+      </section>
+
+      {/* All builders grid */}
+      <section>
+        <h2 class="text-2xl mb-6">All builders</h2>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((b) => (
+            <BuilderCard
+              name={b.name}
+              slug={b.slug}
+              state={b.state}
+              city={b.city ?? undefined}
+              tagline={b.tagline ?? undefined}
+              platforms={b.platforms}
+              priceTier={b.price_tier ?? undefined}
+              description={b.description ?? undefined}
+              logoUrl={b.logo_url ?? undefined}
+              verified={b.verified}
+              reviewRating={b.review_rating ?? undefined}
+              reviewCount={b.review_count ?? undefined}
+              website={b.website ?? undefined}
+            />
+          ))}
+        </div>
+      </section>
     </>
   )}
 </DirectoryLayout>

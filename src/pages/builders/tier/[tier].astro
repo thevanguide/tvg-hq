@@ -1,0 +1,105 @@
+---
+import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
+import BuilderCard from "../../../components/BuilderCard.astro";
+import { getAllBuilders } from "../../../lib/supabase";
+import { tierMeta } from "../../../lib/seo";
+
+export async function getStaticPaths() {
+  const builders = await getAllBuilders();
+  const tiers = new Set<string>();
+  for (const b of builders) {
+    if (b.price_tier && b.price_tier !== "Unknown") {
+      tiers.add(b.price_tier);
+    }
+  }
+  // Seed all tier values
+  ["Budget", "Mid", "Premium", "Luxury"].forEach((t) => tiers.add(t));
+
+  return [...tiers].map((tier) => ({
+    params: { tier: tier.toLowerCase() },
+    props: { tierName: tier },
+  }));
+}
+
+interface Props {
+  tierName: string;
+}
+const { tierName } = Astro.props;
+
+const all = await getAllBuilders();
+const builders = all.filter(
+  (b) => b.price_tier && b.price_tier.toLowerCase() === tierName.toLowerCase(),
+);
+
+const sorted = [...builders].sort((a, b) => {
+  const rA = a.review_rating ?? 0;
+  const rB = b.review_rating ?? 0;
+  if (rB !== rA) return rB - rA;
+  return (b.review_count ?? 0) - (a.review_count ?? 0);
+});
+
+const meta = tierMeta(tierName, builders.length);
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Price Range", href: "/builders/" },
+  { label: tierName, href: `/builders/tier/${tierName.toLowerCase()}/` },
+];
+
+const otherTiers = ["Budget", "Mid", "Premium", "Luxury"].filter(
+  (t) => t.toLowerCase() !== tierName.toLowerCase(),
+);
+---
+
+<DirectoryLayout
+  title={meta.title}
+  description={meta.description}
+  eyebrow="Price range"
+  heading={`${tierName} Van Conversion Builders`}
+  intro={builders.length > 0
+    ? `${builders.length} ${tierName.toLowerCase()}-tier van conversion ${builders.length === 1 ? "builder" : "builders"} across the US.`
+    : `No ${tierName.toLowerCase()}-tier builders listed yet. Check back soon.`}
+  breadcrumbs={breadcrumbs}
+>
+  {builders.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <h2 class="text-xl mb-2">No listings yet</h2>
+      <p style="color: var(--color-text-muted);">
+        We're still categorizing builder pricing tiers.
+      </p>
+    </div>
+  ) : (
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {sorted.map((b) => (
+        <BuilderCard
+          name={b.name}
+          slug={b.slug}
+          state={b.state}
+          city={b.city ?? undefined}
+          tagline={b.tagline ?? undefined}
+          platforms={b.platforms}
+          priceTier={b.price_tier ?? undefined}
+          description={b.description ?? undefined}
+          logoUrl={b.logo_url ?? undefined}
+          verified={b.verified}
+          reviewRating={b.review_rating ?? undefined}
+          reviewCount={b.review_count ?? undefined}
+          website={b.website ?? undefined}
+        />
+      ))}
+    </div>
+  )}
+
+  <nav class="mt-12 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
+    <a href="/builders/">← All builders</a>
+    {otherTiers.map((t) => (
+      <a href={`/builders/tier/${t.toLowerCase()}/`}>{t} builders</a>
+    ))}
+    <a href="/builders/platform/sprinter/">Sprinter builders</a>
+    <a href="/builders/style/custom/">Custom builds</a>
+  </nav>
+</DirectoryLayout>

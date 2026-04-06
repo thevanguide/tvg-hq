@@ -1,17 +1,29 @@
 ---
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
-import { getAllBuilders } from "../../../lib/supabase";
+import {
+  getAllBuilders,
+  getDistinctCities,
+  stateToSlug,
+  cityToSlug,
+  slugToStateName,
+  stateNameToCode,
+} from "../../../lib/supabase";
+import { stateMeta } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
   const states = new Set(builders.map((b) => b.state));
-  // Seed a few US states so the route exists even before the scraper runs.
-  const seed = ["California", "Colorado", "Oregon", "Utah", "Arizona", "Texas", "Washington", "Florida"];
+
+  // Seed a handful of states so the route exists even with an empty database
+  const seed = [
+    "California", "Colorado", "Oregon", "Utah", "Arizona",
+    "Texas", "Washington", "Florida", "North Carolina",
+  ];
   seed.forEach((s) => states.add(s));
 
   return [...states].map((state) => ({
-    params: { state: state.toLowerCase().replace(/\s+/g, "-") },
+    params: { state: stateToSlug(state) },
     props: { stateName: state },
   }));
 }
@@ -25,14 +37,36 @@ const all = await getAllBuilders();
 const builders = all.filter(
   (b) => b.state.toLowerCase() === stateName.toLowerCase(),
 );
+
+// Sort by review_rating desc
+const sorted = [...builders].sort((a, b) => {
+  const rA = a.review_rating ?? 0;
+  const rB = b.review_rating ?? 0;
+  if (rB !== rA) return rB - rA;
+  return (b.review_count ?? 0) - (a.review_count ?? 0);
+});
+
+const cities = await getDistinctCities(stateName);
+const meta = stateMeta(stateName, builders.length);
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: stateName, href: `/builders/${stateToSlug(stateName)}/` },
+];
+
+const stateSlug = stateToSlug(stateName);
 ---
 
 <DirectoryLayout
-  title={`Van Builders in ${stateName}`}
-  description={`Custom van conversion shops in ${stateName}. Independent directory, no paid placements.`}
+  title={meta.title}
+  description={meta.description}
   eyebrow="Directory"
-  heading={`Van builders in ${stateName}`}
-  intro={`${builders.length} ${builders.length === 1 ? "shop" : "shops"} currently listed in ${stateName}.`}
+  heading={`Van Conversion Builders in ${stateName}`}
+  intro={builders.length > 0
+    ? `${builders.length} van conversion ${builders.length === 1 ? "shop" : "shops"} in ${stateName}. Browse by city, compare platforms and pricing, and find the right builder for your project.`
+    : `We're building out the ${stateName} directory. Check back soon.`}
+  breadcrumbs={breadcrumbs}
 >
   {builders.length === 0 ? (
     <div
@@ -41,28 +75,57 @@ const builders = all.filter(
     >
       <h2 class="text-xl mb-2">No listings yet</h2>
       <p style="color: var(--color-text-muted);">
-        We're still building out the {stateName} directory. Check back soon, or
-        <a href="/contact/">tell us about a shop we should add</a>.
+        We're still adding {stateName} builders to the directory. Check back soon.
       </p>
     </div>
   ) : (
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {builders.map((b) => (
-        <BuilderCard
-          name={b.name}
-          slug={b.slug}
-          state={b.state}
-          city={b.city ?? undefined}
-          platforms={b.platforms}
-          priceTier={b.price_tier ?? undefined}
-          description={b.description ?? undefined}
-          logoUrl={b.logo_url ?? undefined}
-          verified={b.verified}
-        />
-      ))}
-    </div>
+    <>
+      {/* City quick-links */}
+      {cities.length > 1 && (
+        <section class="mb-10">
+          <div class="eyebrow mb-4">Cities</div>
+          <div class="flex flex-wrap gap-2">
+            {cities.map(({ city, count }) => (
+              <a
+                href={`/builders/${stateSlug}/${cityToSlug(city)}/`}
+                class="px-3 py-1.5 font-sans-ui text-sm border no-underline transition-colors hover:border-current"
+                style="border-color: var(--color-border-strong); border-radius: 999px; color: var(--color-text);"
+              >
+                {city} <span style="color: var(--color-text-subtle);">({count})</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Builder grid */}
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {sorted.map((b) => (
+          <BuilderCard
+            name={b.name}
+            slug={b.slug}
+            state={b.state}
+            city={b.city ?? undefined}
+            tagline={b.tagline ?? undefined}
+            platforms={b.platforms}
+            priceTier={b.price_tier ?? undefined}
+            description={b.description ?? undefined}
+            logoUrl={b.logo_url ?? undefined}
+            verified={b.verified}
+            reviewRating={b.review_rating ?? undefined}
+            reviewCount={b.review_count ?? undefined}
+            website={b.website ?? undefined}
+          />
+        ))}
+      </div>
+    </>
   )}
-  <div class="mt-10">
-    <a href="/builders/" class="font-sans-ui text-sm">← All states</a>
-  </div>
+
+  {/* Cross-links */}
+  <nav class="mt-12 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
+    <a href="/builders/">← All states</a>
+    <a href="/builders/platform/sprinter/">Sprinter builders</a>
+    <a href="/builders/platform/promaster/">ProMaster builders</a>
+    <a href="/insurance/best-for-van-conversions/">Van conversion insurance</a>
+  </nav>
 </DirectoryLayout>

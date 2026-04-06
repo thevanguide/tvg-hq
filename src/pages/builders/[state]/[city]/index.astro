@@ -1,0 +1,153 @@
+---
+import DirectoryLayout from "../../../../layouts/DirectoryLayout.astro";
+import BuilderCard from "../../../../components/BuilderCard.astro";
+import {
+  getAllBuilders,
+  stateToSlug,
+  cityToSlug,
+  slugToStateName,
+  getNearbyBuilders,
+} from "../../../../lib/supabase";
+import { cityMeta } from "../../../../lib/seo";
+
+export async function getStaticPaths() {
+  const builders = await getAllBuilders();
+
+  // Build distinct (state, city) pairs
+  const pairs = new Map<string, { stateName: string; cityName: string }>();
+  for (const b of builders) {
+    if (!b.city) continue;
+    const key = `${b.state}|${b.city}`;
+    if (!pairs.has(key)) {
+      pairs.set(key, { stateName: b.state, cityName: b.city });
+    }
+  }
+
+  return [...pairs.values()].map(({ stateName, cityName }) => ({
+    params: {
+      state: stateToSlug(stateName),
+      city: cityToSlug(cityName),
+    },
+    props: { stateName, cityName },
+  }));
+}
+
+interface Props {
+  stateName: string;
+  cityName: string;
+}
+const { stateName, cityName } = Astro.props;
+
+const all = await getAllBuilders();
+const cityBuilders = all.filter(
+  (b) =>
+    b.state.toLowerCase() === stateName.toLowerCase() &&
+    b.city?.toLowerCase() === cityName.toLowerCase(),
+);
+
+// Sort by review_rating desc
+const sorted = [...cityBuilders].sort((a, b) => {
+  const rA = a.review_rating ?? 0;
+  const rB = b.review_rating ?? 0;
+  if (rB !== rA) return rB - rA;
+  return (b.review_count ?? 0) - (a.review_count ?? 0);
+});
+
+// Nearby builders (~30 miles), excluding builders already shown
+const cityBuilderIds = new Set(cityBuilders.map((b) => b.id));
+const sampleBuilder = cityBuilders.find((b) => b.latitude != null && b.longitude != null);
+
+let nearbyBuilders: Awaited<ReturnType<typeof getNearbyBuilders>> = [];
+if (sampleBuilder?.latitude != null && sampleBuilder?.longitude != null) {
+  const allNearby = await getNearbyBuilders(
+    sampleBuilder.latitude,
+    sampleBuilder.longitude,
+    30,
+  );
+  nearbyBuilders = allNearby.filter((b) => !cityBuilderIds.has(b.id)).slice(0, 6);
+}
+
+const meta = cityMeta(cityName, stateName, cityBuilders.length);
+const stateSlug = stateToSlug(stateName);
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: stateName, href: `/builders/${stateSlug}/` },
+  { label: cityName, href: `/builders/${stateSlug}/${cityToSlug(cityName)}/` },
+];
+---
+
+<DirectoryLayout
+  title={meta.title}
+  description={meta.description}
+  eyebrow="Directory"
+  heading={`Van Conversion Builders in ${cityName}, ${stateName}`}
+  intro={`${cityBuilders.length} van conversion ${cityBuilders.length === 1 ? "shop" : "shops"} in ${cityName}, ${stateName}.`}
+  breadcrumbs={breadcrumbs}
+>
+  {sorted.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <h2 class="text-xl mb-2">No listings yet</h2>
+      <p style="color: var(--color-text-muted);">
+        We haven't added builders in {cityName} yet. Check back soon.
+      </p>
+    </div>
+  ) : (
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {sorted.map((b) => (
+        <BuilderCard
+          name={b.name}
+          slug={b.slug}
+          state={b.state}
+          city={b.city ?? undefined}
+          tagline={b.tagline ?? undefined}
+          platforms={b.platforms}
+          priceTier={b.price_tier ?? undefined}
+          description={b.description ?? undefined}
+          logoUrl={b.logo_url ?? undefined}
+          verified={b.verified}
+          reviewRating={b.review_rating ?? undefined}
+          reviewCount={b.review_count ?? undefined}
+          website={b.website ?? undefined}
+        />
+      ))}
+    </div>
+  )}
+
+  {/* Nearby builders */}
+  {nearbyBuilders.length > 0 && (
+    <section class="mt-12">
+      <h2 class="text-2xl mb-6">Nearby builders</h2>
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {nearbyBuilders.map((b) => (
+          <BuilderCard
+            name={b.name}
+            slug={b.slug}
+            state={b.state}
+            city={b.city ?? undefined}
+            tagline={b.tagline ?? undefined}
+            platforms={b.platforms}
+            priceTier={b.price_tier ?? undefined}
+            description={b.description ?? undefined}
+            logoUrl={b.logo_url ?? undefined}
+            verified={b.verified}
+            reviewRating={b.review_rating ?? undefined}
+            reviewCount={b.review_count ?? undefined}
+            website={b.website ?? undefined}
+          />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {/* Cross-links */}
+  <nav class="mt-12 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
+    <a href={`/builders/${stateSlug}/`}>← More builders in {stateName}</a>
+    <a href="/builders/">All states</a>
+    <a href="/insurance/best-for-van-conversions/">Van conversion insurance</a>
+  </nav>
+</DirectoryLayout>

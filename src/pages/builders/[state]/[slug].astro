@@ -1,0 +1,400 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import BuilderCard from "../../../components/BuilderCard.astro";
+import {
+  getAllBuilders,
+  getNearbyBuilders,
+  stateToSlug,
+  cityToSlug,
+  type Builder,
+} from "../../../lib/supabase";
+import { profileMeta, localBusinessJsonLd } from "../../../lib/seo";
+
+export async function getStaticPaths() {
+  const builders = await getAllBuilders();
+  return builders.map((b) => ({
+    params: {
+      state: stateToSlug(b.state),
+      slug: b.slug,
+    },
+    props: { builder: b },
+  }));
+}
+
+interface Props {
+  builder: Builder;
+}
+const { builder } = Astro.props;
+
+const meta = profileMeta(builder);
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") || "https://thevanguide.com";
+const jsonLd = localBusinessJsonLd(builder, siteUrl);
+
+const stateSlug = stateToSlug(builder.state);
+const location = builder.city
+  ? `${builder.city}, ${builder.state}`
+  : builder.state;
+
+// Nearby builders (2-4 within ~30 miles)
+let nearbyBuilders: Awaited<ReturnType<typeof getNearbyBuilders>> = [];
+if (builder.latitude != null && builder.longitude != null) {
+  nearbyBuilders = (
+    await getNearbyBuilders(builder.latitude, builder.longitude, 30, builder.id)
+  ).slice(0, 4);
+}
+
+// Years in business
+const currentYear = new Date().getFullYear();
+const yearsInBusiness = builder.year_founded
+  ? currentYear - builder.year_founded
+  : null;
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: builder.state, href: `/builders/${stateSlug}/` },
+  { label: builder.name, href: `/builders/${stateSlug}/${builder.slug}/` },
+];
+
+// Star display helper
+function renderStars(rating: number): string {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.25 && rating - full < 0.75;
+  const empty = 5 - full - (half ? 1 : 0);
+  return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(empty);
+}
+
+function platformSlug(p: string): string {
+  return p.toLowerCase().replace(/\s+/g, "-");
+}
+---
+
+<BaseLayout title={meta.title} description={meta.description}>
+  <script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(jsonLd)} />
+
+  {/* Hero section */}
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-14 md:py-20">
+      <Breadcrumbs items={breadcrumbs} />
+
+      <div class="flex flex-col md:flex-row md:items-start gap-6">
+        {/* Logo or initial */}
+        {builder.logo_url ? (
+          <img
+            src={builder.logo_url}
+            alt={`${builder.name} logo`}
+            class="w-20 h-20 object-contain rounded-lg shrink-0"
+            style="background: var(--color-bg-alt);"
+          />
+        ) : (
+          <div
+            class="w-20 h-20 flex items-center justify-center text-3xl font-semibold rounded-lg shrink-0"
+            style="background: var(--color-bg-alt); color: var(--color-primary); font-family: var(--font-display);"
+          >
+            {builder.name.charAt(0)}
+          </div>
+        )}
+
+        <div class="flex-1">
+          <h1 class="text-4xl md:text-5xl leading-tight">{builder.name}</h1>
+
+          {builder.tagline && (
+            <p class="mt-2 text-lg" style="color: var(--color-text-muted);">
+              {builder.tagline}
+            </p>
+          )}
+
+          <div class="mt-3 font-sans-ui text-sm" style="color: var(--color-text-muted);">
+            {location}
+          </div>
+
+          {/* Badges row */}
+          <div class="mt-4 flex flex-wrap gap-2">
+            {builder.platforms.map((p) => (
+              <a
+                href={`/builders/platform/${platformSlug(p)}/`}
+                class="text-xs font-sans-ui px-3 py-1 rounded-full border no-underline transition-colors hover:border-current"
+                style="border-color: var(--color-border-strong); color: var(--color-text-muted);"
+              >
+                {p}
+              </a>
+            ))}
+            {builder.price_tier && builder.price_tier !== "Unknown" && (
+              <a
+                href={`/builders/tier/${builder.price_tier.toLowerCase()}/`}
+                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline"
+                style="background: var(--color-bg-alt); color: var(--color-primary);"
+              >
+                {builder.price_tier}
+              </a>
+            )}
+            {builder.build_style === "Custom" && (
+              <a
+                href="/builders/style/custom/"
+                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline"
+                style="background: var(--color-bg-alt); color: var(--color-primary);"
+              >
+                Custom builds
+              </a>
+            )}
+            {yearsInBusiness != null && yearsInBusiness >= 5 && (
+              <span
+                class="text-xs font-sans-ui px-3 py-1 rounded-full"
+                style="background: var(--color-bg-alt); color: var(--color-text-muted);"
+              >
+                {yearsInBusiness}+ years
+              </span>
+            )}
+          </div>
+
+          {/* CTAs */}
+          <div class="mt-6 flex flex-wrap gap-3">
+            {builder.website && (
+              <a
+                href={builder.website}
+                class="btn btn-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Visit Website
+              </a>
+            )}
+            {builder.phone && (
+              <a href={`tel:${builder.phone}`} class="btn btn-ghost">
+                Call {builder.phone}
+              </a>
+            )}
+            {builder.emails && builder.emails.length > 0 && (
+              <button
+                class="btn btn-ghost"
+                data-email={builder.emails[0]}
+                id="reveal-email-btn"
+                type="button"
+              >
+                Contact
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container-wide py-12 md:py-16 max-w-4xl">
+    {/* About section */}
+    {builder.description && (
+      <section class="mb-12">
+        <h2 class="text-2xl mb-4">About {builder.name}</h2>
+        <div class="prose">
+          <p>{builder.description}</p>
+        </div>
+        {builder.year_founded && (
+          <p class="mt-4 font-sans-ui text-sm" style="color: var(--color-text-muted);">
+            Established {builder.year_founded}
+          </p>
+        )}
+      </section>
+    )}
+
+    {/* Placeholder hero image */}
+    <section class="mb-12">
+      <div
+        class="w-full aspect-video flex items-center justify-center rounded-lg"
+        style="background: var(--color-bg-alt); border: 1px dashed var(--color-border-strong);"
+      >
+        <div class="text-center" style="color: var(--color-text-subtle);">
+          <img
+            src="/images/builder-placeholder.svg"
+            alt=""
+            class="w-24 h-24 mx-auto mb-3 opacity-40"
+            loading="lazy"
+          />
+          <p class="font-sans-ui text-sm">Photos available when this builder claims their profile</p>
+        </div>
+      </div>
+    </section>
+
+    {/* Services & platforms */}
+    {(builder.services.length > 0 || builder.platforms.length > 0) && (
+      <section class="mb-12">
+        <h2 class="text-2xl mb-4">Services &amp; platforms</h2>
+        <div class="grid sm:grid-cols-2 gap-6">
+          {builder.platforms.length > 0 && (
+            <div>
+              <div class="eyebrow mb-3">Platforms</div>
+              <div class="flex flex-wrap gap-2">
+                {builder.platforms.map((p) => (
+                  <a
+                    href={`/builders/platform/${platformSlug(p)}/`}
+                    class="text-sm font-sans-ui px-3 py-1.5 rounded-full border no-underline transition-colors hover:border-current"
+                    style="border-color: var(--color-border-strong); color: var(--color-text);"
+                  >
+                    {p}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {builder.services.length > 0 && (
+            <div>
+              <div class="eyebrow mb-3">Services</div>
+              <div class="flex flex-wrap gap-2">
+                {builder.services.map((s) => {
+                  const serviceSlug = s.toLowerCase().replace(/\s+/g, "-");
+                  return (
+                    <a
+                      href={`/builders/service/${serviceSlug}/`}
+                      class="text-sm font-sans-ui px-3 py-1.5 rounded-full border no-underline transition-colors hover:border-current"
+                      style="border-color: var(--color-border-strong); color: var(--color-text);"
+                    >
+                      {s}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    )}
+
+    {/* Pricing section */}
+    {builder.price_tier && (
+      <section class="mb-12">
+        <h2 class="text-2xl mb-4">Pricing</h2>
+        <p class="font-sans-ui">
+          This builder is in the <strong>{builder.price_tier.toLowerCase()}</strong> price range.
+        </p>
+        {builder.price_evidence && (
+          <p class="mt-2 text-sm" style="color: var(--color-text-muted);">
+            {builder.price_evidence}
+          </p>
+        )}
+        <p class="mt-3 text-sm" style="color: var(--color-text-muted);">
+          Contact them directly for a quote.
+        </p>
+      </section>
+    )}
+
+    {/* Reviews & reputation */}
+    {builder.review_rating != null && builder.review_rating > 0 && (
+      <section class="mb-12">
+        <h2 class="text-2xl mb-4">Reviews</h2>
+        <div class="flex items-center gap-3 font-sans-ui">
+          <span class="text-3xl" style="color: var(--color-accent);">
+            {renderStars(builder.review_rating)}
+          </span>
+          <div>
+            <div class="text-lg font-semibold">{builder.review_rating.toFixed(1)} / 5</div>
+            {builder.review_count != null && builder.review_count > 0 && (
+              <div class="text-sm" style="color: var(--color-text-muted);">
+                Based on {builder.review_count} Google {builder.review_count === 1 ? "review" : "reviews"}
+              </div>
+            )}
+          </div>
+        </div>
+        {builder.google_maps_url && (
+          <a
+            href={builder.google_maps_url}
+            class="inline-block mt-3 font-sans-ui text-sm"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on Google Maps →
+          </a>
+        )}
+      </section>
+    )}
+
+    {/* Location */}
+    <section class="mb-12">
+      <h2 class="text-2xl mb-4">Location</h2>
+      <p class="font-sans-ui">
+        {builder.street && <span>{builder.street}<br /></span>}
+        {location}
+        {builder.postal_code && ` ${builder.postal_code}`}
+      </p>
+      {builder.google_maps_url && (
+        <a
+          href={builder.google_maps_url}
+          class="inline-block mt-3 font-sans-ui text-sm"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open in Google Maps →
+        </a>
+      )}
+    </section>
+
+    {/* Nearby builders */}
+    {nearbyBuilders.length > 0 && (
+      <section class="mb-12">
+        <h2 class="text-2xl mb-6">Nearby builders</h2>
+        <div class="grid gap-5 sm:grid-cols-2">
+          {nearbyBuilders.map((b) => (
+            <BuilderCard
+              name={b.name}
+              slug={b.slug}
+              state={b.state}
+              city={b.city ?? undefined}
+              tagline={b.tagline ?? undefined}
+              platforms={b.platforms}
+              priceTier={b.price_tier ?? undefined}
+              description={b.description ?? undefined}
+              logoUrl={b.logo_url ?? undefined}
+              verified={b.verified}
+              reviewRating={b.review_rating ?? undefined}
+              reviewCount={b.review_count ?? undefined}
+              website={b.website ?? undefined}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Cross-links */}
+    <section class="pt-8 border-t" style="border-color: var(--color-border);">
+      <h2 class="text-xl mb-4">Related resources</h2>
+      <ul class="space-y-2 font-sans-ui text-sm">
+        <li>
+          <a href="/insurance/best-for-van-conversions/">Planning a build? Here's how to insure it</a>
+        </li>
+        {builder.state === "California" && (
+          <li>
+            <a href="/registration/california/">Need to register your converted van in California?</a>
+          </li>
+        )}
+        {builder.platforms.length > 0 && (
+          <li>
+            <a href={`/builders/platform/${platformSlug(builder.platforms[0])}/`}>
+              Compare {builder.platforms[0]} builders
+            </a>
+          </li>
+        )}
+        <li>
+          <a href={`/builders/${stateSlug}/`}>More builders in {builder.state}</a>
+        </li>
+        <li>
+          <a href="/builders/">Browse all builders</a>
+        </li>
+      </ul>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  const btn = document.getElementById("reveal-email-btn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const email = btn.getAttribute("data-email");
+      if (email) {
+        btn.textContent = email;
+        btn.removeAttribute("data-email");
+        btn.classList.remove("btn-ghost");
+        btn.classList.add("btn-accent");
+        btn.setAttribute("disabled", "true");
+      }
+    });
+  }
+</script>
