@@ -144,6 +144,13 @@ export default function BuilderMap({
         map.fitBounds(bounds, { padding: [30, 30] });
       }
 
+      // Leaflet needs a kick after the container settles its dimensions
+      setTimeout(() => {
+        if (!cleanup && map) {
+          map.invalidateSize();
+        }
+      }, 200);
+
       setLoaded(true);
     }
 
@@ -211,10 +218,7 @@ export default function BuilderMap({
       className="rounded-lg overflow-hidden"
       style={{
         width: "100%",
-        height: singlePin ? 200 : undefined,
-        minHeight: singlePin ? undefined : 300,
-        maxHeight: singlePin ? undefined : 500,
-        aspectRatio: singlePin ? undefined : "16 / 7",
+        height: singlePin ? 200 : 400,
         border: "1px solid var(--color-border)",
         opacity: loaded ? 1 : 0.5,
         transition: "opacity 0.3s",
