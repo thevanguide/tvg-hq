@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import BuilderMap, { type BuilderPin } from "./BuilderMap";
 
 interface BuilderMapToggleProps {
