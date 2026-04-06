@@ -1,3 +1,4 @@
+import React from "react";
 
 interface BuilderCardProps {
   name: string;
@@ -17,6 +18,15 @@ interface BuilderCardProps {
 
 function stateToSlug(state: string): string {
   return state.toLowerCase().replace(/\s+/g, "-");
+}
+
+function toUrlSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[/\\&]+/g, "-")
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function renderStars(rating: number): string {
@@ -130,7 +140,7 @@ export default function BuilderCardReact({
           {platforms.map((p) => (
             <a
               key={p}
-              href={`/builders/platform/${p.toLowerCase().replace(/\s+/g, "-")}/`}
+              href={`/builders/platform/${toUrlSlug(p)}/`}
               className="text-[11px] px-2 py-0.5 rounded-full border no-underline transition-colors hover:border-current"
               style={{
                 borderColor: "var(--color-border-strong)",

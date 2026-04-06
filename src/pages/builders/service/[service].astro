@@ -1,7 +1,7 @@
 ---
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
-import { getAllBuilders } from "../../../lib/supabase";
+import { getAllBuilders, toUrlSlug } from "../../../lib/supabase";
 import { serviceMeta } from "../../../lib/seo";
 
 export async function getStaticPaths() {
@@ -18,7 +18,7 @@ export async function getStaticPaths() {
   );
 
   return [...services].map((service) => ({
-    params: { service: service.toLowerCase().replace(/\s+/g, "-") },
+    params: { service: toUrlSlug(service) },
     props: { serviceName: service },
   }));
 }
@@ -29,10 +29,10 @@ interface Props {
 const { serviceName } = Astro.props;
 
 const all = await getAllBuilders();
-const serviceSlug = serviceName.toLowerCase().replace(/\s+/g, "-");
+const serviceSlug = toUrlSlug(serviceName);
 const builders = all.filter((b) =>
   b.services.some(
-    (s) => s.toLowerCase().replace(/\s+/g, "-") === serviceSlug,
+    (s) => toUrlSlug(s) === serviceSlug,
   ),
 );
 

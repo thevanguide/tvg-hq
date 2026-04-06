@@ -1,7 +1,7 @@
 ---
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
-import { getAllBuilders } from "../../../lib/supabase";
+import { getAllBuilders, toUrlSlug } from "../../../lib/supabase";
 import { platformMeta } from "../../../lib/seo";
 
 export async function getStaticPaths() {
@@ -16,7 +16,7 @@ export async function getStaticPaths() {
   ["Sprinter", "ProMaster", "Transit"].forEach((p) => platforms.add(p));
 
   return [...platforms].map((platform) => ({
-    params: { platform: platform.toLowerCase().replace(/\s+/g, "-") },
+    params: { platform: toUrlSlug(platform) },
     props: { platformName: platform },
   }));
 }
@@ -44,7 +44,7 @@ const breadcrumbs = [
   { label: "Home", href: "/" },
   { label: "Builders", href: "/builders/" },
   { label: "Platform", href: "/builders/" },
-  { label: platformName, href: `/builders/platform/${platformName.toLowerCase().replace(/\s+/g, "-")}/` },
+  { label: platformName, href: `/builders/platform/${toUrlSlug(platformName)}/` },
 ];
 
 // Related categories
@@ -99,7 +99,7 @@ const otherPlatforms = ["Sprinter", "ProMaster", "Transit"].filter(
   <nav class="mt-12 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
     <a href="/builders/">← All builders</a>
     {otherPlatforms.map((p) => (
-      <a href={`/builders/platform/${p.toLowerCase()}/`}>{p} builders</a>
+      <a href={`/builders/platform/${toUrlSlug(p)}/`}>{p} builders</a>
     ))}
     <a href="/builders/tier/premium/">Premium builders</a>
     <a href="/builders/service/off-grid/">Off-grid specialists</a>

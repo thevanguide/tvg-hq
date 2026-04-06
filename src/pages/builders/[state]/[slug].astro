@@ -6,6 +6,7 @@ import {
   getAllBuilders,
   getNearbyBuilders,
   stateToSlug,
+  toUrlSlug,
   type Builder,
 } from "../../../lib/supabase";
 import { profileMeta, localBusinessJsonLd } from "../../../lib/seo";
@@ -65,7 +66,7 @@ function renderStars(rating: number): string {
 }
 
 function platformSlug(p: string): string {
-  return p.toLowerCase().replace(/\s+/g, "-");
+  return toUrlSlug(p);
 }
 ---
 
@@ -240,7 +241,7 @@ function platformSlug(p: string): string {
               <div class="eyebrow mb-3">Services</div>
               <div class="flex flex-wrap gap-2">
                 {builder.services.map((s) => {
-                  const serviceSlug = s.toLowerCase().replace(/\s+/g, "-");
+                  const serviceSlug = toUrlSlug(s);
                   return (
                     <a
                       href={`/builders/service/${serviceSlug}/`}

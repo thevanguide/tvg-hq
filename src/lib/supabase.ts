@@ -90,6 +90,16 @@ export const stateCodeToName: Record<string, string> = Object.fromEntries(
 // URL slug helpers
 // ---------------------------------------------------------------------------
 
+/** Slugify any string for use in a URL segment. Handles slashes, ampersands, etc. */
+export function toUrlSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[/\\&]+/g, "-")  // slashes and ampersands → hyphen
+    .replace(/[^a-z0-9-]+/g, "-")  // anything else non-alphanumeric → hyphen
+    .replace(/-{2,}/g, "-")  // collapse multiple hyphens
+    .replace(/^-|-$/g, "");  // trim leading/trailing hyphens
+}
+
 export function stateToSlug(state: string): string {
   return state.toLowerCase().replace(/\s+/g, "-");
 }
@@ -156,7 +166,12 @@ export async function getAllBuilders(): Promise<Builder[]> {
     console.warn("[supabase] builders fetch failed:", error.message);
     return [];
   }
-  _allBuildersCache = (data ?? []) as Builder[];
+  // Normalize state codes to full names (DB may store "CA" instead of "California")
+  const builders = ((data ?? []) as Builder[]).map((b) => ({
+    ...b,
+    state: stateCodeToName[b.state] ?? b.state, // "CA" → "California", passthrough if already full
+  }));
+  _allBuildersCache = builders;
   return _allBuildersCache;
 }
 

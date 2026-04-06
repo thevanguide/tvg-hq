@@ -1,5 +1,5 @@
 ---
-import { stateToSlug } from "../lib/supabase";
+import { stateToSlug, toUrlSlug } from "../lib/supabase";
 
 interface Props {
   name: string;
@@ -37,11 +37,11 @@ const stateSlug = stateToSlug(state);
 const profileHref = `/builders/${stateSlug}/${slug}/`;
 
 function platformSlug(p: string): string {
-  return p.toLowerCase().replace(/\s+/g, "-");
+  return toUrlSlug(p);
 }
 
 function tierSlug(t: string): string {
-  return t.toLowerCase();
+  return toUrlSlug(t);
 }
 
 // Star display helper

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import BuilderCardReact from "./BuilderCardReact";
 
 // Minimal Builder shape for the search island (matches serialized props)
