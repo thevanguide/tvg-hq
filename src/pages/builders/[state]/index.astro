@@ -107,7 +107,7 @@ const mapData = builders.map((b) => ({
   ) : (
     <>
       {/* Map / List toggle */}
-      <BuilderMapToggle client:visible builders={mapData} />
+      <BuilderMapToggle client:load builders={mapData} />
 
       <div id="builder-list">
       {/* City quick-links */}

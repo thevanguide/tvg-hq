@@ -92,7 +92,7 @@ const mapData = builders.map((b) => ({
   ) : (
     <>
       {/* Map / List toggle */}
-      <BuilderMapToggle client:visible builders={mapData} />
+      <BuilderMapToggle client:load builders={mapData} />
 
       {/* React search island — client-side filtering */}
       <div id="builder-list">
