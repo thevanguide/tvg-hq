@@ -85,7 +85,7 @@ export function styleMeta(style: string, count: number) {
 // LocalBusiness JSON-LD
 // ---------------------------------------------------------------------------
 
-export function localBusinessJsonLd(builder: Builder, siteUrl: string) {
+export function localBusinessJsonLd(builder: Builder, _siteUrl?: string) {
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
