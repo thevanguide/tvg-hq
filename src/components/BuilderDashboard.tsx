@@ -260,12 +260,12 @@ function DashboardInner() {
               src={logoUrl}
               alt={`${builder.name} logo`}
               className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg shrink-0 p-1.5 border"
-              style={{ background: "var(--color-logo-bg)", borderColor: "var(--color-border)" }}
+              style={{ background: "var(--color-bg-alt)", borderColor: "var(--color-border)", filter: "drop-shadow(0 0 1px rgba(0,0,0,0.15))" }}
             />
           ) : (
             <div
               className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg shrink-0 border"
-              style={{ background: "var(--color-logo-bg)", borderColor: "var(--color-border)" }}
+              style={{ background: "var(--color-bg-alt)", borderColor: "var(--color-border)" }}
             >
               <img src="/images/van-icon.svg" alt="" className="w-10 h-10 opacity-30" />
             </div>
@@ -429,7 +429,7 @@ function DashboardInner() {
                 src={logoUrl}
                 alt="Current logo"
                 className="w-20 h-20 object-contain rounded-lg p-2 border"
-                style={{ background: "var(--color-logo-bg)", borderColor: "var(--color-border)" }}
+                style={{ background: "var(--color-bg-alt)", borderColor: "var(--color-border)", filter: "drop-shadow(0 0 1px rgba(0,0,0,0.15))" }}
               />
             </div>
           )}

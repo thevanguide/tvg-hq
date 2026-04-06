@@ -86,12 +86,12 @@ function platformSlug(p: string): string {
             src={builder.logo_url}
             alt={`${builder.name} logo`}
             class="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg shrink-0 p-2 border"
-            style="background: var(--color-logo-bg); border-color: var(--color-border);"
+            style="background: var(--color-bg-alt); border-color: var(--color-border); filter: drop-shadow(0 0 1px rgba(0,0,0,0.15));"
           />
         ) : (
           <div
             class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-lg shrink-0 border"
-            style="background: var(--color-logo-bg); border-color: var(--color-border);"
+            style="background: var(--color-bg-alt); border-color: var(--color-border);"
           >
             <img src="/images/van-icon.svg" alt="" class="w-10 h-10 md:w-12 md:h-12 opacity-30" />
           </div>

@@ -70,20 +70,18 @@ export default function BuilderCardReact({
             src={logoUrl}
             alt={`${name} logo`}
             className="w-14 h-14 object-contain rounded shrink-0 p-1.5 border"
-            style={{ background: "var(--color-logo-bg)", borderColor: "var(--color-border)" }}
+            style={{ background: "var(--color-bg-alt)", borderColor: "var(--color-border)", filter: "drop-shadow(0 0 1px rgba(0,0,0,0.15))" }}
             loading="lazy"
           />
         ) : (
           <div
-            className="w-14 h-14 flex items-center justify-center font-semibold text-xl rounded shrink-0 border"
+            className="w-14 h-14 flex items-center justify-center rounded shrink-0 border"
             style={{
-              background: "var(--color-logo-bg)",
+              background: "var(--color-bg-alt)",
               borderColor: "var(--color-border)",
-              color: "var(--color-primary)",
-              fontFamily: "var(--font-display)",
             }}
           >
-            {name.charAt(0)}
+            <img src="/images/van-icon.svg" alt="" className="w-9 h-9 opacity-30" />
           </div>
         )}
         <div className="flex-1 min-w-0">
