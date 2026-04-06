@@ -48,6 +48,19 @@ const orgJsonLd = {
     "Independent editorial resource for van conversion owners and shoppers. Builder directory, insurance and registration guides, and tools — grounded in primary sources.",
   email: "hello@thevanguide.com",
 };
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "The Van Guide",
+  url: siteUrl,
+  description: "Independent editorial resource for van conversion owners and shoppers.",
+  publisher: {
+    "@type": "Organization",
+    name: "The Van Guide",
+    url: siteUrl,
+  },
+};
 ---
 
 <!doctype html>
@@ -85,6 +98,7 @@ const orgJsonLd = {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{fullTitle}</title>
 
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
     {isHomepage && (
       <script is:inline type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
     )}

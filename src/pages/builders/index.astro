@@ -69,7 +69,7 @@ const searchData = builders.map((b) => ({
   ) : (
     <>
       {/* Unified search + map island */}
-      <BuilderSearch client:load builders={searchData} />
+      <BuilderSearch client:idle builders={searchData} />
 
       {/* State quick-links */}
       {stateEntries.length > 0 && (

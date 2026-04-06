@@ -5,34 +5,114 @@ import EmailCapture from "../../components/EmailCapture.astro";
 
 <BaseLayout
   title="The Van Owner's Guide"
-  description="A practical, no-jargon guide to buying, building, and insuring a custom van conversion."
+  description="A practical, single-source reference for buying, insuring, and registering a custom van conversion. $29, one-time purchase, no subscription."
 >
+  <!-- Hero -->
   <section style="background: var(--color-surface); border-bottom: 1px solid var(--color-border);">
     <div class="container-wide py-16 md:py-24 max-w-4xl">
-      <div class="eyebrow mb-4">Paid guide · Coming soon</div>
+      <div class="eyebrow mb-4">Paid guide · $29 one-time</div>
       <h1 class="text-4xl md:text-6xl leading-tight mb-5">The Van Owner's Guide</h1>
       <p class="text-xl leading-relaxed" style="color: var(--color-text-muted);">
-        A single, practical reference for anyone buying or owning a custom van conversion. No fluff, no affiliate links, no "10 best" listicles. Just the things you actually need to know.
+        A single, practical reference for anyone buying or owning a custom van conversion. No filler, no affiliate links, no "10 best" listicles. Just the things you actually need to know.
       </p>
-      <div class="mt-8 text-2xl font-semibold" style="color: var(--color-primary);">$29 · one-time</div>
+      <div class="mt-8 flex flex-wrap items-center gap-4">
+        <span class="text-2xl font-semibold" style="color: var(--color-primary);">$29</span>
+        <!-- Replace #buy with your Stripe Payment Link URL -->
+        <a href="#buy" id="buy-btn" class="btn btn-accent text-lg !py-3 !px-8">Buy Now</a>
+      </div>
+      <p class="mt-3 font-sans-ui text-sm" style="color: var(--color-text-subtle);">
+        One-time purchase. PDF delivered to your email. Lifetime access to updates.
+      </p>
     </div>
   </section>
+
+  <!-- What's inside -->
   <section class="container-wide py-16 max-w-3xl">
     <h2 class="text-3xl mb-6">What's inside</h2>
-    <ul class="space-y-3 text-lg leading-relaxed">
-      <li>→ How to evaluate a custom van builder (red flags, green flags, contract essentials)</li>
-      <li>→ Insurance types explained: what actually covers a conversion</li>
-      <li>→ State-by-state registration quirks that bite first-time owners</li>
-      <li>→ Realistic build cost ranges by platform and scope</li>
-      <li>→ The questions to ask at every stage of the buying process</li>
+    <ul class="space-y-4 text-lg leading-relaxed">
+      <li>
+        <strong style="color: var(--color-primary);">Evaluating a builder.</strong>
+        Red flags that should stop a conversation, green flags worth paying attention to, and the contract clauses that protect you if something goes wrong.
+      </li>
+      <li>
+        <strong style="color: var(--color-primary);">Insurance, explained.</strong>
+        Which carriers actually write policies on converted vans, what "agreed value" means in practice, and how to avoid the most common coverage gaps.
+      </li>
+      <li>
+        <strong style="color: var(--color-primary);">Registration by state.</strong>
+        The state-by-state differences that trip up first-time owners: inspection requirements, reclassification forms, and the VLF traps nobody warns you about.
+      </li>
+      <li>
+        <strong style="color: var(--color-primary);">Realistic cost ranges.</strong>
+        What builds actually cost by platform and scope, where the budget overruns happen, and what's worth spending more on.
+      </li>
+      <li>
+        <strong style="color: var(--color-primary);">The questions to ask.</strong>
+        At every stage: before signing, during the build, at delivery, and when something goes wrong after the fact.
+      </li>
     </ul>
-    <div class="mt-12">
+  </section>
+
+  <!-- What you get -->
+  <section style="background: var(--color-surface); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
+    <div class="container-wide py-16 max-w-3xl">
+      <h2 class="text-3xl mb-6">What you get</h2>
+      <div class="grid sm:grid-cols-3 gap-6">
+        <div>
+          <div class="text-lg font-semibold mb-2" style="font-family: var(--font-display);">Downloadable PDF</div>
+          <p class="text-base" style="color: var(--color-text-muted);">
+            Read it on your phone, tablet, or laptop. Print it if you want.
+          </p>
+        </div>
+        <div>
+          <div class="text-lg font-semibold mb-2" style="font-family: var(--font-display);">Lifetime updates</div>
+          <p class="text-base" style="color: var(--color-text-muted);">
+            Insurance carriers change policies, states update requirements. When the guide is updated, you get the new version free.
+          </p>
+        </div>
+        <div>
+          <div class="text-lg font-semibold mb-2" style="font-family: var(--font-display);">No subscription</div>
+          <p class="text-base" style="color: var(--color-text-muted);">
+            Pay once, own it. No recurring charges, no account to manage.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who this is for -->
+  <section class="container-wide py-16 max-w-3xl">
+    <h2 class="text-3xl mb-6">Who this is for</h2>
+    <ul class="space-y-3 text-lg leading-relaxed">
+      <li><strong>First-time van buyers</strong> who don't want to learn everything the hard way.</li>
+      <li><strong>DIYers considering a professional build</strong> who want to know what to expect and what to demand.</li>
+      <li><strong>Anyone navigating insurance or registration</strong> for a converted van for the first time.</li>
+    </ul>
+
+    <div class="mt-12 flex flex-wrap items-center gap-4">
+      <!-- Replace #buy with your Stripe Payment Link URL -->
+      <a href="#buy" class="btn btn-accent text-lg !py-3 !px-8">Buy the Guide — $29</a>
+    </div>
+  </section>
+
+  <!-- Fallback email capture -->
+  <section class="container-wide pb-20 max-w-3xl">
+    <div class="pt-10 border-t" style="border-color: var(--color-border);">
       <EmailCapture
-        heading="Get notified when it's released"
-        subheading="We'll send you a single email when the guide goes live. Nothing else."
+        heading="Not ready yet?"
+        subheading="Get notified when the guide is updated or when new resources are published."
         cta="Notify me"
         list="guide-waitlist"
       />
+    </div>
+  </section>
+
+  <!-- Questions -->
+  <section style="background: var(--color-surface); border-top: 1px solid var(--color-border);">
+    <div class="container-wide py-12 max-w-3xl">
+      <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+        Questions? Email <a href="mailto:hello@thevanguide.com" style="color: var(--color-accent);">hello@thevanguide.com</a>
+      </p>
     </div>
   </section>
 </BaseLayout>

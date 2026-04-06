@@ -375,6 +375,23 @@ function platformSlug(p: string): string {
       </section>
     )}
 
+    {/* Claim listing CTA */}
+    {!builder.claimed && (
+      <section class="mb-12 p-8 border" style="border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
+        <div class="eyebrow mb-3">Builder</div>
+        <h3 class="text-2xl mb-3">Is this your business?</h3>
+        <p class="mb-5" style="color: var(--color-text-muted);">
+          Claim your listing to add photos, update your description, and manage how your shop appears in the directory.
+        </p>
+        <a
+          href={`/builders/claim/?builder=${builder.slug}&state=${stateSlug}`}
+          class="btn btn-accent"
+        >
+          Claim this listing →
+        </a>
+      </section>
+    )}
+
     {/* Cross-links */}
     <section class="pt-8 border-t" style="border-color: var(--color-border);">
       <h2 class="text-xl mb-4">Related resources</h2>

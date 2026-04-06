@@ -10,6 +10,7 @@ interface Crumb {
 interface Props {
   title: string;
   description: string;
+  publishedDate?: Date;
   lastUpdated: Date;
   author?: string;
   category?: string;
@@ -22,6 +23,7 @@ interface Props {
 const {
   title,
   description,
+  publishedDate,
   lastUpdated,
   author = "The Van Guide",
   category,
@@ -34,7 +36,7 @@ const {
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "long" });
 
-const jsonLd = {
+const jsonLd: Record<string, unknown> = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: title,
@@ -48,6 +50,9 @@ const jsonLd = {
   },
   keywords: keywords.join(", "),
 };
+if (publishedDate) {
+  jsonLd.datePublished = publishedDate.toISOString();
+}
 
 const eyebrow = cluster ?? category;
 ---
@@ -65,7 +70,13 @@ const eyebrow = cluster ?? category;
       <div class="mt-6 font-sans-ui text-sm flex gap-4" style="color: var(--color-text-subtle);">
         <span>{author}</span>
         <span aria-hidden="true">·</span>
-        <time datetime={lastUpdated.toISOString()}>Last updated {fmtDate(lastUpdated)}</time>
+        {publishedDate && (
+          <>
+            <time datetime={publishedDate.toISOString()}>Published {fmtDate(publishedDate)}</time>
+            <span aria-hidden="true">·</span>
+          </>
+        )}
+        <time datetime={lastUpdated.toISOString()}>Updated {fmtDate(lastUpdated)}</time>
       </div>
       <hr />
     </header>

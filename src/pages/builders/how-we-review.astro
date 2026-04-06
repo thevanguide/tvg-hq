@@ -1,0 +1,100 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "How we review", href: "/builders/how-we-review/" },
+];
+---
+
+<BaseLayout
+  title="How We Review Builders"
+  description="How The Van Guide finds, evaluates, and lists van conversion builders. No paid placements, no pay-to-play rankings."
+>
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-14 md:py-20">
+      <Breadcrumbs items={breadcrumbs} />
+      <div class="eyebrow mb-4">Directory</div>
+      <h1 class="text-4xl md:text-5xl max-w-3xl leading-tight">How we review builders</h1>
+      <p class="mt-5 max-w-2xl text-lg leading-relaxed" style="color: var(--color-text-muted);">
+        The Van Guide maintains an independent directory of US van conversion shops. Here's how listings get added, what the data means, and how builders can manage their own profiles.
+      </p>
+    </div>
+  </section>
+
+  <div class="container-read py-12 md:py-16">
+    <div class="prose">
+      <h2>What gets a builder listed</h2>
+      <p>
+        To appear in the directory, a business must meet three criteria:
+      </p>
+      <ul>
+        <li><strong>Public business.</strong> The shop has a website, Google Business profile, or verifiable social media presence. We don't list businesses that operate entirely by word of mouth.</li>
+        <li><strong>Verified existence.</strong> We confirm the business is currently operating, not permanently closed, dissolved, or a placeholder.</li>
+        <li><strong>Builds custom van conversions.</strong> The shop must do full or partial van conversions as a core service. Auto body shops, general mechanics, and RV dealers that don't do custom conversion work are excluded.</li>
+      </ul>
+      <p>
+        Meeting these criteria earns a listing. It does not imply endorsement, recommendation, or any quality judgment from The Van Guide.
+      </p>
+
+      <h2>How we gather data</h2>
+      <p>
+        Listings are built from publicly available information:
+      </p>
+      <ul>
+        <li>Google Business profiles (address, phone, hours, reviews)</li>
+        <li>Company websites (services, platforms, pricing signals, gallery)</li>
+        <li>Social media accounts (Instagram, Facebook, YouTube)</li>
+        <li>Public review platforms (Google Reviews)</li>
+      </ul>
+      <p>
+        We do not purchase data from third-party brokers, scrape private databases, or use lead-generation services. If information is publicly posted by the business, it may appear in the directory.
+      </p>
+
+      <h2>What the ratings mean</h2>
+      <p>
+        The star rating shown on each builder profile is pulled directly from Google Reviews. It is <strong>not</strong> a score assigned by The Van Guide. We display the rating and review count as-is, with no weighting, adjustment, or editorial influence.
+      </p>
+      <p>
+        If a builder has no Google Reviews, no rating appears on their profile. Absence of a rating is not a negative signal.
+      </p>
+
+      <h2>What "verified" means</h2>
+      <p>
+        A "verified" badge indicates the builder has claimed their listing and confirmed their business information directly with The Van Guide. Verified builders can update their description, add photos, and correct any inaccuracies.
+      </p>
+      <p>
+        Verification confirms identity and ownership. It is not a quality endorsement.
+      </p>
+
+      <h2>No paid placements</h2>
+      <p>
+        Directory listings are free. Search results and rankings are determined by relevance, not payment. No builder can pay to appear higher in search results, and no builder is excluded for declining to pay.
+      </p>
+      <p>
+        Featured placement and premium directory features may be offered in the future. If they are, they will be clearly labeled and will not affect organic search ranking within the directory.
+      </p>
+
+      <h2>Claiming your listing</h2>
+      <p>
+        If you're a van conversion builder listed in the directory, you can claim your profile to:
+      </p>
+      <ul>
+        <li>Add photos and a gallery of your builds</li>
+        <li>Update your business description and services</li>
+        <li>Correct any inaccurate information</li>
+        <li>Display a "verified" badge on your profile</li>
+      </ul>
+      <p>
+        The claim process is currently being built. In the meantime, email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> with your business name and website, and we'll update your listing manually.
+      </p>
+
+      <h2>Reporting incorrect information</h2>
+      <p>
+        If you see an error in a listing (wrong phone number, closed business, incorrect location), email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> with the builder name and the correction. We review reports within a few business days.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

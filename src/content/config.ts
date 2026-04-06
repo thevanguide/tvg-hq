@@ -3,6 +3,7 @@ import { defineCollection, z } from "astro:content";
 const referenceSchema = z.object({
   title: z.string(),
   description: z.string(),
+  publishedDate: z.coerce.date().optional(),
   lastUpdated: z.coerce.date(),
   author: z.string().default("The Van Guide"),
   category: z.string().optional(),

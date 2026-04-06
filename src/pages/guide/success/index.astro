@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Purchase Complete"
+  description="Your copy of The Van Owner's Guide is on its way."
+  noindex={true}
+>
+  <section class="container-wide py-20 md:py-28 max-w-2xl">
+    <div class="eyebrow mb-4">Purchase complete</div>
+    <h1 class="text-4xl md:text-5xl leading-tight mb-5">You're in. Check your email.</h1>
+    <p class="text-lg leading-relaxed mb-6" style="color: var(--color-text-muted);">
+      The Van Owner's Guide PDF will arrive at the email address you provided during checkout. It should show up within a few minutes.
+    </p>
+    <p class="text-base leading-relaxed mb-10" style="color: var(--color-text-muted);">
+      If you don't see it, check your spam folder. Still nothing? Email
+      <a href="mailto:hello@thevanguide.com" style="color: var(--color-accent);">hello@thevanguide.com</a>
+      and we'll sort it out.
+    </p>
+    <div class="pt-8 border-t" style="border-color: var(--color-border);">
+      <p class="font-sans-ui text-sm mb-4" style="color: var(--color-text-subtle);">While you're here:</p>
+      <div class="flex flex-wrap gap-3">
+        <a href="/builders/" class="btn btn-primary">Browse builders</a>
+        <a href="/insurance/" class="btn btn-ghost">Insurance guides</a>
+        <a href="/" class="btn btn-ghost">Back to home</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

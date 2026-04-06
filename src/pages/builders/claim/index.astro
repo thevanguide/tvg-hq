@@ -1,0 +1,173 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Claim your listing", href: "/builders/claim/" },
+];
+---
+
+<BaseLayout
+  title="Claim Your Listing"
+  description="Van conversion builders: claim your profile in The Van Guide directory to add photos, update your info, and manage your listing."
+>
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-14 md:py-20 max-w-3xl">
+      <Breadcrumbs items={breadcrumbs} />
+      <div class="eyebrow mb-4">For builders</div>
+      <h1 class="text-4xl md:text-5xl leading-tight mb-5">Claim Your Listing</h1>
+      <p class="text-lg leading-relaxed" style="color: var(--color-text-muted);">
+        If your shop is listed in the directory, you can claim your profile to take control of how it appears.
+      </p>
+    </div>
+  </section>
+
+  <div class="container-wide py-12 md:py-16 max-w-3xl">
+    <!-- What claiming gets you -->
+    <section class="mb-12">
+      <h2 class="text-2xl mb-4">What you can do with a claimed listing</h2>
+      <ul class="space-y-2 text-base leading-relaxed">
+        <li><strong>Add photos</strong> of your builds and shop to your profile</li>
+        <li><strong>Update your description</strong> so it reflects what you actually do</li>
+        <li><strong>Correct any inaccuracies</strong> in your contact info, platforms, or services</li>
+        <li><strong>Display a verified badge</strong> so prospective customers know the listing is current</li>
+      </ul>
+    </section>
+
+    <!-- Pricing note -->
+    <section class="mb-12 p-6 border" style="border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
+      <p class="text-base" style="color: var(--color-text-muted);">
+        <strong style="color: var(--color-primary);">Claiming is free during our launch period.</strong>
+        In the future, optional premium features (featured placement, analytics, priority support) may require a subscription. Basic listings will always be free.
+      </p>
+    </section>
+
+    <!-- Claim form -->
+    <section>
+      <h2 class="text-2xl mb-6">Submit a claim request</h2>
+      <form id="claim-form" class="space-y-5">
+        <div>
+          <label for="business-name" class="block font-sans-ui text-sm font-medium mb-1.5">
+            Business name <span style="color: var(--color-accent);">*</span>
+          </label>
+          <input
+            type="text"
+            id="business-name"
+            name="business_name"
+            required
+            class="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+            style="border-color: var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-text);"
+            placeholder="e.g. Acme Van Works"
+          />
+        </div>
+        <div>
+          <label for="your-name" class="block font-sans-ui text-sm font-medium mb-1.5">
+            Your name <span style="color: var(--color-accent);">*</span>
+          </label>
+          <input
+            type="text"
+            id="your-name"
+            name="your_name"
+            required
+            class="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+            style="border-color: var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-text);"
+          />
+        </div>
+        <div>
+          <label for="email" class="block font-sans-ui text-sm font-medium mb-1.5">
+            Email <span style="color: var(--color-accent);">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            class="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+            style="border-color: var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-text);"
+            placeholder="you@yourbusiness.com"
+          />
+        </div>
+        <div>
+          <label for="website" class="block font-sans-ui text-sm font-medium mb-1.5">
+            Website
+          </label>
+          <input
+            type="url"
+            id="website"
+            name="website"
+            class="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+            style="border-color: var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-text);"
+            placeholder="https://"
+          />
+        </div>
+        <div>
+          <label for="message" class="block font-sans-ui text-sm font-medium mb-1.5">
+            How can we verify you own this business?
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            rows="3"
+            class="w-full px-4 py-3 font-sans-ui text-base border bg-white resize-y"
+            style="border-color: var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-text);"
+            placeholder="e.g. I can verify via email from our domain, or I'm the owner listed on Google Business"
+          ></textarea>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-accent" aria-label="Submit claim request">
+            Submit Claim Request
+          </button>
+        </div>
+        <p
+          id="claim-msg"
+          class="text-sm font-sans-ui hidden"
+          style="color: var(--color-text-muted);"
+        ></p>
+      </form>
+      <p class="mt-6 font-sans-ui text-sm" style="color: var(--color-text-subtle);">
+        We'll verify your ownership and get back to you within 2 business days.
+      </p>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  // TODO: Replace mailto with Supabase RPC when claim_listing function is created
+  const form = document.getElementById("claim-form") as HTMLFormElement | null;
+  const msg = document.getElementById("claim-msg");
+
+  // Pre-fill business name from URL params if coming from a profile page
+  const params = new URLSearchParams(window.location.search);
+  const builderSlug = params.get("builder");
+  if (builderSlug) {
+    const nameInput = document.getElementById("business-name") as HTMLInputElement | null;
+    if (nameInput && !nameInput.value) {
+      // Convert slug back to readable name (best effort)
+      nameInput.value = builderSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+  }
+
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const business = data.get("business_name") || "";
+    const name = data.get("your_name") || "";
+    const email = data.get("email") || "";
+    const website = data.get("website") || "";
+    const message = data.get("message") || "";
+
+    const subject = encodeURIComponent(`Claim request: ${business}`);
+    const body = encodeURIComponent(
+      `Business: ${business}\nName: ${name}\nEmail: ${email}\nWebsite: ${website}\n\nVerification:\n${message}`
+    );
+
+    window.location.href = `mailto:hello@thevanguide.com?subject=${subject}&body=${body}`;
+
+    if (msg) {
+      msg.textContent = "Your email client should open with the claim details. If it doesn't, email hello@thevanguide.com directly.";
+      msg.classList.remove("hidden");
+    }
+  });
+</script>
