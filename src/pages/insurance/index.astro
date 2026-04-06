@@ -34,8 +34,8 @@ const fmtDate = (d: Date) =>
   <article class="py-14 md:py-20">
     <header class="container-read mb-10">
       <div class="eyebrow mb-4">Insurance</div>
-      <h1 class="text-4xl md:text-5xl leading-tight mb-5">{title}</h1>
-      <p class="text-xl leading-relaxed" style="color: var(--color-text-muted);">
+      <h1 class="text-3xl md:text-5xl leading-tight mb-5">{title}</h1>
+      <p class="text-lg md:text-xl leading-relaxed" style="color: var(--color-text-muted);">
         {description}
       </p>
       {lastUpdated && (
@@ -55,7 +55,7 @@ const fmtDate = (d: Date) =>
   {others.length > 0 && (
     <section class="border-t py-14 md:py-20" style="border-color: var(--color-border); background: var(--color-surface);">
       <div class="container-wide">
-        <h2 class="text-3xl md:text-4xl mb-3">Deeper into insurance</h2>
+        <h2 class="text-2xl md:text-4xl mb-3">Deeper into insurance</h2>
         <p class="text-lg mb-10 max-w-2xl" style="color: var(--color-text-muted);">
           Carrier reviews, vehicle-specific guides, and decision frameworks for specific situations.
         </p>
@@ -64,7 +64,7 @@ const fmtDate = (d: Date) =>
             <h3 class="text-xl mb-5 font-sans-ui tracking-wide uppercase" style="color: var(--color-text-subtle);">
               {clusterName}
             </h3>
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {entries.map((entry) => (
                 <ArticleCard
                   href={`/insurance/${entry.slug}/`}

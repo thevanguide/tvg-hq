@@ -146,8 +146,8 @@ function DashboardInner() {
     setSaving(false);
 
     if (rpcError) {
-      console.error("[tvg] edit error:", rpcError);
-      setError("Something went wrong. Please try again.");
+      console.error("[tvg] edit error:", rpcError.message || rpcError);
+      setError(rpcError.message || "Something went wrong. Please try again.");
     } else {
       setSaved(true);
       loadData();
@@ -238,31 +238,33 @@ function DashboardInner() {
   // Builder linked — show edit form
   return (
     <div>
-      <div className="flex items-center gap-4 mb-8">
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt={`${builder.name} logo`}
-            className="w-16 h-16 object-contain rounded-lg"
-            style={{ background: "var(--color-bg-alt)" }}
-          />
-        ) : (
-          <div
-            className="w-16 h-16 flex items-center justify-center rounded-lg"
-            style={{ background: "var(--color-bg-alt)" }}
-          >
-            <img src="/images/van-icon.svg" alt="" className="w-10 h-10 opacity-50" />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={`${builder.name} logo`}
+              className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg shrink-0"
+              style={{ background: "var(--color-bg-alt)" }}
+            />
+          ) : (
+            <div
+              className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg shrink-0"
+              style={{ background: "var(--color-bg-alt)" }}
+            >
+              <img src="/images/van-icon.svg" alt="" className="w-10 h-10 opacity-50" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl truncate">{builder.name}</h2>
+            <p className="font-sans-ui text-sm" style={{ color: "var(--color-text-muted)" }}>
+              {builder.city ? `${builder.city}, ` : ""}{builder.state}
+            </p>
           </div>
-        )}
-        <div className="flex-1">
-          <h2 className="text-2xl">{builder.name}</h2>
-          <p className="font-sans-ui text-sm" style={{ color: "var(--color-text-muted)" }}>
-            {builder.city ? `${builder.city}, ` : ""}{builder.state}
-          </p>
         </div>
         <a
           href={profileHref}
-          className="btn btn-ghost text-sm"
+          className="btn btn-ghost text-sm shrink-0"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -436,7 +438,7 @@ function DashboardInner() {
           </div>
 
           {galleryUrls.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
               {galleryUrls.map((url, i) => (
                 <div key={i} className="relative group">
                   <img
@@ -483,7 +485,7 @@ function DashboardInner() {
           )}
         </div>
 
-        <div className="pt-2 flex items-center gap-4">
+        <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <button
             type="submit"
             className="btn btn-accent"

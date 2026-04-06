@@ -56,7 +56,7 @@ export default function BuilderCardReact({
 
   return (
     <div
-      className="flex flex-col p-5 border transition-all hover:shadow-md"
+      className="flex flex-col p-4 sm:p-5 border transition-all hover:shadow-md"
       style={{
         background: "var(--color-surface)",
         borderColor: "var(--color-border)",
@@ -64,7 +64,7 @@ export default function BuilderCardReact({
         boxShadow: "var(--shadow-sm)",
       }}
     >
-      <a href={profileHref} className="no-underline flex items-start gap-4">
+      <a href={profileHref} className="no-underline flex items-start gap-3 sm:gap-4">
         {logoUrl ? (
           <img
             src={logoUrl}
@@ -178,7 +178,7 @@ export default function BuilderCardReact({
       )}
 
       {/* CTAs */}
-      <div className="mt-auto pt-4 flex gap-2">
+      <div className="mt-auto pt-3 sm:pt-4 flex flex-col sm:flex-row gap-2">
         <a href={profileHref} className="btn btn-ghost text-sm flex-1 text-center" style={{ padding: "0.375rem 0.75rem" }}>
           View Profile
         </a>

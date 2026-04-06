@@ -3,8 +3,8 @@ const year = new Date().getFullYear();
 import EmailCapture from "./EmailCapture.astro";
 ---
 
-<footer class="mt-24" style="background: var(--color-primary); color: #FBFAF7;">
-  <div class="container-wide py-14">
+<footer class="mt-12 md:mt-24" style="background: var(--color-primary); color: #FBFAF7;">
+  <div class="container-wide py-10 md:py-14">
 
     <!-- Top band: newsletter + tagline -->
     <div class="grid gap-10 md:grid-cols-2 items-start pb-10 border-b" style="border-color: rgba(255,255,255,0.12);">
@@ -26,7 +26,7 @@ import EmailCapture from "./EmailCapture.astro";
     </div>
 
     <!-- Link columns -->
-    <div class="grid gap-8 md:grid-cols-5 pt-10 font-sans-ui text-sm">
+    <div class="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-5 pt-10 font-sans-ui text-sm">
       <div>
         <div class="uppercase tracking-wider text-xs font-semibold mb-4" style="color: #A87E3B; letter-spacing: 0.14em;">Directory</div>
         <ul class="space-y-2.5">

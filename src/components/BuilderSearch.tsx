@@ -337,14 +337,14 @@ export default function BuilderSearch({ builders }: Props) {
   // ---------- Shared UI ----------
 
   const searchBar = (
-    <div className="flex flex-col sm:flex-row gap-3 mb-4">
-      <div className="flex-1 relative">
+    <div className="flex flex-col gap-3 mb-4">
+      <div className="relative">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search builders by name, city, or keyword..."
-          className="w-full px-4 py-2.5 text-sm border rounded-md outline-none"
+          className="w-full px-3 sm:px-4 py-2.5 text-sm border rounded-md outline-none"
           style={{
             borderColor: "var(--color-border-strong)",
             background: "var(--color-bg)",
@@ -358,7 +358,7 @@ export default function BuilderSearch({ builders }: Props) {
         <button
           onClick={handleNearMe}
           disabled={locatingUser}
-          className="px-3 py-2.5 text-sm border rounded-md cursor-pointer"
+          className="px-3 py-2 text-xs sm:text-sm border rounded-md cursor-pointer"
           style={{
             borderColor: userLocation ? "var(--color-accent)" : "var(--color-border-strong)",
             background: userLocation ? "var(--color-accent)" : "var(--color-bg)",
@@ -379,7 +379,7 @@ export default function BuilderSearch({ builders }: Props) {
           >
             <button
               onClick={() => setMobileView("list")}
-              className="px-3 py-2.5 text-sm cursor-pointer border-0"
+              className="px-2.5 py-2 text-xs sm:text-sm cursor-pointer border-0"
               style={{
                 background: mobileView === "list" ? "var(--color-primary)" : "var(--color-bg)",
                 color: mobileView === "list" ? "#fff" : "var(--color-text)",
@@ -391,7 +391,7 @@ export default function BuilderSearch({ builders }: Props) {
             </button>
             <button
               onClick={() => setMobileView("map")}
-              className="px-3 py-2.5 text-sm cursor-pointer border-0"
+              className="px-2.5 py-2 text-xs sm:text-sm cursor-pointer border-0"
               style={{
                 background: mobileView === "map" ? "var(--color-primary)" : "var(--color-bg)",
                 color: mobileView === "map" ? "#fff" : "var(--color-text)",
@@ -406,7 +406,7 @@ export default function BuilderSearch({ builders }: Props) {
         )}
         <button
           onClick={() => setFiltersOpen((v) => !v)}
-          className="px-4 py-2.5 text-sm border rounded-md cursor-pointer"
+          className="px-3 py-2 text-xs sm:text-sm border rounded-md cursor-pointer"
           style={{
             borderColor: "var(--color-border-strong)",
             background: filtersOpen ? "var(--color-primary)" : "var(--color-bg)",
@@ -420,7 +420,7 @@ export default function BuilderSearch({ builders }: Props) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
-          className="px-3 py-2.5 text-sm border rounded-md cursor-pointer"
+          className="px-2 sm:px-3 py-2 text-xs sm:text-sm border rounded-md cursor-pointer flex-1 sm:flex-none min-w-0"
           style={{
             borderColor: "var(--color-border-strong)",
             background: "var(--color-bg)",
@@ -440,7 +440,7 @@ export default function BuilderSearch({ builders }: Props) {
 
   const filterPanel = filtersOpen ? (
     <div
-      className="p-5 mb-6 border rounded-lg grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      className="p-4 sm:p-5 mb-6 border rounded-lg grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
       style={{
         borderColor: "var(--color-border)",
         background: "var(--color-surface)",
@@ -642,7 +642,7 @@ export default function BuilderSearch({ builders }: Props) {
       </p>
     </div>
   ) : (
-    <div className={isDesktop ? "grid gap-4 grid-cols-1 xl:grid-cols-2" : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"}>
+    <div className={isDesktop ? "grid gap-4 grid-cols-1 xl:grid-cols-2" : "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}>
       {results.map(renderCard)}
     </div>
   );
@@ -697,7 +697,7 @@ export default function BuilderSearch({ builders }: Props) {
       {filterPanel}
       {resultCount}
       {mobileView === "list" ? cardGrid : (
-        <div style={{ height: 250 }}>
+        <div style={{ height: "60vh", minHeight: 300, maxHeight: 500 }}>
           {mapView}
         </div>
       )}

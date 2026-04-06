@@ -127,7 +127,7 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
       </p>
     </div>
   ) : (
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {sorted.map((b) => (
         <BuilderCard
           name={b.name}
@@ -152,7 +152,7 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
   {nearbyBuilders.length > 0 && (
     <section class="mt-12">
       <h2 class="text-2xl mb-6">Nearby builders</h2>
-      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {nearbyBuilders.map((b) => (
           <BuilderCard
             name={b.name}

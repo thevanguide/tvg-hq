@@ -21,10 +21,10 @@ const { title, description, eyebrow, heading, intro, breadcrumbs } = Astro.props
 
 <BaseLayout title={title} description={description}>
   <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
-    <div class="container-wide py-14 md:py-20">
+    <div class="container-wide py-10 md:py-20">
       {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
       {eyebrow && <div class="eyebrow mb-4">{eyebrow}</div>}
-      <h1 class="text-4xl md:text-5xl max-w-3xl leading-tight">{heading}</h1>
+      <h1 class="text-3xl md:text-5xl max-w-3xl leading-tight">{heading}</h1>
       {intro && (
         <p class="mt-5 max-w-2xl text-lg leading-relaxed" style="color: var(--color-text-muted);">
           {intro}

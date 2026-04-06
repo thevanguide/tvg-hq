@@ -76,29 +76,29 @@ function platformSlug(p: string): string {
 
   {/* Hero section */}
   <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
-    <div class="container-wide py-14 md:py-20">
+    <div class="container-wide py-10 md:py-20">
       <Breadcrumbs items={breadcrumbs} />
 
-      <div class="flex flex-col md:flex-row md:items-start gap-6">
+      <div class="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
         {/* Logo or initial */}
         {builder.logo_url ? (
           <img
             src={builder.logo_url}
             alt={`${builder.name} logo`}
-            class="w-20 h-20 object-contain rounded-lg shrink-0"
+            class="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg shrink-0"
             style="background: var(--color-bg-alt);"
           />
         ) : (
           <div
-            class="w-20 h-20 flex items-center justify-center rounded-lg shrink-0"
+            class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-lg shrink-0"
             style="background: var(--color-bg-alt);"
           >
-            <img src="/images/van-icon.svg" alt="" class="w-12 h-12 opacity-50" />
+            <img src="/images/van-icon.svg" alt="" class="w-10 h-10 md:w-12 md:h-12 opacity-50" />
           </div>
         )}
 
-        <div class="flex-1">
-          <h1 class="text-4xl md:text-5xl leading-tight">{builder.name}</h1>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-3xl md:text-5xl leading-tight">{builder.name}</h1>
 
           {builder.tagline && (
             <p class="mt-2 text-lg" style="color: var(--color-text-muted);">
@@ -150,7 +150,7 @@ function platformSlug(p: string): string {
           </div>
 
           {/* CTAs */}
-          <div class="mt-6 flex flex-wrap gap-3">
+          <div class="mt-5 md:mt-6 flex flex-wrap gap-2 sm:gap-3">
             {builder.website && (
               <a
                 href={builder.website}
@@ -297,7 +297,7 @@ function platformSlug(p: string): string {
       <section class="mb-12">
         <h2 class="text-2xl mb-4">Reviews</h2>
         <div class="flex items-center gap-3 font-sans-ui">
-          <span class="text-3xl" style="color: var(--color-accent);">
+          <span class="text-2xl md:text-3xl" style="color: var(--color-accent);">
             {renderStars(builder.review_rating)}
           </span>
           <div>
@@ -367,7 +367,7 @@ function platformSlug(p: string): string {
     {nearbyBuilders.length > 0 && (
       <section class="mb-12">
         <h2 class="text-2xl mb-6">Nearby builders</h2>
-        <div class="grid gap-5 sm:grid-cols-2">
+        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
           {nearbyBuilders.map((b) => (
             <BuilderCard
               name={b.name}
@@ -391,9 +391,9 @@ function platformSlug(p: string): string {
 
     {/* Claim listing CTA */}
     {!builder.claimed && (
-      <section class="mb-12 p-8 border" style="border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
+      <section class="mb-12 p-5 sm:p-8 border" style="border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
         <div class="eyebrow mb-3">Builder</div>
-        <h3 class="text-2xl mb-3">Is this your business?</h3>
+        <h3 class="text-xl sm:text-2xl mb-3">Is this your business?</h3>
         <p class="mb-5" style="color: var(--color-text-muted);">
           Claim your listing to add photos, update your description, and manage how your shop appears in the directory.
         </p>
