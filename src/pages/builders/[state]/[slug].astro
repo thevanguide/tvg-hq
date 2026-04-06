@@ -198,22 +198,36 @@ function platformSlug(p: string): string {
       </section>
     )}
 
-    {/* Placeholder hero image */}
+    {/* Gallery or placeholder */}
     <section class="mb-12">
-      <div
-        class="w-full aspect-video flex items-center justify-center rounded-lg"
-        style="background: var(--color-bg-alt); border: 1px dashed var(--color-border-strong);"
-      >
-        <div class="text-center" style="color: var(--color-text-subtle);">
-          <img
-            src="/images/builder-placeholder.svg"
-            alt=""
-            class="w-24 h-24 mx-auto mb-3 opacity-40"
-            loading="lazy"
-          />
-          <p class="font-sans-ui text-sm">Photos will appear here once this builder claims their profile</p>
+      {builder.gallery_urls && builder.gallery_urls.length > 0 ? (
+        <div class="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {builder.gallery_urls.map((url, i) => (
+            <img
+              src={url}
+              alt={`${builder.name} build photo ${i + 1}`}
+              class="w-full aspect-[4/3] object-cover rounded-lg"
+              style="background: var(--color-bg-alt);"
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+          ))}
         </div>
-      </div>
+      ) : (
+        <div
+          class="w-full aspect-video flex items-center justify-center rounded-lg"
+          style="background: var(--color-bg-alt); border: 1px dashed var(--color-border-strong);"
+        >
+          <div class="text-center" style="color: var(--color-text-subtle);">
+            <img
+              src="/images/builder-placeholder.svg"
+              alt=""
+              class="w-24 h-24 mx-auto mb-3 opacity-40"
+              loading="lazy"
+            />
+            <p class="font-sans-ui text-sm">Photos will appear here once this builder claims their profile</p>
+          </div>
+        </div>
+      )}
     </section>
 
     {/* Services & platforms */}

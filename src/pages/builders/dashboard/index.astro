@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import BuilderDashboard from "../../../components/BuilderDashboard";
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Dashboard", href: "/builders/dashboard/" },
+];
+---
+
+<BaseLayout
+  title="Builder Dashboard"
+  description="Manage your builder listing on The Van Guide. Update your profile, add photos, and keep your information current."
+>
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-14 md:py-20 max-w-3xl">
+      <Breadcrumbs items={breadcrumbs} />
+      <div class="eyebrow mb-4">For builders</div>
+      <h1 class="text-4xl md:text-5xl leading-tight mb-5">Builder Dashboard</h1>
+      <p class="text-lg leading-relaxed" style="color: var(--color-text-muted);">
+        Manage your listing, update your profile, and add photos.
+      </p>
+    </div>
+  </section>
+
+  <div class="container-wide py-12 md:py-16 max-w-3xl">
+    <BuilderDashboard client:idle />
+  </div>
+</BaseLayout>

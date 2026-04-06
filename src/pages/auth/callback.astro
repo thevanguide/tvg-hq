@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Signing in..." description="Completing your sign-in to The Van Guide.">
+  <div class="container-wide py-20 max-w-xl text-center">
+    <h1 class="text-3xl mb-4" id="auth-heading">Signing you in...</h1>
+    <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);" id="auth-msg">
+      Hold on while we complete your login.
+    </p>
+  </div>
+</BaseLayout>
+
+<script>
+  import { getAuthClient } from "../../lib/supabase-auth";
+
+  async function handleCallback() {
+    const heading = document.getElementById("auth-heading");
+    const msg = document.getElementById("auth-msg");
+
+    try {
+      const client = getAuthClient();
+      if (!client) throw new Error("Auth not configured");
+
+      // Supabase JS auto-detects the token in the URL hash
+      // and exchanges it for a session. We just need to wait for it.
+      const { data, error } = await client.auth.getSession();
+
+      if (error) throw error;
+
+      if (data.session) {
+        if (heading) heading.textContent = "You're signed in";
+        if (msg) msg.textContent = "Redirecting to your dashboard...";
+
+        // Check if there's a return URL in query params
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get("return_to");
+
+        setTimeout(() => {
+          window.location.href = returnTo || "/builders/dashboard/";
+        }, 1000);
+      } else {
+        if (heading) heading.textContent = "Sign-in incomplete";
+        if (msg) {
+          msg.innerHTML =
+            'The login link may have expired. <a href="/builders/claim/" style="color: var(--color-primary);">Try again</a>.';
+        }
+      }
+    } catch (err) {
+      console.error("[tvg] auth callback error:", err);
+      if (heading) heading.textContent = "Something went wrong";
+      if (msg) {
+        msg.innerHTML =
+          'We couldn\'t complete your sign-in. <a href="/builders/claim/" style="color: var(--color-primary);">Try again</a>.';
+      }
+    }
+  }
+
+  handleCallback();
+</script>
