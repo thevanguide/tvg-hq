@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Breadcrumbs from "../../../components/Breadcrumbs.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
+import BuilderMap from "../../../components/BuilderMap";
 import {
   getAllBuilders,
   getNearbyBuilders,
@@ -310,6 +311,27 @@ function platformSlug(p: string): string {
     {/* Location */}
     <section class="mb-12">
       <h2 class="text-2xl mb-4">Location</h2>
+      {builder.latitude != null && builder.longitude != null && (
+        <div class="mb-4">
+          <BuilderMap
+            client:visible
+            builders={[{
+              id: builder.id,
+              name: builder.name,
+              slug: builder.slug,
+              state: builder.state,
+              city: builder.city,
+              latitude: builder.latitude,
+              longitude: builder.longitude,
+              review_rating: builder.review_rating,
+              review_count: builder.review_count,
+            }]}
+            singlePin={true}
+            center={[builder.latitude, builder.longitude]}
+            zoom={13}
+          />
+        </div>
+      )}
       <p class="font-sans-ui">
         {builder.street && <span>{builder.street}<br /></span>}
         {location}

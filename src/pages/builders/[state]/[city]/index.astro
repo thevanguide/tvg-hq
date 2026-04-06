@@ -1,6 +1,7 @@
 ---
 import DirectoryLayout from "../../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../../components/BuilderCard.astro";
+import BuilderMap from "../../../../components/BuilderMap";
 import {
   getAllBuilders,
   stateToSlug,
@@ -75,6 +76,29 @@ const breadcrumbs = [
   { label: stateName, href: `/builders/${stateSlug}/` },
   { label: cityName, href: `/builders/${stateSlug}/${cityToSlug(cityName)}/` },
 ];
+
+// Map data — city builders + nearby builders combined
+const allMapBuilders = [...cityBuilders, ...nearbyBuilders];
+const mapData = allMapBuilders.map((b) => ({
+  id: b.id,
+  name: b.name,
+  slug: b.slug,
+  state: b.state,
+  city: b.city,
+  latitude: b.latitude,
+  longitude: b.longitude,
+  review_rating: b.review_rating,
+  review_count: b.review_count,
+}));
+
+// Derive center from city builders with coords
+const cityWithCoords = cityBuilders.filter((b) => b.latitude != null && b.longitude != null);
+const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
+  ? [
+      cityWithCoords.reduce((sum, b) => sum + b.latitude!, 0) / cityWithCoords.length,
+      cityWithCoords.reduce((sum, b) => sum + b.longitude!, 0) / cityWithCoords.length,
+    ]
+  : undefined;
 ---
 
 <DirectoryLayout
@@ -85,6 +109,13 @@ const breadcrumbs = [
   intro={`${cityBuilders.length} van conversion ${cityBuilders.length === 1 ? "shop" : "shops"} in ${cityName}, ${stateName}.`}
   breadcrumbs={breadcrumbs}
 >
+  {/* City map — always visible, includes nearby builders */}
+  {mapData.length > 0 && (
+    <div class="mb-8">
+      <BuilderMap client:visible builders={mapData} center={cityCenter} zoom={11} />
+    </div>
+  )}
+
   {sorted.length === 0 ? (
     <div
       class="p-10 text-center border border-dashed"
