@@ -69,16 +69,17 @@ export default function BuilderCardReact({
           <img
             src={logoUrl}
             alt={`${name} logo`}
-            className="w-14 h-14 object-contain rounded shrink-0 p-1.5"
-            style={{ background: "var(--color-logo-bg)" }}
+            className="w-14 h-14 object-contain rounded shrink-0 p-1.5 border"
+            style={{ background: "var(--color-logo-bg)", borderColor: "var(--color-border)" }}
             loading="lazy"
           />
         ) : (
           <div
-            className="w-14 h-14 flex items-center justify-center font-semibold text-xl rounded shrink-0"
+            className="w-14 h-14 flex items-center justify-center font-semibold text-xl rounded shrink-0 border"
             style={{
               background: "var(--color-logo-bg)",
-              color: "#ffffff",
+              borderColor: "var(--color-border)",
+              color: "var(--color-primary)",
               fontFamily: "var(--font-display)",
             }}
           >
