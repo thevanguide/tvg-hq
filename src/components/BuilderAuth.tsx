@@ -4,6 +4,7 @@ import {
   signInWithMagicLink,
   signOut,
   onAuthStateChange,
+  setAuthRedirect,
 } from "../lib/supabase-auth";
 import type { Session } from "@supabase/supabase-js";
 
@@ -12,11 +13,14 @@ interface Props {
   children?: React.ReactNode;
   /** Text shown above the email input */
   prompt?: string;
+  /** URL to redirect to after auth callback (stored in localStorage, used by callback page) */
+  returnTo?: string;
 }
 
 export default function BuilderAuth({
   children,
   prompt = "Enter your email to get started",
+  returnTo,
 }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +54,11 @@ export default function BuilderAuth({
 
     setSending(true);
     setError(null);
+
+    // Store return URL so the auth callback redirects back here instead of dashboard
+    if (returnTo) {
+      setAuthRedirect(returnTo);
+    }
 
     const { error: err } = await signInWithMagicLink(email.trim());
     setSending(false);

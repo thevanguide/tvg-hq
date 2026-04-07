@@ -24,6 +24,10 @@ export default defineConfig({
         const path = new URL(page).pathname;
         // Placeholder tool pages (not yet built)
         if (path.startsWith("/tools/van-insurance-finder")) return false;
+        // Logged-in-only / admin pages — no indexing
+        if (path.startsWith("/builders/admin/")) return false;
+        if (path.startsWith("/builders/dashboard/")) return false;
+        if (path.startsWith("/auth/callback/")) return false;
         return true;
       },
     }),

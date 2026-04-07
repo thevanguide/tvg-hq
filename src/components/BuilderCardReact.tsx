@@ -70,7 +70,7 @@ export default function BuilderCardReact({
             src={logoUrl}
             alt={`${name} logo`}
             className="w-14 h-14 object-contain rounded shrink-0 p-1.5 border"
-            style={{ background: "var(--color-bg-alt)", borderColor: "var(--color-border)", filter: "drop-shadow(0 0 1px rgba(0,0,0,0.15))" }}
+            style={{ background: "#ffffff", borderColor: "var(--color-border)" }}
             loading="lazy"
           />
         ) : (

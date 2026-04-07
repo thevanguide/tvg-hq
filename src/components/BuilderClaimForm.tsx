@@ -18,8 +18,11 @@ interface BuilderMatch {
 }
 
 export default function BuilderClaimForm({ builderSlug, stateSlug }: Props) {
+  // Build the return URL so auth callback redirects back to this claim page
+  const returnTo = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/builders/claim/";
+
   return (
-    <BuilderAuth prompt="Enter the email associated with your business to start your claim.">
+    <BuilderAuth prompt="Enter the email associated with your business to start your claim." returnTo={returnTo}>
       <ClaimFormInner builderSlug={builderSlug} stateSlug={stateSlug} />
     </BuilderAuth>
   );

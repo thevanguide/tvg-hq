@@ -2,7 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Signing in..." description="Completing your sign-in to The Van Guide.">
+<BaseLayout title="Signing in..." description="Completing your sign-in to The Van Guide." noindex>
   <div class="container-wide py-20 max-w-xl text-center">
     <h1 class="text-3xl mb-4" id="auth-heading">Signing you in...</h1>
     <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);" id="auth-msg">
@@ -12,7 +12,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 </BaseLayout>
 
 <script>
-  import { getAuthClient } from "../../lib/supabase-auth";
+  import { getAuthClient, consumeAuthRedirect } from "../../lib/supabase-auth";
 
   async function handleCallback() {
     const heading = document.getElementById("auth-heading");
@@ -30,11 +30,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       if (data.session) {
         if (heading) heading.textContent = "You're signed in";
-        if (msg) msg.textContent = "Redirecting to your dashboard...";
+        if (msg) msg.textContent = "Redirecting...";
 
-        // Check if there's a return URL in query params
+        // Check localStorage first (set before magic link was sent, e.g. from claim flow),
+        // then fall back to query params, then default to dashboard
+        const storedRedirect = consumeAuthRedirect();
         const params = new URLSearchParams(window.location.search);
-        const returnTo = params.get("return_to");
+        const returnTo = storedRedirect || params.get("return_to");
 
         setTimeout(() => {
           window.location.href = returnTo || "/builders/dashboard/";

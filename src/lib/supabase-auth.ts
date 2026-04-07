@@ -30,6 +30,28 @@ export function getAuthClient(): SupabaseClient | null {
   return _browserClient;
 }
 
+const AUTH_REDIRECT_KEY = "tvg_auth_redirect";
+
+/**
+ * Store a return URL so the auth callback redirects there instead of the dashboard.
+ * Call this before sending the magic link (e.g., from a claim flow).
+ */
+export function setAuthRedirect(url: string): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(AUTH_REDIRECT_KEY, url);
+  }
+}
+
+/**
+ * Read and clear the stored return URL. Returns null if none was set.
+ */
+export function consumeAuthRedirect(): string | null {
+  if (typeof window === "undefined") return null;
+  const url = localStorage.getItem(AUTH_REDIRECT_KEY);
+  if (url) localStorage.removeItem(AUTH_REDIRECT_KEY);
+  return url;
+}
+
 export async function signInWithMagicLink(email: string): Promise<{ error: string | null }> {
   const client = getAuthClient();
   if (!client) return { error: "Auth not configured" };
