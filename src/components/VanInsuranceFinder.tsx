@@ -106,7 +106,8 @@ interface ScoredCarrier {
   reasons: string[];
   caveats: string[];
   disqualified: boolean;
-  disqualifyReason?: string;
+  disqualifyReasons: string[];
+  nearMiss?: string;
 }
 
 const FEATURE_LIST = [
@@ -121,6 +122,16 @@ const FEATURE_LIST = [
 
 const SIX_REQUIRED = ["cooking", "fridge", "sleeping", "hvac", "water", "electrical"];
 
+const FEATURE_LABELS: Record<string, string> = {
+  cooking: "cooking facilities",
+  fridge: "refrigeration",
+  sleeping: "sleeping area",
+  hvac: "heating/AC",
+  water: "drinkable water",
+  electrical: "110-125V electrical",
+  bathroom: "bathroom",
+};
+
 /* ── Scoring ─────────────────────────────────────────────────────── */
 
 function scoreCarriers(answers: Answers): ScoredCarrier[] {
@@ -128,21 +139,16 @@ function scoreCarriers(answers: Answers): ScoredCarrier[] {
   const hasBathroom = answers.features.includes("bathroom");
   const hasAll7 = hasSix && hasBathroom;
   const isCA = answers.state.toLowerCase() === "california";
+  const missingSix = SIX_REQUIRED.filter((f) => !answers.features.includes(f));
 
   return carriers.map((carrier) => {
     let score = 0;
     const reasons: string[] = [];
     const caveats: string[] = [];
-    let disqualified = false;
-    let disqualifyReason: string | undefined;
+    const disqualifyReasons: string[] = [];
+    let nearMiss: string | undefined;
 
-    const dq = (reason: string) => {
-      score = -10;
-      disqualified = true;
-      disqualifyReason = reason;
-    };
-
-    // Build type
+    // Build type scoring (never disqualifies)
     if (answers.buildType === "diy") {
       const pts: Record<string, number> = { Roamly: 3, Progressive: 2, "Good Sam / National General": 1, "State Farm": 1 };
       score += pts[carrier.name] ?? 0;
@@ -157,56 +163,60 @@ function scoreCarriers(answers: Answers): ScoredCarrier[] {
       score += pts[carrier.name] ?? 0;
     }
 
-    // Features
-    if (!disqualified) {
-      if (hasAll7) {
-        const pts: Record<string, number> = { Roamly: 1, Progressive: 1, "Good Sam / National General": 2, "State Farm": 1 };
-        score += pts[carrier.name] ?? 0;
-        if (carrier.name === "Good Sam / National General") reasons.push("Your build meets all 7 feature requirements");
-      } else if (hasSix) {
-        if (carrier.name === "Good Sam / National General") {
-          dq("Requires a bathroom with indoor plumbing");
-        } else {
-          const pts: Record<string, number> = { Roamly: 2, Progressive: 1, "State Farm": 1 };
-          score += pts[carrier.name] ?? 0;
-          if (carrier.name === "Roamly") reasons.push("No bathroom requirement");
-        }
+    // Features — check all carriers independently
+    if (hasAll7) {
+      const pts: Record<string, number> = { Roamly: 1, Progressive: 1, "Good Sam / National General": 2, "State Farm": 1 };
+      score += pts[carrier.name] ?? 0;
+      if (carrier.name === "Good Sam / National General") reasons.push("Your build meets all 7 feature requirements");
+    } else if (hasSix) {
+      // Has 6 but not bathroom
+      if (carrier.name === "Good Sam / National General") {
+        disqualifyReasons.push("Requires a bathroom with indoor plumbing");
       } else {
-        if (carrier.name === "Progressive") {
-          dq("Requires 6 specific RV features your build is missing");
-        } else if (carrier.name === "Good Sam / National General") {
-          dq("Requires 7 specific RV features your build is missing");
+        const pts: Record<string, number> = { Roamly: 2, Progressive: 1, "State Farm": 1 };
+        score += pts[carrier.name] ?? 0;
+        if (carrier.name === "Roamly") reasons.push("No bathroom requirement");
+      }
+    } else {
+      // Missing some of the core 6
+      if (carrier.name === "Progressive") {
+        if (missingSix.length === 1) {
+          const missing = FEATURE_LABELS[missingSix[0]] || missingSix[0];
+          disqualifyReasons.push(`Requires 6 RV features — you're only missing ${missing}`);
+          nearMiss = `Add ${missing} to qualify for Progressive's RV rates`;
         } else {
-          score += 1;
-          if (carrier.name === "Roamly") reasons.push("Covers vans without specific feature requirements");
-          if (carrier.name === "State Farm") reasons.push("No specific feature checklist required");
+          disqualifyReasons.push(`Requires 6 specific RV features (missing ${missingSix.length})`);
         }
+      } else if (carrier.name === "Good Sam / National General") {
+        disqualifyReasons.push(`Requires 7 specific RV features (missing ${missingSix.length + (hasBathroom ? 0 : 1)})`);
+      } else {
+        score += 1;
+        if (carrier.name === "Roamly") reasons.push("Covers vans without specific feature requirements");
+        if (carrier.name === "State Farm") reasons.push("No specific feature checklist required");
       }
     }
 
     // State
-    if (!disqualified) {
-      if (isCA) {
-        if (carrier.name === "Good Sam / National General") {
-          dq("Does not cover Class B van conversions in California");
-        } else {
-          const pts: Record<string, number> = { Roamly: 2, Progressive: 1, "State Farm": 1 };
-          score += pts[carrier.name] ?? 0;
-          if (carrier.name === "Roamly") reasons.push("Available in California");
-        }
+    if (isCA) {
+      if (carrier.name === "Good Sam / National General") {
+        disqualifyReasons.push("Does not cover Class B van conversions in California");
+      } else {
+        const pts: Record<string, number> = { Roamly: 2, Progressive: 1, "State Farm": 1 };
+        score += pts[carrier.name] ?? 0;
+        if (carrier.name === "Roamly") reasons.push("Available in California");
       }
     }
 
     // Usage
-    if (!disqualified) {
-      if (answers.usage === "rental") {
-        if (carrier.name === "Roamly") {
-          score += 3;
-          reasons.push("Supports Outdoorsy and RVshare rentals");
-        } else {
-          dq("Does not cover peer-to-peer van rentals");
-        }
-      } else if (answers.usage === "fulltime") {
+    if (answers.usage === "rental") {
+      if (carrier.name === "Roamly") {
+        score += 3;
+        reasons.push("Supports Outdoorsy and RVshare rentals");
+      } else {
+        disqualifyReasons.push("Does not cover peer-to-peer van rentals");
+      }
+    } else if (answers.usage === "fulltime") {
+      if (disqualifyReasons.length === 0) {
         const pts: Record<string, number> = { Roamly: 1, Progressive: 2, "Good Sam / National General": 1, "State Farm": 0 };
         score += pts[carrier.name] ?? 0;
         if (carrier.name === "Progressive") reasons.push("Offers full-time RV coverage");
@@ -215,19 +225,17 @@ function scoreCarriers(answers: Answers): ScoredCarrier[] {
     }
 
     // Only vehicle
-    if (!disqualified) {
-      if (answers.onlyVehicle) {
-        if (carrier.name === "Good Sam / National General") {
-          dq("Requires a separate daily-driver vehicle");
-        } else {
-          score += 1;
-          if (carrier.name === "Roamly") reasons.push("No second vehicle required");
-        }
+    if (answers.onlyVehicle) {
+      if (carrier.name === "Good Sam / National General") {
+        disqualifyReasons.push("Requires a separate daily-driver vehicle");
+      } else if (disqualifyReasons.length === 0) {
+        score += 1;
+        if (carrier.name === "Roamly") reasons.push("No second vehicle required");
       }
     }
 
-    // Existing insurance
-    if (!disqualified) {
+    // Existing insurance (only apply if not disqualified)
+    if (disqualifyReasons.length === 0) {
       if (answers.existingInsurance.includes("Progressive") && carrier.name === "Progressive") {
         score += 3;
         reasons.push("Multi-policy discount with your existing Progressive coverage");
@@ -242,8 +250,8 @@ function scoreCarriers(answers: Answers): ScoredCarrier[] {
       }
     }
 
-    // General caveats
-    if (!disqualified) {
+    // General caveats (only if not disqualified)
+    if (disqualifyReasons.length === 0) {
       if (carrier.name === "Roamly" && !carrier.features.bundlingDiscount) {
         caveats.push("No multi-policy bundling discount available");
       }
@@ -255,7 +263,10 @@ function scoreCarriers(answers: Answers): ScoredCarrier[] {
       }
     }
 
-    return { carrier, score, reasons, caveats, disqualified, disqualifyReason };
+    const disqualified = disqualifyReasons.length > 0;
+    if (disqualified) score = -10;
+
+    return { carrier, score, reasons, caveats, disqualified, disqualifyReasons, nearMiss };
   });
 }
 
@@ -443,6 +454,63 @@ function ResultCard({
   );
 }
 
+function AnswerSummary({ answers, onEditStep }: { answers: Answers; onEditStep: (step: number) => void }) {
+  const buildLabels: Record<string, string> = { factory: "Factory Class B", professional: "Professional custom build", diy: "DIY build" };
+  const usageLabels: Record<string, string> = { recreational: "Recreational", fulltime: "Full-time", rental: "Peer-to-peer rental" };
+  const featureCount = answers.features.length;
+
+  const rows: { label: string; value: string; step: number }[] = [
+    { label: "Build type", value: answers.buildType ? buildLabels[answers.buildType] : "—", step: 1 },
+    { label: "Features", value: featureCount === 7 ? "All 7" : featureCount === 0 ? "None" : `${featureCount} of 7`, step: 2 },
+    { label: "State", value: answers.state || "—", step: 3 },
+    { label: "Usage", value: answers.usage ? usageLabels[answers.usage] : "—", step: 4 },
+    { label: "Only vehicle", value: answers.onlyVehicle === null ? "—" : answers.onlyVehicle ? "Yes" : "No", step: 5 },
+    {
+      label: "Existing insurance",
+      value: answers.existingInsurance.length > 0 ? answers.existingInsurance.join(", ") : "None",
+      step: 6,
+    },
+  ];
+
+  return (
+    <div style={{ ...styles.card, marginBottom: "1.5rem" }}>
+      <div style={{ fontWeight: 600, marginBottom: "0.75rem", fontSize: "0.9375rem" }}>Your answers</div>
+      {rows.map((row) => (
+        <div
+          key={row.step}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "0.375rem 0",
+            fontSize: "0.875rem",
+          }}
+        >
+          <span style={{ color: "var(--color-text-muted)" }}>{row.label}</span>
+          <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontWeight: 500 }}>{row.value}</span>
+            <button
+              type="button"
+              onClick={() => onEditStep(row.step)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--color-accent)",
+                cursor: "pointer",
+                fontSize: "0.8125rem",
+                padding: "0.125rem 0.25rem",
+                textDecoration: "underline",
+              }}
+            >
+              Edit
+            </button>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Main component ──────────────────────────────────────────────── */
 
 const INITIAL_ANSWERS: Answers = {
@@ -466,6 +534,7 @@ export default function VanInsuranceFinder() {
 
   const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS + 1));
   const back = () => setStep((s) => Math.max(s - 1, 1));
+  const goToStep = (s: number) => setStep(s);
   const restart = () => {
     setStep(1);
     setAnswers({ ...INITIAL_ANSWERS });
@@ -490,8 +559,11 @@ export default function VanInsuranceFinder() {
   // Results
   if (step > TOTAL_STEPS) {
     const scored = scoreCarriers(answers);
-    const recommended = scored.filter((s) => !s.disqualified && s.score > 0).sort((a, b) => b.score - a.score);
+    const recommended = scored
+      .filter((s) => !s.disqualified && s.score > 0)
+      .sort((a, b) => b.score - a.score || a.carrier.name.localeCompare(b.carrier.name));
     const disqualified = scored.filter((s) => s.disqualified);
+    const nearMisses = disqualified.filter((d) => d.nearMiss);
 
     return (
       <div>
@@ -499,6 +571,8 @@ export default function VanInsuranceFinder() {
         <p style={{ color: "var(--color-text-muted)", marginBottom: "1.5rem", fontSize: "0.9375rem" }}>
           Based on your answers, {recommended.length === 0 ? "here's what we found" : `${recommended.length} carrier${recommended.length !== 1 ? "s" : ""} fit${recommended.length === 1 ? "s" : ""} your situation`}.
         </p>
+
+        <AnswerSummary answers={answers} onEditStep={goToStep} />
 
         {recommended.length === 0 && (
           <div style={{ ...styles.card, marginBottom: "1.5rem" }}>
@@ -514,6 +588,26 @@ export default function VanInsuranceFinder() {
           <ResultCard key={result.carrier.slug} result={result} rank={i + 1} />
         ))}
 
+        {nearMisses.length > 0 && (
+          <div
+            style={{
+              marginTop: "1rem",
+              marginBottom: "1rem",
+              padding: "1rem",
+              background: "var(--color-bg-alt)",
+              borderRadius: "var(--radius-md)",
+              borderLeft: "3px solid var(--color-accent)",
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "0.5rem" }}>Almost qualified</div>
+            {nearMisses.map((nm) => (
+              <p key={nm.carrier.slug} style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", margin: "0.25rem 0" }}>
+                {nm.nearMiss}
+              </p>
+            ))}
+          </div>
+        )}
+
         {disqualified.length > 0 && (
           <div style={{ marginTop: "1.5rem" }}>
             <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.75rem" }}>
@@ -523,16 +617,26 @@ export default function VanInsuranceFinder() {
               <div
                 key={d.carrier.slug}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
                   padding: "0.75rem 0",
                   borderBottom: "1px solid var(--color-border)",
                   fontSize: "0.875rem",
                 }}
               >
-                <span style={{ fontWeight: 600 }}>{d.carrier.name}</span>
-                <span style={{ color: "var(--color-text-muted)" }}>{d.disqualifyReason}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <span style={{ fontWeight: 600 }}>{d.carrier.name}</span>
+                  {d.disqualifyReasons.length === 1 && (
+                    <span style={{ color: "var(--color-text-muted)", textAlign: "right" }}>{d.disqualifyReasons[0]}</span>
+                  )}
+                </div>
+                {d.disqualifyReasons.length > 1 && (
+                  <ul style={{ listStyle: "none", padding: 0, margin: "0.375rem 0 0 0" }}>
+                    {d.disqualifyReasons.map((r, i) => (
+                      <li key={i} style={{ color: "var(--color-text-muted)", padding: "0.125rem 0" }}>
+                        &bull; {r}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
@@ -554,9 +658,6 @@ export default function VanInsuranceFinder() {
         </p>
 
         <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
-          <button className="btn btn-ghost" onClick={back} type="button">
-            Back
-          </button>
           <button className="btn btn-primary" onClick={restart} type="button">
             Start over
           </button>
@@ -596,6 +697,7 @@ export default function VanInsuranceFinder() {
           <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Does your build have all of these?</h2>
           <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginBottom: "1rem" }}>
             Check everything that applies. Some carriers require specific features for RV classification.
+            {answers.features.length === 0 && " It's fine if you don't have any yet."}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {FEATURE_LIST.map((f) => (
@@ -622,6 +724,13 @@ export default function VanInsuranceFinder() {
               </label>
             ))}
           </div>
+          {answers.features.length > 0 && answers.features.length < 6 && (
+            <p style={{ fontSize: "0.8125rem", color: "var(--color-text-subtle)", marginTop: "0.75rem" }}>
+              {6 - answers.features.filter((f) => SIX_REQUIRED.includes(f)).length > 0
+                ? `${6 - answers.features.filter((f) => SIX_REQUIRED.includes(f)).length} more feature${6 - answers.features.filter((f) => SIX_REQUIRED.includes(f)).length !== 1 ? "s" : ""} needed for Progressive's RV classification`
+                : ""}
+            </p>
+          )}
           <NavButtons onBack={back} onNext={next} />
         </div>
       )}
@@ -746,6 +855,24 @@ export default function VanInsuranceFinder() {
                 <span style={{ fontWeight: 500 }}>{label}</span>
               </label>
             ))}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => update("existingInsurance", [])}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); update("existingInsurance", []); } }}
+              style={{
+                padding: "0.75rem 1rem",
+                background: answers.existingInsurance.length === 0 ? "var(--color-surface)" : "var(--color-bg)",
+                border: answers.existingInsurance.length === 0 ? "2px solid var(--color-accent)" : "1px solid var(--color-border)",
+                borderRadius: "var(--radius-lg)",
+                cursor: "pointer",
+                fontWeight: 500,
+                textAlign: "center",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              None of these
+            </div>
           </div>
           <NavButtons onBack={back} onNext={next} nextLabel="See recommendations" />
         </div>
