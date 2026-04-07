@@ -113,7 +113,7 @@ export default function BuilderAuth({
       >
         <h3 className="text-xl mb-3">Check your email</h3>
         <p className="font-sans-ui text-sm mb-4" style={{ color: "var(--color-text-muted)" }}>
-          We sent a login link to <strong>{email}</strong>. Click it to continue.
+          We emailed a sign-in link to <strong>{email}</strong>. Open it to continue.
         </p>
         <button
           onClick={() => { setSent(false); setEmail(""); }}
