@@ -509,15 +509,20 @@ function DashboardInner() {
             {saving ? "Saving..." : "Save changes"}
           </button>
           {saved && builder && (
-            <span className="font-sans-ui text-sm" style={{ color: "var(--color-primary)" }}>
-              Changes saved.{" "}
-              <a
-                href={`/builders/${builder.state.toLowerCase()}/${builder.slug}/`}
-                style={{ color: "var(--color-primary)", textDecoration: "underline" }}
-              >
-                View updated profile →
-              </a>
-            </span>
+            <div className="font-sans-ui text-sm">
+              <span style={{ color: "var(--color-primary)" }}>
+                Changes saved.{" "}
+                <a
+                  href={`/builders/${builder.state.toLowerCase()}/${builder.slug}/`}
+                  style={{ color: "var(--color-primary)", textDecoration: "underline" }}
+                >
+                  View updated profile →
+                </a>
+              </span>
+              <p className="mt-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                Your public profile updates within about a minute.
+              </p>
+            </div>
           )}
         </div>
 

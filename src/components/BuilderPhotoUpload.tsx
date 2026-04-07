@@ -29,9 +29,9 @@ export default function BuilderPhotoUpload({
       return;
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setError("Only JPEG, PNG, WebP, and SVG files are accepted.");
+      setError("Only JPEG, PNG, and WebP files are accepted.");
       return;
     }
 
@@ -86,15 +86,18 @@ export default function BuilderPhotoUpload({
         <input
           ref={fileRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/svg+xml"
+          accept="image/jpeg,image/png,image/webp"
           onChange={handleUpload}
           className="sr-only"
           disabled={uploading}
         />
         {uploading ? "Uploading..." : label}
       </label>
+      <p className="mt-1.5 font-sans-ui text-xs" style={{ color: "var(--color-text-subtle, #999)" }}>
+        JPEG, PNG, or WebP. Max 5 MB.
+      </p>
       {error && (
-        <p className="mt-2 font-sans-ui text-xs" style={{ color: "#b91c1c" }}>
+        <p className="mt-1 font-sans-ui text-xs" style={{ color: "#b91c1c" }}>
           {error}
         </p>
       )}
