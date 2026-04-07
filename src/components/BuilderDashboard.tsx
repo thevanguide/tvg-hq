@@ -260,7 +260,7 @@ function DashboardInner() {
               src={logoUrl}
               alt={`${builder.name} logo`}
               className="w-14 h-14 sm:w-16 sm:h-16 object-contain rounded-lg shrink-0 p-1.5 border"
-              style={{ background: "#e8e8e8", borderColor: "var(--color-border)" }}
+              style={{ background: "#2a2a2a", borderColor: "var(--color-border)" }}
             />
           ) : (
             <div
@@ -429,7 +429,7 @@ function DashboardInner() {
                 src={logoUrl}
                 alt="Current logo"
                 className="w-20 h-20 object-contain rounded-lg p-2 border"
-                style={{ background: "#e8e8e8", borderColor: "var(--color-border)" }}
+                style={{ background: "#2a2a2a", borderColor: "var(--color-border)" }}
               />
             </div>
           )}
