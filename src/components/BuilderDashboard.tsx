@@ -508,9 +508,15 @@ function DashboardInner() {
           >
             {saving ? "Saving..." : "Save changes"}
           </button>
-          {saved && (
+          {saved && builder && (
             <span className="font-sans-ui text-sm" style={{ color: "var(--color-primary)" }}>
-              Changes saved. Your profile has been updated.
+              Changes saved.{" "}
+              <a
+                href={`/builders/${builder.state.toLowerCase()}/${builder.slug}/`}
+                style={{ color: "var(--color-primary)", textDecoration: "underline" }}
+              >
+                View updated profile →
+              </a>
             </span>
           )}
         </div>
