@@ -56,7 +56,11 @@ function AdminPanel() {
 
   async function loadData() {
     const client = getAuthClient();
-    if (!client) return;
+    if (!client) {
+      setError("Auth client not available");
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
