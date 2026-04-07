@@ -3,6 +3,7 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Breadcrumbs from "../../../components/Breadcrumbs.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
+import EditListingLink from "../../../components/EditListingLink";
 import {
   getAllBuilders,
   getNearbyBuilders,
@@ -177,6 +178,9 @@ function platformSlug(p: string): string {
               </button>
             )}
           </div>
+
+          {/* Owner-only edit link (renders nothing if not the owner) */}
+          <EditListingLink client:idle builderId={builder.id} />
         </div>
       </div>
     </div>
