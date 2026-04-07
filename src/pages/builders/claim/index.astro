@@ -22,8 +22,8 @@ const stateSlug = Astro.url.searchParams.get("state") || undefined;
     <div class="container-wide py-10 md:py-20 max-w-3xl">
       <Breadcrumbs items={breadcrumbs} />
       <div class="eyebrow mb-4">For builders</div>
-      <h1 class="text-3xl md:text-5xl leading-tight mb-5">Claim Your Listing</h1>
-      <p class="text-lg leading-relaxed" style="color: var(--color-text-muted);">
+      <h1 class="text-3xl md:text-5xl leading-tight mb-5" id="claim-heading">Claim Your Listing</h1>
+      <p class="text-lg leading-relaxed" style="color: var(--color-text-muted);" id="claim-subtitle">
         If your shop is listed in the directory, you can claim your profile to take control of how it appears.
       </p>
     </div>
@@ -76,3 +76,21 @@ const stateSlug = Astro.url.searchParams.get("state") || undefined;
     </section>
   </div>
 </BaseLayout>
+
+<script>
+  // Update heading with builder name from URL param (client-side, since this is a static page)
+  const params = new URLSearchParams(window.location.search);
+  const builderSlug = params.get("builder");
+  if (builderSlug) {
+    // Convert slug to display name: "emery-custom-builds" → "Emery Custom Builds"
+    const name = builderSlug
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+    const heading = document.getElementById("claim-heading");
+    const subtitle = document.getElementById("claim-subtitle");
+    if (heading) heading.textContent = `Claim ${name}`;
+    if (subtitle) subtitle.textContent = `Verify that you own or manage ${name} to take control of how this listing appears in the directory.`;
+    document.title = `Claim ${name} — The Van Guide`;
+  }
+</script>

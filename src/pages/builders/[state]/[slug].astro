@@ -186,6 +186,23 @@ function platformSlug(p: string): string {
     </div>
   </section>
 
+  {/* Claim banner — right below hero, above content */}
+  {!builder.claimed && (
+    <div style="background: var(--color-bg-alt); border-bottom: 1px solid var(--color-border);">
+      <div class="container-wide py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 max-w-4xl">
+        <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+          <strong style="color: var(--color-text);">Is this your business?</strong> Claim this listing to add photos, update your info, and get a verified badge.
+        </p>
+        <a
+          href={`/builders/claim/?builder=${builder.slug}&state=${stateSlug}`}
+          class="btn btn-accent text-sm shrink-0"
+        >
+          Claim this listing
+        </a>
+      </div>
+    </div>
+  )}
+
   <div class="container-wide py-12 md:py-16 max-w-4xl">
     {/* About section */}
     {builder.description && (
@@ -202,9 +219,9 @@ function platformSlug(p: string): string {
       </section>
     )}
 
-    {/* Gallery or placeholder */}
-    <section class="mb-12">
-      {builder.gallery_urls && builder.gallery_urls.length > 0 ? (
+    {/* Gallery — only show if photos exist */}
+    {builder.gallery_urls && builder.gallery_urls.length > 0 && (
+      <section class="mb-12">
         <div class="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {builder.gallery_urls.map((url, i) => (
             <img
@@ -216,23 +233,8 @@ function platformSlug(p: string): string {
             />
           ))}
         </div>
-      ) : (
-        <div
-          class="w-full aspect-video flex items-center justify-center rounded-lg"
-          style="background: var(--color-bg-alt); border: 1px dashed var(--color-border-strong);"
-        >
-          <div class="text-center" style="color: var(--color-text-subtle);">
-            <img
-              src="/images/builder-placeholder.svg"
-              alt=""
-              class="w-24 h-24 mx-auto mb-3 opacity-40"
-              loading="lazy"
-            />
-            <p class="font-sans-ui text-sm">Photos will appear here once this builder claims their profile</p>
-          </div>
-        </div>
-      )}
-    </section>
+      </section>
+    )}
 
     {/* Services & platforms */}
     {(builder.services.length > 0 || builder.platforms.length > 0) && (
@@ -367,6 +369,26 @@ function platformSlug(p: string): string {
       )}
     </section>
 
+    {/* Claim listing CTA — above nearby builders */}
+    {!builder.claimed && (
+      <section class="mb-12 p-5 sm:p-8 border" style="border-color: var(--color-primary); border-radius: var(--radius-lg); background: var(--color-surface);">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div class="flex-1">
+            <h3 class="text-xl sm:text-2xl mb-2">Is this your business?</h3>
+            <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+              Claim this listing to add photos, update your description, and display a verified badge. Free during launch.
+            </p>
+          </div>
+          <a
+            href={`/builders/claim/?builder=${builder.slug}&state=${stateSlug}`}
+            class="btn btn-accent shrink-0"
+          >
+            Claim this listing →
+          </a>
+        </div>
+      </section>
+    )}
+
     {/* Nearby builders */}
     {nearbyBuilders.length > 0 && (
       <section class="mb-12">
@@ -390,23 +412,6 @@ function platformSlug(p: string): string {
             />
           ))}
         </div>
-      </section>
-    )}
-
-    {/* Claim listing CTA */}
-    {!builder.claimed && (
-      <section class="mb-12 p-5 sm:p-8 border" style="border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface);">
-        <div class="eyebrow mb-3">Builder</div>
-        <h3 class="text-xl sm:text-2xl mb-3">Is this your business?</h3>
-        <p class="mb-5" style="color: var(--color-text-muted);">
-          Claim your listing to add photos, update your description, and manage how your shop appears in the directory.
-        </p>
-        <a
-          href={`/builders/claim/?builder=${builder.slug}&state=${stateSlug}`}
-          class="btn btn-accent"
-        >
-          Claim this listing →
-        </a>
       </section>
     )}
 
