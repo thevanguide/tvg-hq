@@ -1,21 +1,13 @@
 ---
 import ToolLayout from "../../../layouts/ToolLayout.astro";
+import VanInsuranceFinder from "../../../components/VanInsuranceFinder";
 ---
 
 <ToolLayout
-  title="Van Insurance Finder"
-  description="Answer a few questions and get a shortlist of carriers that actually cover custom conversion vans."
+  title="Van Insurance Finder — Find the Right Carrier for Your Converted Van"
+  description="Answer 6 quick questions about your van conversion and get personalized carrier recommendations based on your build type, state, and how you use the van."
   heading="Van Insurance Finder"
-  intro="Coming soon. The content/logic for this tool is being developed in a separate workstream — this page is scaffolding so the route exists."
+  intro="Answer a few questions about your build and we'll tell you which carriers actually cover your van — and which ones won't."
 >
-  <!-- Placeholder for a future React island:
-       <VanInsuranceFinder client:load />
-  -->
-  <div
-    class="p-10 text-center border border-dashed"
-    style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
-  >
-    <p class="text-lg" style="color: var(--color-text-muted);">Tool launching alongside our insurance content.</p>
-    <a href="/insurance/" class="btn btn-primary mt-6 inline-block">Read insurance guides →</a>
-  </div>
+  <VanInsuranceFinder client:load />
 </ToolLayout>
