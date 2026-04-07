@@ -1,0 +1,35 @@
+---
+import ArticleLayout from "../../layouts/ArticleLayout.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+  const entries = await getCollection(
+    "financing",
+    ({ data }) => !data.draft && !data.pillar,
+  );
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<"financing">;
+}
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<ArticleLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  publishedDate={entry.data.publishedDate}
+  lastUpdated={entry.data.lastUpdated}
+  author={entry.data.author}
+  category={entry.data.category}
+  cluster={entry.data.cluster}
+  keywords={entry.data.keywords}
+  ogImage={entry.data.ogImage}
+>
+  <Content />
+</ArticleLayout>

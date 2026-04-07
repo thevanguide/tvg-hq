@@ -45,4 +45,9 @@ const blog = defineCollection({
   schema: referenceSchema,
 });
 
-export const collections = { insurance, registration, certification, blog };
+const financing = defineCollection({
+  type: "content",
+  schema: referenceSchema,
+});
+
+export const collections = { insurance, registration, certification, blog, financing };
