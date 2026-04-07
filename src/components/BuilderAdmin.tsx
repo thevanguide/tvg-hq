@@ -76,8 +76,11 @@ function AdminPanel() {
       if (editsRes.error) throw new Error(editsRes.error.message);
       if (statsRes.error) throw new Error(statsRes.error.message);
 
-      setClaims(claimsRes.data || []);
-      setEdits(editsRes.data || []);
+      // RPCs return jsonb — may come as array directly or need parsing
+      const claimsData = Array.isArray(claimsRes.data) ? claimsRes.data : [];
+      const editsData = Array.isArray(editsRes.data) ? editsRes.data : [];
+      setClaims(claimsData);
+      setEdits(editsData);
       setStats(statsRes.data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load";
