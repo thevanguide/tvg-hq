@@ -1,4 +1,4 @@
-import type { Builder } from "./supabase";
+import { stateToSlug, type Builder } from "./supabase";
 
 /**
  * SEO helpers for the Van Builder Directory.
@@ -125,4 +125,64 @@ export function localBusinessJsonLd(builder: Builder, _siteUrl?: string) {
   }
 
   return jsonLd;
+}
+
+// ---------------------------------------------------------------------------
+// ItemList JSON-LD — for directory listing pages (state, city, platform, etc.)
+// ---------------------------------------------------------------------------
+
+interface ItemListBuilder {
+  name: string;
+  slug: string;
+  state: string;
+}
+
+/**
+ * Generates an ItemList schema for a directory listing page.
+ * Each builder becomes a ListItem with a link to their profile.
+ */
+export function itemListJsonLd(
+  builders: ItemListBuilder[],
+  listName: string,
+  siteUrl = "https://thevanguide.com",
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: listName,
+    numberOfItems: builders.length,
+    itemListElement: builders.map((b, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: b.name,
+      url: `${siteUrl}/builders/${stateToSlug(b.state)}/${b.slug}/`,
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// FAQPage JSON-LD
+// ---------------------------------------------------------------------------
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+/**
+ * Generates a FAQPage schema from question/answer pairs.
+ */
+export function faqPageJsonLd(faqs: FaqItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
 }

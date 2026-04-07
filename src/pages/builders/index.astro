@@ -2,6 +2,7 @@
 import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
 import BuilderSearch from "../../components/BuilderSearch";
 import { getAllBuilders, getDistinctStates, stateToSlug } from "../../lib/supabase";
+import { itemListJsonLd } from "../../lib/seo";
 
 const builders = await getAllBuilders();
 const states = await getDistinctStates();
@@ -143,5 +144,10 @@ const searchData = builders.map((b) => ({
         </div>
       </section>
     </>
+  )}
+
+  {/* ItemList structured data */}
+  {builders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(builders, "Van Conversion Builder Directory"))} />
   )}
 </DirectoryLayout>

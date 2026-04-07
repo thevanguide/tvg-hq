@@ -7,7 +7,7 @@ import {
   stateToSlug,
   cityToSlug,
 } from "../../../lib/supabase";
-import { stateMeta } from "../../../lib/seo";
+import { stateMeta, itemListJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -140,4 +140,9 @@ const searchData = builders.map((b) => ({
     <a href="/builders/platform/promaster/">ProMaster builders</a>
     <a href="/insurance/best-for-van-conversions/">Van conversion insurance</a>
   </nav>
+
+  {/* ItemList structured data */}
+  {builders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(builders, `Van Conversion Builders in ${stateName}`))} />
+  )}
 </DirectoryLayout>

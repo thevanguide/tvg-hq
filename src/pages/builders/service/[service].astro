@@ -2,7 +2,7 @@
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import { getAllBuilders, toUrlSlug } from "../../../lib/supabase";
-import { serviceMeta } from "../../../lib/seo";
+import { serviceMeta, itemListJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -101,4 +101,9 @@ const breadcrumbs = [
     <a href="/builders/tier/premium/">Premium builders</a>
     <a href="/builders/style/custom/">Custom builds</a>
   </nav>
+
+  {/* ItemList structured data */}
+  {builders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(sorted, `${serviceName} Van Builders`))} />
+  )}
 </DirectoryLayout>

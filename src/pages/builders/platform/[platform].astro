@@ -2,7 +2,7 @@
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import { getAllBuilders, toUrlSlug } from "../../../lib/supabase";
-import { platformMeta } from "../../../lib/seo";
+import { platformMeta, itemListJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -104,4 +104,9 @@ const otherPlatforms = ["Sprinter", "ProMaster", "Transit"].filter(
     <a href="/builders/tier/premium/">Premium builders</a>
     <a href="/builders/service/off-grid/">Off-grid specialists</a>
   </nav>
+
+  {/* ItemList structured data */}
+  {builders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(sorted, `${platformName} Van Conversion Builders`))} />
+  )}
 </DirectoryLayout>

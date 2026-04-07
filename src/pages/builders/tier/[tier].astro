@@ -2,7 +2,7 @@
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import { getAllBuilders } from "../../../lib/supabase";
-import { tierMeta } from "../../../lib/seo";
+import { tierMeta, itemListJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -102,4 +102,9 @@ const otherTiers = ["Budget", "Mid", "Premium", "Luxury"].filter(
     <a href="/builders/platform/sprinter/">Sprinter builders</a>
     <a href="/builders/style/custom/">Custom builds</a>
   </nav>
+
+  {/* ItemList structured data */}
+  {builders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(sorted, `${tierName} Van Conversion Builders`))} />
+  )}
 </DirectoryLayout>

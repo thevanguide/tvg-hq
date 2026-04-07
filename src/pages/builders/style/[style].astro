@@ -2,7 +2,7 @@
 import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import { getAllBuilders } from "../../../lib/supabase";
-import { styleMeta } from "../../../lib/seo";
+import { styleMeta, itemListJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -96,4 +96,9 @@ const otherStyle = styleName === "Custom" ? "Standard" : "Custom";
     <a href="/builders/platform/sprinter/">Sprinter builders</a>
     <a href="/builders/tier/luxury/">Luxury builders</a>
   </nav>
+
+  {/* ItemList structured data */}
+  {builders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(sorted, `${styleName} Van Conversion Builders`))} />
+  )}
 </DirectoryLayout>

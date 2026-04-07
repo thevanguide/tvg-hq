@@ -8,7 +8,7 @@ import {
   cityToSlug,
   getNearbyBuilders,
 } from "../../../../lib/supabase";
-import { cityMeta } from "../../../../lib/seo";
+import { cityMeta, itemListJsonLd } from "../../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -180,4 +180,9 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
     <a href="/builders/">All states</a>
     <a href="/insurance/best-for-van-conversions/">Van conversion insurance</a>
   </nav>
+
+  {/* ItemList structured data */}
+  {cityBuilders.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(cityBuilders, `Van Conversion Builders in ${cityName}, ${stateName}`))} />
+  )}
 </DirectoryLayout>
