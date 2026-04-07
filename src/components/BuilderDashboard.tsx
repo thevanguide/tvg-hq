@@ -514,7 +514,7 @@ function DashboardInner() {
               <span style={{ color: "var(--color-primary)" }}>
                 Changes saved.{" "}
                 <a
-                  href={`/builders/${builder.state.toLowerCase()}/${builder.slug}/`}
+                  href={profileHref}
                   style={{ color: "var(--color-primary)", textDecoration: "underline" }}
                 >
                   View updated profile →
