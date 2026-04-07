@@ -6,6 +6,8 @@ interface Props {
   folder?: string;
   onUploaded: (publicUrl: string) => void;
   label?: string;
+  /** Max file size in MB. Defaults to 5. */
+  maxSizeMB?: number;
 }
 
 export default function BuilderPhotoUpload({
@@ -13,6 +15,7 @@ export default function BuilderPhotoUpload({
   folder = "photos",
   onUploaded,
   label = "Upload photo",
+  maxSizeMB = 5,
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +26,9 @@ export default function BuilderPhotoUpload({
     if (!file) return;
 
     // Validate client-side
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = maxSizeMB * 1024 * 1024;
     if (file.size > maxSize) {
-      setError("File must be under 5MB.");
+      setError(`File must be under ${maxSizeMB} MB.`);
       return;
     }
 
@@ -94,7 +97,7 @@ export default function BuilderPhotoUpload({
         {uploading ? "Uploading..." : label}
       </label>
       <p className="mt-1.5 font-sans-ui text-xs" style={{ color: "var(--color-text-subtle, #999)" }}>
-        JPEG, PNG, or WebP. Max 5 MB.
+        JPEG, PNG, or WebP. Max {maxSizeMB} MB.
       </p>
       {error && (
         <p className="mt-1 font-sans-ui text-xs" style={{ color: "#b91c1c" }}>

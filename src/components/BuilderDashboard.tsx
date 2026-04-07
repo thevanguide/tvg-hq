@@ -438,6 +438,7 @@ function DashboardInner() {
             folder="logos"
             onUploaded={handleLogoUploaded}
             label="Upload new logo"
+            maxSizeMB={2}
           />
         </div>
 
