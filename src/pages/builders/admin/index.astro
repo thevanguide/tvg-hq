@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import BuilderAdmin from "../../../components/BuilderAdmin";
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Admin", href: "/builders/admin/" },
+];
+---
+
+<BaseLayout
+  title="Builder Admin"
+  description="Admin dashboard for managing builder claims and edits."
+>
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-10 md:py-16 max-w-4xl">
+      <Breadcrumbs items={breadcrumbs} />
+      <h1 class="text-3xl md:text-4xl leading-tight mb-3">Admin</h1>
+      <p class="text-base leading-relaxed" style="color: var(--color-text-muted);">
+        Review and manage builder claims and profile edits.
+      </p>
+    </div>
+  </section>
+
+  <div class="container-wide py-12 md:py-16 max-w-4xl">
+    <BuilderAdmin client:idle />
+  </div>
+</BaseLayout>
