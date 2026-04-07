@@ -30,3 +30,6 @@ pnpm-debug.log*
 
 # claude code session tooling
 .claude/
+
+# firecrawl scraper cache
+.firecrawl/
