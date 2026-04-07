@@ -203,6 +203,18 @@ function platformSlug(p: string): string {
     </div>
   )}
 
+  {/* Owner disclosure — ECB only */}
+  {builder.slug === "emery-custom-builds" && (
+    <div style="background: var(--color-bg-alt); border-bottom: 1px solid var(--color-border);">
+      <div class="container-wide py-3 max-w-4xl">
+        <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+          <strong style="color: var(--color-text);">Disclosure:</strong> This shop is operated by the founder of The Van Guide. It is listed under the same criteria as every other builder and receives no preferential placement.
+          <a href="/builders/how-we-review/#conflicts-of-interest" class="ml-1">Learn more →</a>
+        </p>
+      </div>
+    </div>
+  )}
+
   <div class="container-wide py-12 md:py-16 max-w-4xl">
     {/* About section */}
     {builder.description && (
