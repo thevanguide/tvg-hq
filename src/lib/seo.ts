@@ -81,6 +81,26 @@ export function styleMeta(style: string, count: number) {
   };
 }
 
+export function serviceShopProfileMeta(shop: Builder) {
+  const location = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
+  return {
+    title: `${shop.name} — Van Repair & Service in ${location} | The Van Guide`,
+    description:
+      shop.description?.slice(0, 155) ??
+      `${shop.name} is a van repair and service shop in ${location}. View services, reviews, and contact info.`,
+  };
+}
+
+export function serviceShopStateMeta(stateName: string, count: number) {
+  return {
+    title: `Van Repair & Service Shops in ${stateName} | The Van Guide`,
+    description: `Browse ${count || ""} van repair and service ${count === 1 ? "shop" : "shops"} in ${stateName}. Find Sprinter specialists, mobile installers, and upgrade shops.`.replace(
+      "  ",
+      " ",
+    ),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // LocalBusiness JSON-LD
 // ---------------------------------------------------------------------------
@@ -156,6 +176,29 @@ export function itemListJsonLd(
       position: idx + 1,
       name: b.name,
       url: `${siteUrl}/builders/${stateToSlug(b.state)}/${b.slug}/`,
+    })),
+  };
+}
+
+/**
+ * Generates an ItemList schema for the services directory.
+ * Each shop links to /services/[state]/[slug]/.
+ */
+export function serviceItemListJsonLd(
+  shops: ItemListBuilder[],
+  listName: string,
+  siteUrl = "https://thevanguide.com",
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: listName,
+    numberOfItems: shops.length,
+    itemListElement: shops.map((b, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: b.name,
+      url: `${siteUrl}/services/${stateToSlug(b.state)}/${b.slug}/`,
     })),
   };
 }

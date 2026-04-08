@@ -1,0 +1,111 @@
+---
+import DirectoryLayout from "../../../layouts/DirectoryLayout.astro";
+import BuilderSearch from "../../../components/BuilderSearch";
+import {
+  getAllServiceShops,
+  getServiceShopsByState,
+  stateToSlug,
+} from "../../../lib/supabase";
+import { serviceShopStateMeta, serviceItemListJsonLd } from "../../../lib/seo";
+
+export async function getStaticPaths() {
+  const shops = await getAllServiceShops();
+  const states = new Set(shops.map((s) => s.state));
+
+  // Seed key states so the route exists even with an empty database
+  const seed = [
+    "California", "Colorado", "Oregon", "Utah", "Arizona",
+    "Texas", "Washington", "Florida", "North Carolina",
+  ];
+  seed.forEach((s) => states.add(s));
+
+  return [...states].map((state) => ({
+    params: { state: stateToSlug(state) },
+    props: { stateName: state },
+  }));
+}
+
+interface Props {
+  stateName: string;
+}
+const { stateName } = Astro.props;
+
+const shops = await getServiceShopsByState(stateName);
+const meta = serviceShopStateMeta(stateName, shops.length);
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Repairs & Services", href: "/services/" },
+  { label: stateName, href: `/services/${stateToSlug(stateName)}/` },
+];
+
+const searchData = shops.map((s) => ({
+  id: s.id,
+  name: s.name,
+  slug: s.slug,
+  state: s.state,
+  city: s.city,
+  tagline: s.tagline,
+  platforms: s.platforms,
+  services: s.services,
+  price_tier: s.price_tier,
+  description: s.description,
+  logo_url: s.logo_url,
+  verified: s.verified,
+  review_rating: s.review_rating,
+  review_count: s.review_count,
+  website: s.website,
+  year_founded: s.year_founded,
+  build_style: s.build_style,
+  latitude: s.latitude,
+  longitude: s.longitude,
+}));
+---
+
+<DirectoryLayout
+  title={meta.title}
+  description={meta.description}
+  eyebrow="Repairs & Services"
+  heading={`Van Repair & Service Shops in ${stateName}`}
+  intro={shops.length > 0
+    ? `${shops.length} van repair and service ${shops.length === 1 ? "shop" : "shops"} in ${stateName}. Find Sprinter specialists, mobile installers, and upgrade shops.`
+    : `We're building out the ${stateName} service directory. Check back soon.`}
+  breadcrumbs={breadcrumbs}
+>
+  {shops.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <h2 class="text-xl mb-2">No listings yet</h2>
+      <p style="color: var(--color-text-muted);">
+        We're still adding {stateName} service shops to the directory. Check back soon.
+      </p>
+    </div>
+  ) : (
+    <BuilderSearch client:idle builders={searchData} basePath="/services" />
+  )}
+
+  <section
+    class="mt-12 p-6 border flex flex-col sm:flex-row sm:items-center gap-4"
+    style="border-color: var(--color-primary); border-radius: var(--radius-lg); background: var(--color-surface);"
+  >
+    <div class="flex-1">
+      <div class="eyebrow mb-2">For shops</div>
+      <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+        Run a van repair or service shop in {stateName}? Get listed for free.
+      </p>
+    </div>
+    <a href="/builders/add/" class="btn btn-accent text-sm shrink-0">Add your shop</a>
+  </section>
+
+  <nav class="mt-8 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
+    <a href="/services/">← All states</a>
+    <a href="/builders/">Find a builder</a>
+    <a href="/insurance/best-for-van-conversions/">Van conversion insurance</a>
+  </nav>
+
+  {shops.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(serviceItemListJsonLd(shops, `Van Repair & Service Shops in ${stateName}`))} />
+  )}
+</DirectoryLayout>

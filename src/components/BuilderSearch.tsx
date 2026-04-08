@@ -26,6 +26,7 @@ interface BuilderData {
 
 interface Props {
   builders: BuilderData[];
+  basePath?: string;
 }
 
 type SortOption = "rating" | "reviews" | "alpha" | "newest" | "distance";
@@ -43,7 +44,7 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function BuilderSearch({ builders }: Props) {
+export default function BuilderSearch({ builders, basePath = "/builders" }: Props) {
   const getInitialParams = () => {
     if (typeof window === "undefined") return new URLSearchParams();
     return new URLSearchParams(window.location.search);
@@ -615,6 +616,7 @@ export default function BuilderSearch({ builders }: Props) {
           reviewRating={b.review_rating ?? undefined}
           reviewCount={b.review_count ?? undefined}
           website={b.website ?? undefined}
+          basePath={basePath}
         />
       </div>
     );

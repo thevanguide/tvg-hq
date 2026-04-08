@@ -15,6 +15,7 @@ interface Props {
   reviewRating?: number;
   reviewCount?: number;
   website?: string;
+  basePath?: string;
 }
 
 const {
@@ -31,10 +32,11 @@ const {
   reviewRating,
   reviewCount,
   website,
+  basePath = "/builders",
 } = Astro.props;
 
 const stateSlug = stateToSlug(state);
-const profileHref = `/builders/${stateSlug}/${slug}/`;
+const profileHref = `${basePath}/${stateSlug}/${slug}/`;
 
 function platformSlug(p: string): string {
   return toUrlSlug(p);

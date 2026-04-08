@@ -1,0 +1,110 @@
+---
+import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
+import BuilderSearch from "../../components/BuilderSearch";
+import { getAllServiceShops, getDistinctServiceStates, stateToSlug } from "../../lib/supabase";
+import { serviceItemListJsonLd } from "../../lib/seo";
+
+const shops = await getAllServiceShops();
+const states = await getDistinctServiceStates();
+
+const stateCounts = new Map<string, number>();
+for (const s of shops) {
+  stateCounts.set(s.state, (stateCounts.get(s.state) ?? 0) + 1);
+}
+const stateEntries = [...stateCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+const shopCount = shops.length;
+const stateCount = states.length;
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Repairs & Services", href: "/services/" },
+];
+
+const searchData = shops.map((s) => ({
+  id: s.id,
+  name: s.name,
+  slug: s.slug,
+  state: s.state,
+  city: s.city,
+  tagline: s.tagline,
+  platforms: s.platforms,
+  services: s.services,
+  price_tier: s.price_tier,
+  description: s.description,
+  logo_url: s.logo_url,
+  verified: s.verified,
+  review_rating: s.review_rating,
+  review_count: s.review_count,
+  website: s.website,
+  year_founded: s.year_founded,
+  build_style: s.build_style,
+  latitude: s.latitude,
+  longitude: s.longitude,
+}));
+---
+
+<DirectoryLayout
+  title="Van Repair & Service Shop Directory | The Van Guide"
+  description={`Browse ${shopCount || ""} van repair and service shops across the US. Find Sprinter specialists, mobile installers, electrical upgrade shops, and more.`.replace("  ", " ")}
+  eyebrow="Directory"
+  heading="Van Repair & Service Shops"
+  intro={shopCount > 0
+    ? `Browse ${shopCount} van repair and service shops across ${stateCount} ${stateCount === 1 ? "state" : "states"}. Sprinter specialists, mobile installers, electrical upgrades, and more.`
+    : "An independent directory of US van repair and service shops. No paid placements."}
+  breadcrumbs={breadcrumbs}
+>
+  {shops.length === 0 ? (
+    <div
+      class="p-10 text-center border border-dashed"
+      style="border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface);"
+    >
+      <div class="eyebrow mb-3">Coming soon</div>
+      <h2 class="text-2xl mb-3">Service shop directory is being built</h2>
+      <p class="max-w-xl mx-auto" style="color: var(--color-text-muted);">
+        We're adding repair shops, mobile installers, and upgrade specialists. Check back soon.
+      </p>
+    </div>
+  ) : (
+    <>
+      <BuilderSearch client:idle builders={searchData} basePath="/services" />
+
+      {stateEntries.length > 0 && (
+        <section class="mb-12">
+          <div class="eyebrow mb-4">Browse by state</div>
+          <div class="flex flex-wrap gap-2">
+            {stateEntries.map(([state, count]) => (
+              <a
+                href={`/services/${stateToSlug(state)}/`}
+                class="px-3 py-1.5 font-sans-ui text-sm border no-underline transition-colors hover:border-current"
+                style="border-color: var(--color-border-strong); border-radius: 999px; color: var(--color-text);"
+              >
+                {state} <span style="color: var(--color-text-subtle);">({count})</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  )}
+
+  <section
+    class="mb-12 p-6 sm:p-8 border flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
+    style="border-color: var(--color-primary); border-radius: var(--radius-lg); background: var(--color-surface);"
+  >
+    <div class="flex-1">
+      <div class="eyebrow mb-2">For shops</div>
+      <h2 class="text-xl sm:text-2xl mb-2">Run a van repair or service shop?</h2>
+      <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+        Add your shop to the directory for free. Reach van owners looking for service in your area.
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+      <a href="/builders/add/" class="btn btn-accent text-center">Add your shop</a>
+    </div>
+  </section>
+
+  {shops.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(serviceItemListJsonLd(shops, "Van Repair & Service Shop Directory"))} />
+  )}
+</DirectoryLayout>

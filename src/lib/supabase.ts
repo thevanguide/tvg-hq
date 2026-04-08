@@ -50,6 +50,7 @@ export type Builder = {
   logo_url: string | null;
   gallery_urls: string[];
   build_style: "Custom" | "Standard" | null;
+  category: "builder" | "service" | null;
   place_id: string | null;
   google_maps_url: string | null;
   review_count: number | null;
@@ -147,11 +148,11 @@ function haversineDistance(
 // ---------------------------------------------------------------------------
 
 let _allBuildersCache: Builder[] | null = null;
+let _allServiceShopsCache: Builder[] | null = null;
 
 /**
- * Fetch all published builders. Caches results for the duration of the build
- * so multiple pages don't re-query Supabase. Returns empty array if Supabase
- * isn't configured or the table is empty.
+ * Fetch all published builders (category = 'builder'). Caches results for the
+ * duration of the build so multiple pages don't re-query Supabase.
  */
 export async function getAllBuilders(): Promise<Builder[]> {
   if (_allBuildersCache) return _allBuildersCache;
@@ -161,6 +162,7 @@ export async function getAllBuilders(): Promise<Builder[]> {
     .from("builders")
     .select("*")
     .eq("published", true)
+    .eq("category", "builder")
     .order("name", { ascending: true });
   if (error) {
     console.warn("[supabase] builders fetch failed:", error.message);
@@ -261,4 +263,69 @@ export async function getDistinctCities(
   return [...counts.entries()]
     .map(([city, count]) => ({ city, count }))
     .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+}
+
+// ---------------------------------------------------------------------------
+// Service shop helpers (category = 'service')
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch all published service/repair shops. Cached separately from builders.
+ */
+export async function getAllServiceShops(): Promise<Builder[]> {
+  if (_allServiceShopsCache) return _allServiceShopsCache;
+  const supabase = getSupabase();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("builders")
+    .select("*")
+    .eq("published", true)
+    .eq("category", "service")
+    .order("name", { ascending: true });
+  if (error) {
+    console.warn("[supabase] service shops fetch failed:", error.message);
+    return [];
+  }
+  const shops = ((data ?? []) as Builder[]).map((b) => ({
+    ...b,
+    state: stateCodeToName[b.state] ?? b.state,
+  }));
+  _allServiceShopsCache = shops;
+  return _allServiceShopsCache;
+}
+
+export async function getServiceShopsByState(state: string): Promise<Builder[]> {
+  const all = await getAllServiceShops();
+  const s = state.toLowerCase();
+  return all.filter((b) => b.state.toLowerCase() === s);
+}
+
+export async function getServiceShopBySlug(
+  state: string,
+  slug: string,
+): Promise<Builder | null> {
+  const all = await getServiceShopsByState(state);
+  return all.find((b) => b.slug === slug) ?? null;
+}
+
+export async function getDistinctServiceStates(): Promise<string[]> {
+  const all = await getAllServiceShops();
+  return [...new Set(all.map((b) => b.state))].sort();
+}
+
+export async function getNearbyServiceShops(
+  lat: number,
+  lng: number,
+  radiusMiles: number,
+  excludeId?: string,
+): Promise<(Builder & { distance: number })[]> {
+  const all = await getAllServiceShops();
+  return all
+    .filter((b) => b.latitude != null && b.longitude != null && b.id !== excludeId)
+    .map((b) => ({
+      ...b,
+      distance: haversineDistance(lat, lng, b.latitude!, b.longitude!),
+    }))
+    .filter((b) => b.distance <= radiusMiles)
+    .sort((a, b) => a.distance - b.distance);
 }

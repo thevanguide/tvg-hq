@@ -14,6 +14,7 @@ interface BuilderCardProps {
   reviewRating?: number;
   reviewCount?: number;
   website?: string;
+  basePath?: string;
 }
 
 function stateToSlug(state: string): string {
@@ -50,9 +51,10 @@ export default function BuilderCardReact({
   reviewRating,
   reviewCount,
   website,
+  basePath = "/builders",
 }: BuilderCardProps) {
   const stateSlug = stateToSlug(state);
-  const profileHref = `/builders/${stateSlug}/${slug}/`;
+  const profileHref = `${basePath}/${stateSlug}/${slug}/`;
 
   return (
     <div
