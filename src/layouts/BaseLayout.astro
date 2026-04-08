@@ -7,6 +7,7 @@ interface Props {
   title: string;
   description?: string;
   noindex?: boolean;
+  nocanonical?: boolean;
   ogImage?: string;
   ogType?: "website" | "article";
   canonical?: string;
@@ -17,13 +18,14 @@ const {
   title,
   description = "Independent resource for van conversion owners and shoppers. Find builders, navigate insurance and registration, and plan your build.",
   noindex = false,
+  nocanonical = false,
   ogImage = "/og-default.png",
   ogType = "website",
   canonical,
   showChrome = true,
 } = Astro.props;
 
-const canonicalUrl = canonical ?? new URL(Astro.url.pathname, Astro.site).toString();
+const canonicalUrl = nocanonical ? null : (canonical ?? new URL(Astro.url.pathname, Astro.site).toString());
 const ogImageUrl = new URL(ogImage, Astro.site).toString();
 const fullTitle = title.includes("The Van Guide") ? title : `${title} — The Van Guide`;
 
@@ -71,13 +73,13 @@ const websiteJsonLd = {
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta name="google-site-verification" content="sxRnNZ9uz4X0cbyqH286LfEpP-OwXY1EgQEB4yIXaOs" />
-    <link rel="canonical" href={canonicalUrl} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
     <!-- Open Graph -->
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonicalUrl} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:site_name" content="The Van Guide" />
 
