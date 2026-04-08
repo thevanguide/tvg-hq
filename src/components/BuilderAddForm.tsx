@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getAuthClient } from "../lib/supabase-auth";
+import { getSupabase, stateNameToCode } from "../lib/supabase";
 import BuilderAuth from "./BuilderAuth";
 
 const US_STATES = [
@@ -48,6 +49,37 @@ function AddFormInner() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Similarity check
+  type SimilarBuilder = { id: string; name: string; slug: string; state: string; city: string | null; website: string | null };
+  const [similarBuilders, setSimilarBuilders] = useState<SimilarBuilder[]>([]);
+  const [similarDismissed, setSimilarDismissed] = useState(false);
+  const similarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (similarTimer.current) clearTimeout(similarTimer.current);
+    if (businessName.trim().length < 3) { setSimilarBuilders([]); return; }
+    similarTimer.current = setTimeout(async () => {
+      const supabase = getSupabase();
+      if (!supabase) return;
+      let query = supabase
+        .from("builders")
+        .select("id, name, slug, state, city, website")
+        .ilike("name", `%${businessName.trim()}%`)
+        .eq("published", true)
+        .limit(4);
+      if (state) query = query.eq("state", stateNameToCode[state] ?? state);
+      const { data } = await query;
+      if (data && data.length > 0) setSimilarBuilders(data as SimilarBuilder[]);
+      else setSimilarBuilders([]);
+    }, 400);
+    return () => { if (similarTimer.current) clearTimeout(similarTimer.current); };
+  }, [businessName, state]);
+
+  function handleNameChange(val: string) {
+    setBusinessName(val);
+    setSimilarDismissed(false);
+  }
 
   function togglePlatform(p: string) {
     setPlatforms((prev) => {
@@ -139,13 +171,50 @@ function AddFormInner() {
           type="text"
           id="add-name"
           value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
+          onChange={(e) => handleNameChange(e.target.value)}
           required
           placeholder="Your shop name"
           className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
           style={inputStyle}
         />
       </div>
+
+      {/* Similar builders — show before they fill out the whole form */}
+      {similarBuilders.length > 0 && !similarDismissed && (
+        <div
+          className="p-4 border"
+          style={{ borderColor: "var(--color-primary)", borderRadius: "var(--radius-md)", background: "var(--color-surface)" }}
+        >
+          <p className="font-sans-ui text-sm font-semibold mb-2" style={{ color: "var(--color-primary)" }}>
+            We found similar listings — is one of these yours?
+          </p>
+          <div className="space-y-2 mb-3">
+            {similarBuilders.map((b) => (
+              <div key={b.id} className="flex items-center justify-between gap-3">
+                <div className="font-sans-ui text-sm">
+                  <span className="font-medium">{b.name}</span>
+                  {b.city && <span style={{ color: "var(--color-text-muted)" }}> — {b.city}, {b.state}</span>}
+                </div>
+                <a
+                  href="/builders/claim/"
+                  className="px-3 py-1 text-xs font-semibold rounded-full border whitespace-nowrap"
+                  style={{ borderColor: "var(--color-primary)", color: "var(--color-primary)" }}
+                >
+                  Claim it
+                </a>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSimilarDismissed(true)}
+            className="font-sans-ui text-xs underline"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            None of these — my shop isn't listed yet
+          </button>
+        </div>
+      )}
 
       {/* City + State */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
