@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import ArticleCard from "../../components/ArticleCard.astro";
+import StateSearch from "../../components/StateSearch";
 import { getCollection } from "astro:content";
 
 const all = await getCollection("registration", ({ data }) => !data.draft);
@@ -52,17 +52,16 @@ const fmtDate = (d: Date) =>
         <p class="text-base md:text-lg mb-8 md:mb-10 max-w-2xl" style="color: var(--color-text-muted);">
           Detailed retitling walkthroughs for each US state.
         </p>
-        <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {others.map((entry) => (
-            <ArticleCard
-              href={`/registration/${entry.slug}/`}
-              title={entry.data.title}
-              description={entry.data.description}
-              lastUpdated={entry.data.lastUpdated}
-              cluster={entry.data.cluster}
-            />
-          ))}
-        </div>
+        <StateSearch
+          client:load
+          states={others.map((entry) => ({
+            href: `/registration/${entry.slug}/`,
+            title: entry.data.title,
+            description: entry.data.description,
+            lastUpdated: entry.data.lastUpdated?.toISOString(),
+            cluster: entry.data.cluster,
+          }))}
+        />
       </div>
     </section>
   )}
