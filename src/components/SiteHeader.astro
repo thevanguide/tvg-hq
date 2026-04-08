@@ -6,6 +6,7 @@ interface NavDropdownItem {
   label: string;
   href: string;
   description?: string;
+  divider?: boolean;
 }
 interface NavItem {
   label: string;
@@ -46,9 +47,12 @@ const navItems: NavItem[] = [
       { label: "Registration overview", href: "/registration/" },
       { label: "California", href: "/registration/california/" },
       { label: "Texas", href: "/registration/texas/" },
-      { label: "Colorado", href: "/registration/colorado/" },
       { label: "Florida", href: "/registration/florida/" },
-      { label: "Vermont loophole (debunked)", href: "/registration/vermont-loophole/" },
+      { label: "Colorado", href: "/registration/colorado/" },
+      { label: "Arizona", href: "/registration/arizona/" },
+      { label: "Washington", href: "/registration/washington/" },
+      { label: "Browse all 50 states →", href: "/registration/#state-guides" },
+      { label: "Vermont loophole (debunked)", href: "/registration/vermont-loophole/", divider: true },
       { label: "RVIA certification", href: "/certification/rvia/" },
       { label: "Self-certification & DMV", href: "/certification/" },
     ],
@@ -117,13 +121,16 @@ function isActive(item: NavItem): boolean {
             <div class="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
               <div class="py-2 min-w-[260px]" style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
                 {item.items?.map((sub) => (
-                  <a
-                    href={sub.href}
-                    class="block px-4 py-2 text-sm no-underline transition-colors"
-                    style={`color: ${pathname === sub.href ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${pathname === sub.href ? 600 : 400};`}
-                  >
-                    {sub.label}
-                  </a>
+                  <Fragment>
+                    {sub.divider && <hr class="my-1 mx-3 border-0 border-t" style="border-color: var(--color-border);" />}
+                    <a
+                      href={sub.href}
+                      class="block px-4 py-2 text-sm no-underline transition-colors"
+                      style={`color: ${pathname === sub.href ? "var(--color-accent)" : "var(--color-text)"}; font-weight: ${pathname === sub.href ? 600 : 400};`}
+                    >
+                      {sub.label}
+                    </a>
+                  </Fragment>
                 ))}
               </div>
             </div>
@@ -177,13 +184,16 @@ function isActive(item: NavItem): boolean {
             </summary>
             <div class="pb-3 pl-3">
               {item.items?.map((sub) => (
-                <a
-                  href={sub.href}
-                  class="block py-2 text-sm no-underline"
-                  style={`color: ${pathname === sub.href ? "var(--color-accent)" : "var(--color-text-muted)"}; font-weight: ${pathname === sub.href ? 600 : 400}; font-family: var(--font-sans);`}
-                >
-                  {sub.label}
-                </a>
+                <Fragment>
+                  {sub.divider && <hr class="my-1 border-0 border-t" style="border-color: var(--color-border);" />}
+                  <a
+                    href={sub.href}
+                    class="block py-2 text-sm no-underline"
+                    style={`color: ${pathname === sub.href ? "var(--color-accent)" : "var(--color-text-muted)"}; font-weight: ${pathname === sub.href ? 600 : 400}; font-family: var(--font-sans);`}
+                  >
+                    {sub.label}
+                  </a>
+                </Fragment>
               ))}
             </div>
           </details>
