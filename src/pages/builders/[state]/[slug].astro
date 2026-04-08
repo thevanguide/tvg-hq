@@ -437,11 +437,9 @@ function platformSlug(p: string): string {
         <li>
           <a href="/insurance/best-for-van-conversions/">Van conversion insurance: which carriers write these policies</a>
         </li>
-        {builder.state === "California" && (
-          <li>
-            <a href="/registration/california/">How to register a converted van in California</a>
-          </li>
-        )}
+        <li>
+          <a href={`/registration/${stateToSlug(builder.state)}/`}>How to register a converted van in {builder.state}</a>
+        </li>
         {builder.platforms.length > 0 && (
           <li>
             <a href={`/builders/platform/${platformSlug(builder.platforms[0])}/`}>
