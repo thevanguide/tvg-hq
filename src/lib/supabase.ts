@@ -278,40 +278,9 @@ let _allBuildersCache: Builder[] | null = null;
 let _allServiceShopsCache: Builder[] | null = null;
 
 /**
- * Dev-only: layer fixture overrides on top of the fetched DB rows.
- * Disabled by default; opt in with `TVG_DEV_FIXTURES=1` at build time.
- * This is how we validate the dual-profile architecture against real
- * listings (logos, reviews, maps) without mutating the production DB.
- */
-async function applyDevFixtures(builders: Builder[]): Promise<Builder[]> {
-  const flag =
-    (typeof process !== "undefined" && process.env?.TVG_DEV_FIXTURES) ||
-    import.meta.env?.TVG_DEV_FIXTURES ||
-    import.meta.env?.PUBLIC_TVG_DEV_FIXTURES;
-  if (flag !== "1") return builders;
-  try {
-    const mod = await import("./dev-fixtures");
-    const overrides = new Map(
-      mod.DEV_FIXTURE_OVERRIDES.map((f) => [f.id, f.override] as const),
-    );
-    if (overrides.size === 0) return builders;
-    console.warn(
-      `[supabase] TVG_DEV_FIXTURES=1 — applying ${overrides.size} fixture override(s). Do not enable in prod deploy.`,
-    );
-    return builders.map((b) => {
-      const over = overrides.get(b.id);
-      return over ? ({ ...b, ...over } as Builder) : b;
-    });
-  } catch (err) {
-    console.warn("[supabase] failed to load dev-fixtures:", err);
-    return builders;
-  }
-}
-
-/**
  * Fetch every published shop regardless of category tag. Single query per
  * build; downstream helpers derive builder-side and service-side listings
- * from this shared result. Applies dev-fixture overrides when enabled.
+ * from this shared result.
  */
 async function fetchAllPublishedShops(): Promise<Builder[]> {
   if (_allPublishedCache) return _allPublishedCache;
@@ -331,8 +300,7 @@ async function fetchAllPublishedShops(): Promise<Builder[]> {
     ...b,
     state: stateCodeToName[b.state] ?? b.state,
   }));
-  const withFixtures = await applyDevFixtures(rows);
-  _allPublishedCache = withFixtures;
+  _allPublishedCache = rows;
   return _allPublishedCache;
 }
 
