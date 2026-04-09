@@ -72,6 +72,50 @@ if (frauncesBold && interMedium) {
   ];
 }
 
+// ---------- Landing pages (non-MDX) ----------
+// Homepage + hub pages + the sitewide og-default fallback.
+// These get rendered with the same template as articles and written directly to public/og/.
+// og-default.png is also overwritten here so any page without an explicit ogImage still
+// gets a branded fallback instead of the plain text placeholder.
+const LANDING_PAGES = [
+  {
+    output: "../public/og-default.png",
+    title: "Independent reporting for van conversion owners",
+    category: "The Van Guide",
+    photoIndex: 2, // mountain overlook
+  },
+  {
+    output: "../public/og/home.png",
+    title: "Find a van builder. Figure out the insurance. Skip the guesswork.",
+    category: "The Van Guide",
+    photoIndex: 2,
+  },
+  {
+    output: "../public/og/insurance-hub.png",
+    title: "Van Insurance for Converted Sprinters, Transits & ProMasters",
+    category: "Insurance",
+    photoIndex: 1, // sunset sprinter
+  },
+  {
+    output: "../public/og/registration-hub.png",
+    title: "Van Conversion Registration Guides for All 50 States",
+    category: "Registration",
+    photoIndex: 0, // white promaster / desert
+  },
+  {
+    output: "../public/og/builders-hub.png",
+    title: "The US Van Builder Directory",
+    category: "Builders",
+    photoIndex: 2,
+  },
+  {
+    output: "../public/og/blog-hub.png",
+    title: "Van Conversion Reporting, Reviews & Buying Guides",
+    category: "Blog",
+    photoIndex: 1,
+  },
+];
+
 // ---------- Photos ----------
 // Each photo has a manual focal point to keep the van centered in the crop
 const PHOTO_CONFIGS = [
@@ -310,6 +354,46 @@ function textTemplate(title, category) {
   };
 }
 
+// ---------- Render one OG image ----------
+async function renderOgImage({ title, category, photo, gradientBuf, darkBuf }) {
+  const svg = await satori(textTemplate(title, category), {
+    width: WIDTH,
+    height: HEIGHT,
+    fonts,
+  });
+  const textPng = new Resvg(svg, { fitTo: { mode: "width", value: WIDTH } }).render().asPng();
+
+  const bodyHeight = HEIGHT - FOOTER_HEIGHT;
+
+  // Crop photo to body area (exclude footer)
+  const photoCropped = await sharp(photo)
+    .resize(PHOTO_WIDTH, bodyHeight, { fit: "cover", position: "center" })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: {
+      width: WIDTH,
+      height: HEIGHT,
+      channels: 4,
+      background: { r: 251, g: 250, b: 247, alpha: 1 }, // BG color
+    },
+  })
+    .png()
+    .composite([
+      // Photo on right side (body area only)
+      { input: photoCropped, top: 0, left: PHOTO_X },
+      // Dark overlay on photo for readability
+      { input: darkBuf, top: 0, left: PHOTO_X },
+      // Gradient fade from bg into photo
+      { input: gradientBuf, top: 0, left: PHOTO_X },
+      // Text layer on top of everything
+      { input: Buffer.from(textPng), top: 0, left: 0 },
+    ])
+    .png()
+    .toBuffer();
+}
+
 // ---------- Main ----------
 async function main() {
   await mkdir(OUTPUT_DIR, { recursive: true });
@@ -328,8 +412,8 @@ async function main() {
   const mdxFiles = await findMdxFiles(CONTENT_DIR);
   let generated = 0;
   let skipped = 0;
-  let photoIndex = 0;
 
+  // --- MDX content images ---
   for (const file of mdxFiles) {
     const content = await readFile(file, "utf-8");
     const fm = parseFrontmatter(content);
@@ -342,50 +426,35 @@ async function main() {
     const outputPath = join(OUTPUT_DIR, outputName);
     const category = getCategoryLabel(fm, relative(CONTENT_DIR, file));
 
-    // Use photo 3 (mountain overlook) for all cards
-    const photo = photos[2];
-
-    // 1. Render text layer with satori → PNG
-    const svg = await satori(textTemplate(fm.title, category), {
-      width: WIDTH,
-      height: HEIGHT,
-      fonts,
+    const result = await renderOgImage({
+      title: fm.title,
+      category,
+      photo: photos[2], // mountain overlook for article cards
+      gradientBuf,
+      darkBuf,
     });
-    const textPng = new Resvg(svg, { fitTo: { mode: "width", value: WIDTH } }).render().asPng();
-
-    // 2. Compose final image with sharp
-    const bodyHeight = HEIGHT - FOOTER_HEIGHT;
-
-    // Crop photo to body area (exclude footer)
-    const photoCropped = await sharp(photo)
-      .resize(PHOTO_WIDTH, bodyHeight, { fit: "cover", position: "center" })
-      .png()
-      .toBuffer();
-
-    const result = await sharp({
-      create: {
-        width: WIDTH,
-        height: HEIGHT,
-        channels: 4,
-        background: { r: 251, g: 250, b: 247, alpha: 1 }, // BG color
-      },
-    })
-      .png()
-      .composite([
-        // Photo on right side (body area only)
-        { input: photoCropped, top: 0, left: PHOTO_X },
-        // Dark overlay on photo for readability
-        { input: darkBuf, top: 0, left: PHOTO_X },
-        // Gradient fade from bg into photo
-        { input: gradientBuf, top: 0, left: PHOTO_X },
-        // Text layer on top of everything
-        { input: Buffer.from(textPng), top: 0, left: 0 },
-      ])
-      .png()
-      .toBuffer();
 
     await writeFile(outputPath, result);
-    console.log(`  ✓ ${outputName} (photo ${(photoIndex - 1) % photos.length + 1})`);
+    console.log(`  ✓ ${outputName}`);
+    generated++;
+  }
+
+  // --- Landing pages (homepage, hub pages, og-default fallback) ---
+  console.log("\nGenerating landing page OG images...");
+  for (const page of LANDING_PAGES) {
+    const photo = photos[Math.min(page.photoIndex, photos.length - 1)];
+    const result = await renderOgImage({
+      title: page.title,
+      category: page.category,
+      photo,
+      gradientBuf,
+      darkBuf,
+    });
+
+    const outputPath = fileURLToPath(new URL(page.output, import.meta.url));
+    await mkdir(join(outputPath, ".."), { recursive: true });
+    await writeFile(outputPath, result);
+    console.log(`  ✓ ${relative(fileURLToPath(new URL("..", import.meta.url)), outputPath)}`);
     generated++;
   }
 
