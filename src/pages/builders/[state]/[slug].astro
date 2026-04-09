@@ -99,7 +99,18 @@ function platformSlug(p: string): string {
         )}
 
         <div class="flex-1 min-w-0">
-          <h1 class="text-3xl md:text-5xl leading-tight">{builder.name}</h1>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h1 class="text-3xl md:text-5xl leading-tight">{builder.name}</h1>
+            {builder.verified && (
+              <span
+                class="text-xs font-sans-ui uppercase tracking-wider px-2 py-1 rounded shrink-0"
+                style="background: var(--color-primary); color: var(--color-bg);"
+                title="This listing is owner-verified"
+              >
+                Verified
+              </span>
+            )}
+          </div>
 
           {builder.tagline && (
             <p class="mt-2 text-lg" style="color: var(--color-text-muted);">
