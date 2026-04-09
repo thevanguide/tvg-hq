@@ -51,6 +51,11 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
 }
 
 export default function BuilderSearch({ builders, basePath = "/builders" }: Props) {
+  // Directory context — drives the noun used in the search placeholder,
+  // result counter, and empty state. Listing cards themselves stay neutral.
+  const isServices = basePath === "/services";
+  const nounSingular = isServices ? "shop" : "builder";
+  const nounPlural = isServices ? "shops" : "builders";
   const getInitialParams = () => {
     if (typeof window === "undefined") return new URLSearchParams();
     return new URLSearchParams(window.location.search);
@@ -351,7 +356,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search builders by name, city, or keyword..."
+          placeholder={`Search ${nounPlural} by name, city, or keyword...`}
           className="w-full px-3 sm:px-4 py-2.5 text-sm border rounded-md outline-none"
           style={{
             borderColor: "var(--color-border-strong)",
@@ -565,8 +570,8 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
     >
       {results.length === builders.length
-        ? `${results.length} builders`
-        : `${results.length} of ${builders.length} builders`}
+        ? `${results.length} ${nounPlural}`
+        : `${results.length} of ${builders.length} ${nounPlural}`}
     </div>
   );
 
@@ -642,7 +647,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
         className="text-lg mb-2"
         style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--color-text)" }}
       >
-        No builders match your filters
+        No {nounPlural} match your filters
       </p>
       <p
         className="text-sm"

@@ -347,10 +347,10 @@ function renderStars(rating: number): string {
               slug={s.slug}
               state={s.state}
               city={s.city ?? undefined}
-              tagline={s.tagline ?? undefined}
+              tagline={s.service_tagline ?? s.tagline ?? undefined}
               platforms={s.platforms}
               priceTier={s.price_tier ?? undefined}
-              description={s.description ?? undefined}
+              description={s.service_description ?? s.description ?? undefined}
               logoUrl={s.logo_url ?? undefined}
               verified={s.verified}
               reviewRating={s.review_rating ?? undefined}
