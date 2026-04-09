@@ -166,20 +166,16 @@ export function hasBuilderProfile(shop: ProfileGateShop): boolean {
 
 /**
  * Does this shop have its own /services/[state]/[slug]/ profile page?
- * A service profile exists when:
- *   - the shop is tagged as a service shop (categories includes 'service'), AND
- *   - either the primary story is on the service side, OR the shop has
- *     populated `service_description` with distinct service-side copy.
- * Dual-tagged shops without filled service content get a single profile on
- * their primary directory, with a "also offers repair & service" directory
- * cross-link in place of a second profile.
+ * Any shop tagged as a service shop gets a service profile. The page template
+ * falls back to the shared `description`/`tagline`/`phone`/`emails` fields
+ * when the `service_*` overrides are empty, so owners don't have to fill in
+ * duplicate copy to appear properly in both directories. When they later edit
+ * the service-side fields from the dashboard, the same page swaps to the
+ * service-specific content without any URL changes.
  */
 export function hasServiceProfile(shop: ProfileGateShop): boolean {
-  const primary = shop.primary_category ?? shop.category ?? "builder";
   const categories = normalizeCategories(shop);
-  if (!categories.includes("service")) return false;
-  if (primary === "service") return true;
-  return shop.service_description != null && shop.service_description !== "";
+  return categories.includes("service");
 }
 
 /**

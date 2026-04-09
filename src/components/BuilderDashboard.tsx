@@ -296,13 +296,12 @@ function DashboardInner() {
   const profileHref = isServiceOnly
     ? `/services/${stateSlug}/${builder.slug}/`
     : `/builders/${stateSlug}/${builder.slug}/`;
-  // Secondary service profile link shown for dual-tagged shops that have
-  // filled in service-side content (and therefore have a generated service
-  // profile page).
-  const serviceProfileHref =
-    isDualTagged && (builder.service_description || "").trim().length > 0
-      ? `/services/${stateSlug}/${builder.slug}/`
-      : null;
+  // Secondary service profile link shown for dual-tagged shops. Every
+  // dual-tagged shop generates a /services/ profile page with fallback
+  // content, so this link is always live when the shop is dual-tagged.
+  const serviceProfileHref = isDualTagged
+    ? `/services/${stateSlug}/${builder.slug}/`
+    : null;
 
   // Builder linked — show edit form
   return (
@@ -502,12 +501,10 @@ function DashboardInner() {
             <div>
               <h3 className="text-lg mb-1">Repair &amp; service profile</h3>
               <p className="font-sans-ui text-xs" style={{ color: "var(--color-text-muted)" }}>
-                Your shop shows up in both the builder directory and the repair &amp; service
-                directory. Fill these in to give service customers their own profile page with
-                copy focused on repairs, upgrades, or mobile installs.{" "}
-                {serviceProfileHref
-                  ? "Your service profile is live."
-                  : "Add a service description below to publish the service profile."}
+                Your shop appears in both the builder directory and the repair &amp; service
+                directory, each with its own profile page. By default the service page mirrors
+                your builder copy. Fill the fields below to give service customers a dedicated
+                tagline and description focused on repairs, upgrades, or mobile installs.
               </p>
             </div>
 
@@ -548,8 +545,7 @@ function DashboardInner() {
                 placeholder="Describe the repair and service work you do — diagnostics, electrical upgrades, solar, mobile installs, etc."
               />
               <p className="mt-1 font-sans-ui text-xs" style={{ color: "var(--color-text-muted)" }}>
-                Leave blank to use your builder description as fallback. Filling this in publishes
-                a dedicated /services/ profile page.
+                Leave blank to fall back to your builder description on the service profile.
               </p>
             </div>
 

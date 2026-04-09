@@ -8,16 +8,16 @@ import {
   getServiceShopProfileShops,
   getNearbyServiceShops,
   getShopProfileUrl,
-  hasBuilderProfile,
   stateToSlug,
   type Builder,
 } from "../../../lib/supabase";
 import { serviceShopProfileMeta, localBusinessJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
-  // Only build profile pages for shops whose canonical URL lives under
-  // /services/. Dual-tagged shops with primary='builder' get their profile
-  // under /builders/ instead; the /services/ listing just links across.
+  // Every shop tagged as a service shop gets a /services/[state]/[slug]/
+  // profile. Dual-tagged shops get this page in addition to their builder
+  // profile; the page template falls back to the shared description/tagline
+  // when service-specific copy isn't filled in yet.
   const shops = await getServiceShopProfileShops();
   return shops.map((s) => ({
     params: {
@@ -49,9 +49,6 @@ const displayEmail =
   (shop.service_emails && shop.service_emails[0]) ??
   (shop.emails && shop.emails[0]) ??
   null;
-
-// Does this shop have a distinct builder-side profile to cross-link to?
-const builderProfileExists = hasBuilderProfile(shop);
 
 // Nearby service shops (up to 4 within 30 miles)
 let nearbyShops: Awaited<ReturnType<typeof getNearbyServiceShops>> = [];
@@ -136,16 +133,12 @@ function renderStars(rating: number): string {
             )}
             {shop.categories?.includes("builder") && (
               <a
-                href={builderProfileExists
-                  ? `/builders/${stateSlug}/${shop.slug}/`
-                  : `/builders/${stateSlug}/`}
+                href={`/builders/${stateSlug}/${shop.slug}/`}
                 class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline transition-colors"
                 style="background: var(--color-bg-alt); color: var(--color-primary); border: 1px solid var(--color-primary);"
-                title={builderProfileExists
-                  ? "View this shop's van conversion builder profile"
-                  : "This shop also does full van conversion builds"}
+                title="View this shop's van conversion builder profile"
               >
-                {builderProfileExists ? "View builder profile" : "Also: Full builds"}
+                View builder profile
               </a>
             )}
           </div>

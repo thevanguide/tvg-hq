@@ -8,7 +8,6 @@ import {
   getBuilderProfileShops,
   getNearbyBuilders,
   getShopProfileUrl,
-  hasServiceProfile,
   stateToSlug,
   toUrlSlug,
   type Builder,
@@ -16,9 +15,9 @@ import {
 import { profileMeta, localBusinessJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
-  // Only build profile pages for shops whose canonical URL lives under
-  // /builders/. Dual-tagged shops with primary='service' get their profile
-  // under /services/ instead; the /builders/ listing just links across.
+  // Every shop tagged as a builder gets a /builders/[state]/[slug]/ profile.
+  // Dual-tagged shops also get a /services/[state]/[slug]/ profile; the two
+  // pages cross-link via the hero badge.
   const builders = await getBuilderProfileShops();
   return builders.map((b) => ({
     params: {
@@ -37,9 +36,6 @@ const { builder } = Astro.props;
 const meta = profileMeta(builder);
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") || "https://thevanguide.com";
 const jsonLd = localBusinessJsonLd(builder, siteUrl, "builder");
-
-// Does this shop have a distinct service-side profile to cross-link to?
-const serviceProfileExists = hasServiceProfile(builder);
 
 const stateSlug = stateToSlug(builder.state);
 const location = builder.city
@@ -169,16 +165,12 @@ function platformSlug(p: string): string {
             )}
             {builder.categories?.includes("service") && (
               <a
-                href={serviceProfileExists
-                  ? `/services/${stateSlug}/${builder.slug}/`
-                  : `/services/${stateSlug}/`}
+                href={`/services/${stateSlug}/${builder.slug}/`}
                 class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline transition-colors"
                 style="background: var(--color-bg-alt); color: var(--color-primary); border: 1px solid var(--color-primary);"
-                title={serviceProfileExists
-                  ? "View this shop's repair & service profile"
-                  : "This shop also offers repair and service work"}
+                title="View this shop's repair & service profile"
               >
-                {serviceProfileExists ? "View repair & service profile" : "Also: Repair & service"}
+                View repair & service profile
               </a>
             )}
           </div>
