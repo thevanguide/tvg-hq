@@ -15,24 +15,50 @@ interface Props {
   intro?: string;
   breadcrumbs?: Crumb[];
   ogImage?: string;
+  heroImage?: string;
+  heroAlt?: string;
 }
 
-const { title, description, eyebrow, heading, intro, breadcrumbs, ogImage } = Astro.props;
+const { title, description, eyebrow, heading, intro, breadcrumbs, ogImage, heroImage, heroAlt } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} ogImage={ogImage}>
-  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
-    <div class="container-wide py-10 md:py-20">
-      {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
-      {eyebrow && <div class="eyebrow mb-4">{eyebrow}</div>}
-      <h1 class="text-3xl md:text-5xl max-w-3xl leading-tight">{heading}</h1>
-      {intro && (
-        <p class="mt-5 max-w-2xl text-lg leading-relaxed" style="color: var(--color-text-muted);">
-          {intro}
-        </p>
-      )}
-    </div>
-  </section>
+  {heroImage ? (
+    <section class="relative overflow-hidden border-b" style="border-color: var(--color-border); min-height: 280px;">
+      <img
+        src={heroImage}
+        alt={heroAlt ?? ""}
+        class="absolute inset-0 w-full h-full object-cover object-center"
+        loading="eager"
+        width="1280"
+        height="400"
+      />
+      <div class="absolute inset-0" style="background: linear-gradient(to right, rgba(20,51,30,0.82) 0%, rgba(20,51,30,0.55) 50%, rgba(20,51,30,0.15) 100%);"></div>
+      <div class="relative container-wide py-14 md:py-24">
+        {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
+        {eyebrow && <div class="eyebrow mb-4" style="color: var(--color-accent);">{eyebrow}</div>}
+        <h1 class="text-3xl md:text-5xl max-w-3xl leading-tight" style="color: #FBFAF7;">{heading}</h1>
+        {intro && (
+          <p class="mt-5 max-w-2xl text-lg leading-relaxed" style="color: rgba(251,250,247,0.8);">
+            {intro}
+          </p>
+        )}
+      </div>
+    </section>
+  ) : (
+    <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+      <div class="container-wide py-10 md:py-20">
+        {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
+        {eyebrow && <div class="eyebrow mb-4">{eyebrow}</div>}
+        <h1 class="text-3xl md:text-5xl max-w-3xl leading-tight">{heading}</h1>
+        {intro && (
+          <p class="mt-5 max-w-2xl text-lg leading-relaxed" style="color: var(--color-text-muted);">
+            {intro}
+          </p>
+        )}
+      </div>
+    </section>
+  )}
   <div class="container-wide py-12 md:py-16">
     <slot />
   </div>
