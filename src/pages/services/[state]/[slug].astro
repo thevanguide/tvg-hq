@@ -7,8 +7,9 @@ import EditListingLink from "../../../components/EditListingLink";
 import {
   getServiceShopProfileShops,
   getNearbyServiceShops,
+  getShopProfileUrl,
+  hasBuilderProfile,
   stateToSlug,
-  toUrlSlug,
   type Builder,
 } from "../../../lib/supabase";
 import { serviceShopProfileMeta, localBusinessJsonLd } from "../../../lib/seo";
@@ -34,10 +35,23 @@ const { shop } = Astro.props;
 
 const meta = serviceShopProfileMeta(shop);
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") || "https://thevanguide.com";
-const jsonLd = localBusinessJsonLd(shop, siteUrl);
+const jsonLd = localBusinessJsonLd(shop, siteUrl, "service");
 
 const stateSlug = stateToSlug(shop.state);
 const location = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
+
+// Service-side content with graceful fallback to the shared fields for
+// primary=service shops that only have the default description/tagline.
+const displayDescription = shop.service_description ?? shop.description;
+const displayTagline = shop.service_tagline ?? shop.tagline;
+const displayPhone = shop.service_phone ?? shop.phone;
+const displayEmail =
+  (shop.service_emails && shop.service_emails[0]) ??
+  (shop.emails && shop.emails[0]) ??
+  null;
+
+// Does this shop have a distinct builder-side profile to cross-link to?
+const builderProfileExists = hasBuilderProfile(shop);
 
 // Nearby service shops (up to 4 within 30 miles)
 let nearbyShops: Awaited<ReturnType<typeof getNearbyServiceShops>> = [];
@@ -93,9 +107,9 @@ function renderStars(rating: number): string {
         <div class="flex-1 min-w-0">
           <h1 class="text-3xl md:text-5xl leading-tight">{shop.name}</h1>
 
-          {shop.tagline && (
+          {displayTagline && (
             <p class="mt-2 text-lg" style="color: var(--color-text-muted);">
-              {shop.tagline}
+              {displayTagline}
             </p>
           )}
 
@@ -122,12 +136,16 @@ function renderStars(rating: number): string {
             )}
             {shop.categories?.includes("builder") && (
               <a
-                href={`/builders/${stateSlug}/`}
+                href={builderProfileExists
+                  ? `/builders/${stateSlug}/${shop.slug}/`
+                  : `/builders/${stateSlug}/`}
                 class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline transition-colors"
                 style="background: var(--color-bg-alt); color: var(--color-primary); border: 1px solid var(--color-primary);"
-                title="This shop also does full van conversion builds"
+                title={builderProfileExists
+                  ? "View this shop's van conversion builder profile"
+                  : "This shop also does full van conversion builds"}
               >
-                Also: Full builds
+                {builderProfileExists ? "View builder profile" : "Also: Full builds"}
               </a>
             )}
           </div>
@@ -143,15 +161,15 @@ function renderStars(rating: number): string {
                 Visit Website
               </a>
             )}
-            {shop.phone && (
-              <a href={`tel:${shop.phone}`} class="btn btn-ghost">
-                Call {shop.phone}
+            {displayPhone && (
+              <a href={`tel:${displayPhone}`} class="btn btn-ghost">
+                Call {displayPhone}
               </a>
             )}
-            {shop.emails && shop.emails.length > 0 && (
+            {displayEmail && (
               <button
                 class="btn btn-ghost"
-                data-email={shop.emails[0]}
+                data-email={displayEmail}
                 id="reveal-email-btn"
                 type="button"
               >
@@ -184,11 +202,11 @@ function renderStars(rating: number): string {
   )}
 
   <div class="container-wide py-12 md:py-16 max-w-4xl">
-    {shop.description && (
+    {displayDescription && (
       <section class="mb-12">
         <h2 class="text-2xl mb-4">About {shop.name}</h2>
         <div class="prose">
-          <p>{shop.description}</p>
+          <p>{displayDescription}</p>
         </div>
         {shop.year_founded && (
           <p class="mt-4 font-sans-ui text-sm" style="color: var(--color-text-muted);">
@@ -275,7 +293,7 @@ function renderStars(rating: number): string {
               longitude: shop.longitude,
               review_rating: shop.review_rating,
               review_count: shop.review_count,
-              primary_category: shop.primary_category,
+              profile_href: `/services/${stateSlug}/${shop.slug}/`,
             }]}
             singlePin={true}
             center={[shop.latitude, shop.longitude]}
@@ -339,7 +357,7 @@ function renderStars(rating: number): string {
               reviewCount={s.review_count ?? undefined}
               website={s.website ?? undefined}
               basePath="/services"
-              primaryCategory={s.primary_category}
+              profileHref={getShopProfileUrl(s, "/services")}
             />
           ))}
         </div>

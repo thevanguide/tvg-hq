@@ -16,11 +16,11 @@ interface BuilderCardProps {
   website?: string;
   basePath?: string;
   /**
-   * Where this shop's canonical profile page lives. When set, the card link
-   * always points to the primary directory regardless of `basePath`, so
-   * dual-tagged shops never generate duplicate profile URLs.
+   * Pre-computed profile URL. Dual-profile-aware callers should compute
+   * this with getShopProfileUrl() from lib/supabase and pass it in.
+   * Falls back to `${basePath}/${state}/${slug}/` when omitted.
    */
-  primaryCategory?: "builder" | "service" | null;
+  profileHref?: string;
 }
 
 function stateToSlug(state: string): string {
@@ -58,15 +58,11 @@ export default function BuilderCardReact({
   reviewCount,
   website,
   basePath = "/builders",
-  primaryCategory,
+  profileHref: profileHrefProp,
 }: BuilderCardProps) {
   const stateSlug = stateToSlug(state);
-  // Canonical URL: primary_category wins over basePath so dual-tagged shops
-  // never have two profile URLs. Falls back to basePath when unset.
-  const canonicalBase = primaryCategory
-    ? (primaryCategory === "service" ? "/services" : "/builders")
-    : basePath;
-  const profileHref = `${canonicalBase}/${stateSlug}/${slug}/`;
+  const profileHref =
+    profileHrefProp ?? `${basePath}/${stateSlug}/${slug}/`;
 
   return (
     <div

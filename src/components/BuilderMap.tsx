@@ -10,7 +10,11 @@ export interface BuilderPin {
   longitude: number | null;
   review_rating: number | null;
   review_count: number | null;
-  primary_category?: "builder" | "service" | null;
+  /**
+   * Pre-computed profile URL for this pin. Parent calls
+   * getShopProfileUrl(shop, basePath) when building the pins array.
+   */
+  profile_href?: string;
 }
 
 interface BuilderMapProps {
@@ -199,9 +203,9 @@ export default function BuilderMap({
     }
 
     function buildPopup(b: BuilderPin & { latitude: number; longitude: number }): string {
-      const slug = stateToSlug(b.state);
       const loc = b.city ? `${b.city}, ${b.state}` : b.state;
-      const base = b.primary_category === "service" ? "services" : "builders";
+      const href =
+        b.profile_href ?? `/builders/${stateToSlug(b.state)}/${b.slug}/`;
       const stars =
         b.review_rating != null
           ? `<div style="color:#A87E3B;font-size:13px;margin:4px 0;">${"★".repeat(Math.floor(b.review_rating))}${b.review_rating % 1 >= 0.25 ? "½" : ""}${"☆".repeat(5 - Math.ceil(b.review_rating))} ${b.review_rating.toFixed(1)}${b.review_count ? ` (${b.review_count})` : ""}</div>`
@@ -211,7 +215,7 @@ export default function BuilderMap({
         `<div style="font-weight:600;font-size:14px;color:#0F0F0F;margin-bottom:2px;">${b.name}</div>` +
         `<div style="font-size:12px;color:#555550;">${loc}</div>` +
         stars +
-        `<a href="/${base}/${slug}/${b.slug}/" style="display:inline-block;margin-top:6px;font-size:12px;font-weight:500;color:#14331E;text-decoration:none;">View Profile →</a>` +
+        `<a href="${href}" style="display:inline-block;margin-top:6px;font-size:12px;font-weight:500;color:#14331E;text-decoration:none;">View Profile →</a>` +
         `</div>`
       );
     }

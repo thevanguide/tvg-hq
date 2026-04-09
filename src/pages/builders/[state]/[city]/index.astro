@@ -4,6 +4,7 @@ import BuilderCard from "../../../../components/BuilderCard.astro";
 import BuilderMap from "../../../../components/BuilderMap";
 import {
   getAllBuilders,
+  getShopProfileUrl,
   stateToSlug,
   cityToSlug,
   getNearbyBuilders,
@@ -89,7 +90,7 @@ const mapData = allMapBuilders.map((b) => ({
   longitude: b.longitude,
   review_rating: b.review_rating,
   review_count: b.review_count,
-  primary_category: b.primary_category,
+  profile_href: getShopProfileUrl(b, "/builders"),
 }));
 
 // Derive center from city builders with coords
@@ -144,7 +145,7 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
           reviewRating={b.review_rating ?? undefined}
           reviewCount={b.review_count ?? undefined}
           website={b.website ?? undefined}
-          primaryCategory={b.primary_category}
+          profileHref={getShopProfileUrl(b, "/builders")}
         />
       ))}
     </div>
@@ -170,7 +171,7 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
             reviewRating={b.review_rating ?? undefined}
             reviewCount={b.review_count ?? undefined}
             website={b.website ?? undefined}
-            primaryCategory={b.primary_category}
+            profileHref={getShopProfileUrl(b, "/builders")}
           />
         ))}
       </div>

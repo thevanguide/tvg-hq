@@ -22,7 +22,12 @@ interface BuilderData {
   build_style: string | null;
   latitude: number | null;
   longitude: number | null;
-  primary_category?: "builder" | "service" | null;
+  /**
+   * Pre-computed profile URL for this shop in the current listing context.
+   * Parent Astro page calls getShopProfileUrl(shop, basePath) when building
+   * the data array. Used for card links and map popup links.
+   */
+  profile_href?: string;
 }
 
 interface Props {
@@ -249,7 +254,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
         longitude: b.longitude,
         review_rating: b.review_rating,
         review_count: b.review_count,
-        primary_category: b.primary_category ?? null,
+        profile_href: b.profile_href,
       })),
     [results],
   );
@@ -619,7 +624,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
           reviewCount={b.review_count ?? undefined}
           website={b.website ?? undefined}
           basePath={basePath}
-          primaryCategory={b.primary_category ?? null}
+          profileHref={b.profile_href}
         />
       </div>
     );

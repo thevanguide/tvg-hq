@@ -4,6 +4,7 @@ import BuilderSearch from "../../../components/BuilderSearch";
 import {
   getAllServiceShops,
   getServiceShopsByState,
+  getShopProfileUrl,
   stateToSlug,
 } from "../../../lib/supabase";
 import { serviceShopStateMeta, serviceItemListJsonLd } from "../../../lib/seo";
@@ -59,7 +60,7 @@ const searchData = shops.map((s) => ({
   build_style: s.build_style,
   latitude: s.latitude,
   longitude: s.longitude,
-  primary_category: s.primary_category,
+  profile_href: getShopProfileUrl(s, "/services"),
 }));
 ---
 

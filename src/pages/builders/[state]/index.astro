@@ -4,6 +4,7 @@ import BuilderSearch from "../../../components/BuilderSearch";
 import {
   getAllBuilders,
   getDistinctCities,
+  getShopProfileUrl,
   stateToSlug,
   cityToSlug,
 } from "../../../lib/supabase";
@@ -68,7 +69,7 @@ const searchData = builders.map((b) => ({
   build_style: b.build_style,
   latitude: b.latitude,
   longitude: b.longitude,
-  primary_category: b.primary_category,
+  profile_href: getShopProfileUrl(b, "/builders"),
 }));
 ---
 

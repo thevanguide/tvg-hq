@@ -1,7 +1,12 @@
 ---
 import DirectoryLayout from "../../layouts/DirectoryLayout.astro";
 import BuilderSearch from "../../components/BuilderSearch";
-import { getAllServiceShops, getDistinctServiceStates, stateToSlug } from "../../lib/supabase";
+import {
+  getAllServiceShops,
+  getDistinctServiceStates,
+  getShopProfileUrl,
+  stateToSlug,
+} from "../../lib/supabase";
 import { serviceItemListJsonLd } from "../../lib/seo";
 
 const shops = await getAllServiceShops();
@@ -41,7 +46,7 @@ const searchData = shops.map((s) => ({
   build_style: s.build_style,
   latitude: s.latitude,
   longitude: s.longitude,
-  primary_category: s.primary_category,
+  profile_href: getShopProfileUrl(s, "/services"),
 }));
 ---
 

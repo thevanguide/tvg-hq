@@ -83,10 +83,12 @@ export function styleMeta(style: string, count: number) {
 
 export function serviceShopProfileMeta(shop: Builder) {
   const location = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
+  // Prefer service-side copy when a dual-tagged shop has filled it in.
+  const copy = shop.service_description ?? shop.description ?? null;
   return {
     title: `${shop.name} — Van Repair & Service in ${location} | The Van Guide`,
     description:
-      shop.description?.slice(0, 155) ??
+      copy?.slice(0, 155) ??
       `${shop.name} is a van repair and service shop in ${location}. View services, reviews, and contact info.`,
   };
 }
@@ -105,13 +107,31 @@ export function serviceShopStateMeta(stateName: string, count: number) {
 // LocalBusiness JSON-LD
 // ---------------------------------------------------------------------------
 
-export function localBusinessJsonLd(builder: Builder, _siteUrl?: string) {
+/**
+ * LocalBusiness JSON-LD for a profile page. `side` controls which fields
+ * are used for dual-tagged shops that have filled in both builder and
+ * service content: the service profile emits service_description /
+ * service_phone, while the builder profile uses the default fields.
+ */
+export function localBusinessJsonLd(
+  builder: Builder,
+  _siteUrl?: string,
+  side: "builder" | "service" = "builder",
+) {
+  const useServiceSide = side === "service";
+  const description = useServiceSide
+    ? (builder.service_description ?? builder.description)
+    : builder.description;
+  const phone = useServiceSide
+    ? (builder.service_phone ?? builder.phone)
+    : builder.phone;
+
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: builder.name,
     url: builder.website ?? undefined,
-    description: builder.description ?? undefined,
+    description: description ?? undefined,
     image: builder.logo_url ?? undefined,
     address: {
       "@type": "PostalAddress",
@@ -123,8 +143,8 @@ export function localBusinessJsonLd(builder: Builder, _siteUrl?: string) {
     },
   };
 
-  if (builder.phone) {
-    jsonLd.telephone = builder.phone;
+  if (phone) {
+    jsonLd.telephone = phone;
   }
 
   if (builder.latitude != null && builder.longitude != null) {
@@ -157,33 +177,58 @@ interface ItemListBuilder {
   state: string;
   primary_category?: "builder" | "service" | null;
   category?: "builder" | "service" | null;
+  categories?: ("builder" | "service")[] | null;
+  service_description?: string | null;
 }
 
 /**
- * Returns the canonical profile URL for a shop — always the primary
- * directory, regardless of which listing page is rendering the schema.
- * Duplicates `canonicalShopPath` in supabase.ts to avoid circular imports
- * through `lib/supabase` (which pulls env vars at module load time).
+ * Resolve the profile URL for a shop in a given listing context. Dual-
+ * profile aware:
+ *   - If the listing is /services/ and the shop has a filled service
+ *     profile, use /services/[state]/[slug]/.
+ *   - If the shop only has a builder profile, fall back to /builders/
+ *     (cross-directory) even when listed under /services/.
+ * Duplicates the logic in `getShopProfileUrl` from supabase.ts to avoid
+ * pulling that module's env-dependent imports into JSON-LD generation.
  */
-function canonicalUrl(
+function resolveProfileUrl(
   b: ItemListBuilder,
   siteUrl: string,
-  defaultBase: "builders" | "services",
+  listingBase: "builders" | "services",
 ): string {
-  const primary = b.primary_category ?? b.category ?? null;
-  const base =
-    primary === "service"
-      ? "services"
-      : primary === "builder"
-        ? "builders"
-        : defaultBase;
-  return `${siteUrl}/${base}/${stateToSlug(b.state)}/${b.slug}/`;
+  const primary = b.primary_category ?? b.category ?? "builder";
+  const categories =
+    b.categories && b.categories.length > 0
+      ? b.categories
+      : b.category
+        ? [b.category]
+        : [];
+  const hasBuilder =
+    categories.includes("builder") && (primary === "builder" || primary == null);
+  const hasService =
+    categories.includes("service") &&
+    (primary === "service" ||
+      (b.service_description != null && b.service_description !== ""));
+
+  const state = stateToSlug(b.state);
+  if (listingBase === "services" && hasService) {
+    return `${siteUrl}/services/${state}/${b.slug}/`;
+  }
+  if (listingBase === "builders" && hasBuilder) {
+    return `${siteUrl}/builders/${state}/${b.slug}/`;
+  }
+  if (hasBuilder) return `${siteUrl}/builders/${state}/${b.slug}/`;
+  if (hasService) return `${siteUrl}/services/${state}/${b.slug}/`;
+  // Last resort: legacy primary_category fallback.
+  const base = primary === "service" ? "services" : "builders";
+  return `${siteUrl}/${base}/${state}/${b.slug}/`;
 }
 
 /**
- * Generates an ItemList schema for a directory listing page.
- * Each builder becomes a ListItem linked to its canonical profile URL
- * (which may be under /services/ for dual-tagged service-primary shops).
+ * Generates an ItemList schema for a builder directory listing page.
+ * Each builder becomes a ListItem linked to its profile URL — for dual-
+ * tagged shops with a service-side profile, the link still points to the
+ * builder profile here (we're in the builder directory).
  */
 export function itemListJsonLd(
   builders: ItemListBuilder[],
@@ -199,15 +244,16 @@ export function itemListJsonLd(
       "@type": "ListItem",
       position: idx + 1,
       name: b.name,
-      url: canonicalUrl(b, siteUrl, "builders"),
+      url: resolveProfileUrl(b, siteUrl, "builders"),
     })),
   };
 }
 
 /**
  * Generates an ItemList schema for the services directory.
- * Each shop links to its canonical profile URL — for shops whose primary
- * category is 'builder', that URL is under /builders/.
+ * Each shop links to its service profile URL if one exists; dual-tagged
+ * shops without distinct service content fall back cross-directory to
+ * their builder profile so the listing never links to a 404.
  */
 export function serviceItemListJsonLd(
   shops: ItemListBuilder[],
@@ -223,7 +269,7 @@ export function serviceItemListJsonLd(
       "@type": "ListItem",
       position: idx + 1,
       name: b.name,
-      url: canonicalUrl(b, siteUrl, "services"),
+      url: resolveProfileUrl(b, siteUrl, "services"),
     })),
   };
 }
