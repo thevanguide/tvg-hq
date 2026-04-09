@@ -5,7 +5,7 @@ import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
 import EditListingLink from "../../../components/EditListingLink";
 import {
-  getAllBuilders,
+  getBuilderProfileShops,
   getNearbyBuilders,
   stateToSlug,
   toUrlSlug,
@@ -14,7 +14,10 @@ import {
 import { profileMeta, localBusinessJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
-  const builders = await getAllBuilders();
+  // Only build profile pages for shops whose canonical URL lives under
+  // /builders/. Dual-tagged shops with primary='service' get their profile
+  // under /services/ instead; the /builders/ listing just links across.
+  const builders = await getBuilderProfileShops();
   return builders.map((b) => ({
     params: {
       state: stateToSlug(b.state),
@@ -158,6 +161,16 @@ function platformSlug(p: string): string {
               >
                 {yearsInBusiness}+ years
               </span>
+            )}
+            {builder.categories?.includes("service") && (
+              <a
+                href={`/services/${stateSlug}/`}
+                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline transition-colors"
+                style="background: var(--color-bg-alt); color: var(--color-primary); border: 1px solid var(--color-primary);"
+                title="This shop also offers repair and service work"
+              >
+                Also: Repair &amp; service
+              </a>
             )}
           </div>
 
@@ -368,6 +381,7 @@ function platformSlug(p: string): string {
               longitude: builder.longitude,
               review_rating: builder.review_rating,
               review_count: builder.review_count,
+              primary_category: builder.primary_category,
             }]}
             singlePin={true}
             center={[builder.latitude, builder.longitude]}
@@ -432,6 +446,7 @@ function platformSlug(p: string): string {
               reviewRating={b.review_rating ?? undefined}
               reviewCount={b.review_count ?? undefined}
               website={b.website ?? undefined}
+              primaryCategory={b.primary_category}
             />
           ))}
         </div>

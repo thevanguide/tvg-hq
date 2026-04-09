@@ -16,6 +16,12 @@ interface Props {
   reviewCount?: number;
   website?: string;
   basePath?: string;
+  /**
+   * Where this shop's canonical profile page lives. When set, the card link
+   * always points to the primary directory regardless of `basePath`, so
+   * dual-tagged shops never generate duplicate profile URLs.
+   */
+  primaryCategory?: "builder" | "service" | null;
 }
 
 const {
@@ -33,10 +39,16 @@ const {
   reviewCount,
   website,
   basePath = "/builders",
+  primaryCategory,
 } = Astro.props;
 
 const stateSlug = stateToSlug(state);
-const profileHref = `${basePath}/${stateSlug}/${slug}/`;
+// Canonical URL: primary_category wins over basePath. Falls back to basePath
+// for shops that predate the categories migration.
+const canonicalBase = primaryCategory
+  ? (primaryCategory === "service" ? "/services" : "/builders")
+  : basePath;
+const profileHref = `${canonicalBase}/${stateSlug}/${slug}/`;
 
 function platformSlug(p: string): string {
   return toUrlSlug(p);

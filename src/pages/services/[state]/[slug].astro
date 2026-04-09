@@ -5,7 +5,7 @@ import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
 import EditListingLink from "../../../components/EditListingLink";
 import {
-  getAllServiceShops,
+  getServiceShopProfileShops,
   getNearbyServiceShops,
   stateToSlug,
   toUrlSlug,
@@ -14,7 +14,10 @@ import {
 import { serviceShopProfileMeta, localBusinessJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
-  const shops = await getAllServiceShops();
+  // Only build profile pages for shops whose canonical URL lives under
+  // /services/. Dual-tagged shops with primary='builder' get their profile
+  // under /builders/ instead; the /services/ listing just links across.
+  const shops = await getServiceShopProfileShops();
   return shops.map((s) => ({
     params: {
       state: stateToSlug(s.state),
@@ -116,6 +119,16 @@ function renderStars(rating: number): string {
               >
                 {yearsInBusiness}+ years
               </span>
+            )}
+            {shop.categories?.includes("builder") && (
+              <a
+                href={`/builders/${stateSlug}/`}
+                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline transition-colors"
+                style="background: var(--color-bg-alt); color: var(--color-primary); border: 1px solid var(--color-primary);"
+                title="This shop also does full van conversion builds"
+              >
+                Also: Full builds
+              </a>
             )}
           </div>
 
@@ -262,6 +275,7 @@ function renderStars(rating: number): string {
               longitude: shop.longitude,
               review_rating: shop.review_rating,
               review_count: shop.review_count,
+              primary_category: shop.primary_category,
             }]}
             singlePin={true}
             center={[shop.latitude, shop.longitude]}
@@ -325,6 +339,7 @@ function renderStars(rating: number): string {
               reviewCount={s.review_count ?? undefined}
               website={s.website ?? undefined}
               basePath="/services"
+              primaryCategory={s.primary_category}
             />
           ))}
         </div>

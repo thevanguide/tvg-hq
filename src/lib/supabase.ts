@@ -50,7 +50,23 @@ export type Builder = {
   logo_url: string | null;
   gallery_urls: string[];
   build_style: "Custom" | "Standard" | null;
+  /**
+   * Legacy single-value category. Kept for rollback safety; new code should
+   * use `categories` (array) and `primary_category` instead.
+   */
   category: "builder" | "service" | null;
+  /**
+   * All categories this shop belongs in — e.g. ['builder'], ['service'], or
+   * ['builder','service'] for shops that do both. Used to decide which
+   * directory listing pages the shop appears on.
+   */
+  categories: ("builder" | "service")[];
+  /**
+   * The directory where the shop's canonical profile page lives. Used to
+   * build cross-directory card links so every shop has exactly one profile
+   * URL regardless of how many listings reference it.
+   */
+  primary_category: "builder" | "service" | null;
   place_id: string | null;
   google_maps_url: string | null;
   review_count: number | null;
@@ -105,6 +121,23 @@ export function stateToSlug(state: string): string {
   return state.toLowerCase().replace(/\s+/g, "-");
 }
 
+/**
+ * Return the canonical profile URL for a shop. A shop only ever has ONE
+ * canonical URL, determined by its `primary_category`. If the shop is dual-
+ * tagged, the *other* directory's listing page will still link here. This
+ * avoids duplicate-content profiles at two different URLs.
+ */
+export function canonicalShopPath(shop: {
+  slug: string;
+  state: string;
+  primary_category?: "builder" | "service" | null;
+  category?: "builder" | "service" | null;
+}): string {
+  const primary = shop.primary_category ?? shop.category ?? "builder";
+  const base = primary === "service" ? "/services" : "/builders";
+  return `${base}/${stateToSlug(shop.state)}/${shop.slug}/`;
+}
+
 export function cityToSlug(city: string): string {
   return city.toLowerCase().replace(/\s+/g, "-");
 }
@@ -151,8 +184,10 @@ let _allBuildersCache: Builder[] | null = null;
 let _allServiceShopsCache: Builder[] | null = null;
 
 /**
- * Fetch all published builders (category = 'builder'). Caches results for the
- * duration of the build so multiple pages don't re-query Supabase.
+ * Fetch all published shops tagged with 'builder' in their categories array.
+ * This includes dual-tagged shops whose primary is 'service' — they still
+ * appear on /builders/ listings, but their card links point to the canonical
+ * /services/ profile URL. Caches results for the duration of the build.
  */
 export async function getAllBuilders(): Promise<Builder[]> {
   if (_allBuildersCache) return _allBuildersCache;
@@ -162,7 +197,7 @@ export async function getAllBuilders(): Promise<Builder[]> {
     .from("builders")
     .select("*")
     .eq("published", true)
-    .eq("category", "builder")
+    .contains("categories", ["builder"])
     .order("name", { ascending: true });
   if (error) {
     console.warn("[supabase] builders fetch failed:", error.message);
@@ -175,6 +210,19 @@ export async function getAllBuilders(): Promise<Builder[]> {
   }));
   _allBuildersCache = builders;
   return _allBuildersCache;
+}
+
+/**
+ * Fetch only the shops whose canonical profile lives under /builders/
+ * (primary_category = 'builder'). Used by getStaticPaths on the builder
+ * profile page so dual-tagged service-primary shops don't generate a
+ * duplicate /builders/[state]/[slug]/ route.
+ */
+export async function getBuilderProfileShops(): Promise<Builder[]> {
+  const all = await getAllBuilders();
+  return all.filter(
+    (b) => (b.primary_category ?? b.category ?? "builder") === "builder",
+  );
 }
 
 export async function getBuildersByState(state: string): Promise<Builder[]> {
@@ -270,7 +318,10 @@ export async function getDistinctCities(
 // ---------------------------------------------------------------------------
 
 /**
- * Fetch all published service/repair shops. Cached separately from builders.
+ * Fetch all published shops tagged with 'service' in their categories array.
+ * Includes dual-tagged shops whose primary is 'builder' — they appear on
+ * /services/ listings but their card links point to the canonical /builders/
+ * profile URL. Cached separately from the builder listing.
  */
 export async function getAllServiceShops(): Promise<Builder[]> {
   if (_allServiceShopsCache) return _allServiceShopsCache;
@@ -280,7 +331,7 @@ export async function getAllServiceShops(): Promise<Builder[]> {
     .from("builders")
     .select("*")
     .eq("published", true)
-    .eq("category", "service")
+    .contains("categories", ["service"])
     .order("name", { ascending: true });
   if (error) {
     console.warn("[supabase] service shops fetch failed:", error.message);
@@ -292,6 +343,19 @@ export async function getAllServiceShops(): Promise<Builder[]> {
   }));
   _allServiceShopsCache = shops;
   return _allServiceShopsCache;
+}
+
+/**
+ * Fetch only the shops whose canonical profile lives under /services/
+ * (primary_category = 'service'). Used by getStaticPaths on the service
+ * profile page so dual-tagged builder-primary shops don't generate a
+ * duplicate /services/[state]/[slug]/ route.
+ */
+export async function getServiceShopProfileShops(): Promise<Builder[]> {
+  const all = await getAllServiceShops();
+  return all.filter(
+    (b) => (b.primary_category ?? b.category ?? "service") === "service",
+  );
 }
 
 export async function getServiceShopsByState(state: string): Promise<Builder[]> {

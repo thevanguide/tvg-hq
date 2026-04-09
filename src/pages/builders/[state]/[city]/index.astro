@@ -89,6 +89,7 @@ const mapData = allMapBuilders.map((b) => ({
   longitude: b.longitude,
   review_rating: b.review_rating,
   review_count: b.review_count,
+  primary_category: b.primary_category,
 }));
 
 // Derive center from city builders with coords
@@ -143,6 +144,7 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
           reviewRating={b.review_rating ?? undefined}
           reviewCount={b.review_count ?? undefined}
           website={b.website ?? undefined}
+          primaryCategory={b.primary_category}
         />
       ))}
     </div>
@@ -168,6 +170,7 @@ const cityCenter: [number, number] | undefined = cityWithCoords.length > 0
             reviewRating={b.review_rating ?? undefined}
             reviewCount={b.review_count ?? undefined}
             website={b.website ?? undefined}
+            primaryCategory={b.primary_category}
           />
         ))}
       </div>

@@ -155,11 +155,35 @@ interface ItemListBuilder {
   name: string;
   slug: string;
   state: string;
+  primary_category?: "builder" | "service" | null;
+  category?: "builder" | "service" | null;
+}
+
+/**
+ * Returns the canonical profile URL for a shop — always the primary
+ * directory, regardless of which listing page is rendering the schema.
+ * Duplicates `canonicalShopPath` in supabase.ts to avoid circular imports
+ * through `lib/supabase` (which pulls env vars at module load time).
+ */
+function canonicalUrl(
+  b: ItemListBuilder,
+  siteUrl: string,
+  defaultBase: "builders" | "services",
+): string {
+  const primary = b.primary_category ?? b.category ?? null;
+  const base =
+    primary === "service"
+      ? "services"
+      : primary === "builder"
+        ? "builders"
+        : defaultBase;
+  return `${siteUrl}/${base}/${stateToSlug(b.state)}/${b.slug}/`;
 }
 
 /**
  * Generates an ItemList schema for a directory listing page.
- * Each builder becomes a ListItem with a link to their profile.
+ * Each builder becomes a ListItem linked to its canonical profile URL
+ * (which may be under /services/ for dual-tagged service-primary shops).
  */
 export function itemListJsonLd(
   builders: ItemListBuilder[],
@@ -175,14 +199,15 @@ export function itemListJsonLd(
       "@type": "ListItem",
       position: idx + 1,
       name: b.name,
-      url: `${siteUrl}/builders/${stateToSlug(b.state)}/${b.slug}/`,
+      url: canonicalUrl(b, siteUrl, "builders"),
     })),
   };
 }
 
 /**
  * Generates an ItemList schema for the services directory.
- * Each shop links to /services/[state]/[slug]/.
+ * Each shop links to its canonical profile URL — for shops whose primary
+ * category is 'builder', that URL is under /builders/.
  */
 export function serviceItemListJsonLd(
   shops: ItemListBuilder[],
@@ -198,7 +223,7 @@ export function serviceItemListJsonLd(
       "@type": "ListItem",
       position: idx + 1,
       name: b.name,
-      url: `${siteUrl}/services/${stateToSlug(b.state)}/${b.slug}/`,
+      url: canonicalUrl(b, siteUrl, "services"),
     })),
   };
 }
