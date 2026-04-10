@@ -99,6 +99,12 @@ function DashboardInner() {
   const [servicePhone, setServicePhone] = useState("");
   const [serviceEmailsStr, setServiceEmailsStr] = useState("");
 
+  // Self-serve service-directory toggle. Independent of the main form save —
+  // calls toggle_service_listing RPC and updates local state on success.
+  const [togglingService, setTogglingService] = useState(false);
+  const [serviceToggleError, setServiceToggleError] = useState<string | null>(null);
+  const [serviceToggleNotice, setServiceToggleNotice] = useState<string | null>(null);
+
   // Reset every form field from a builder row. Called when loading data
   // and when the owner switches between listings via the tabs.
   function applyBuilderToForm(b: BuilderData) {
@@ -278,6 +284,72 @@ function DashboardInner() {
         prev.map((b) => (b.id === savedId ? { ...b, ...changes } : b)),
       );
     }
+  }
+
+  // Toggle the shop in/out of the Repairs & Services directory. Calls the
+  // toggle_service_listing RPC, which auto-applies + triggers a rebuild.
+  // Independent of the main form save — other unsaved form fields are
+  // untouched. Optimistically updates the local categories array on success
+  // so the dependent service-side form section appears/disappears immediately.
+  async function handleToggleServiceListing(enabled: boolean) {
+    if (!builder) return;
+    if (togglingService) return;
+
+    if (!enabled) {
+      const confirmed = window.confirm(
+        "Remove your shop from the Repairs & Services directory?\n\n" +
+          "Your service description, contacts, and any service-side photos will " +
+          "be saved in case you re-enable the listing later. The public service " +
+          "profile page will be removed within about a minute.",
+      );
+      if (!confirmed) return;
+    }
+
+    setTogglingService(true);
+    setServiceToggleError(null);
+    setServiceToggleNotice(null);
+
+    const client = getAuthClient();
+    if (!client) {
+      setServiceToggleError("Auth not configured");
+      setTogglingService(false);
+      return;
+    }
+
+    const { error: rpcError } = await client.rpc("toggle_service_listing", {
+      p_builder_id: builder.id,
+      p_enabled: enabled,
+    });
+
+    setTogglingService(false);
+
+    if (rpcError) {
+      console.error("[tvg] service toggle error:", rpcError.message || rpcError);
+      setServiceToggleError(
+        rpcError.message || "Something went wrong. Please try again.",
+      );
+      return;
+    }
+
+    // Optimistically update local categories so the conditional service-side
+    // form section appears/disappears immediately, without a full reload.
+    const savedId = builder.id;
+    setAllBuilders((prev) =>
+      prev.map((b) => {
+        if (b.id !== savedId) return b;
+        const current = b.categories || [];
+        const next = enabled
+          ? Array.from(new Set([...current, "service"]))
+          : current.filter((c) => c !== "service");
+        return { ...b, categories: next };
+      }),
+    );
+
+    setServiceToggleNotice(
+      enabled
+        ? "Added to the Repairs & Services directory. Your new profile page goes live within about a minute."
+        : "Removed from the Repairs & Services directory. The change goes live within about a minute.",
+    );
   }
 
   function handleLogoUploaded(url: string) {
@@ -593,6 +665,180 @@ function DashboardInner() {
           />
         </div>
 
+        {/* Logo upload — listing-wide. The same logo and gallery render on
+            every profile page generated from this row, so they live with the
+            shared listing fields above the service toggle, not inside the
+            service-side block. */}
+        <div>
+          <label className="block font-sans-ui text-sm font-medium mb-1.5">Logo</label>
+          {logoUrl && (
+            <div className="mb-3">
+              <img
+                src={logoUrl}
+                alt="Current logo"
+                className="w-20 h-20 object-contain rounded-lg p-2 border"
+                style={{ background: "#2a2a2a", borderColor: "var(--color-border)" }}
+              />
+            </div>
+          )}
+          <BuilderPhotoUpload
+            builderId={builder.id}
+            folder="logos"
+            onUploaded={handleLogoUploaded}
+            label="Upload new logo"
+            maxSizeMB={2}
+          />
+        </div>
+
+        {/* Gallery photos — 3 free, listing-wide (shared across builder + service profiles) */}
+        <div>
+          <div className="flex items-baseline justify-between mb-1.5">
+            <label className="block font-sans-ui text-sm font-medium">
+              Shop photos
+            </label>
+            <span className="font-sans-ui text-xs" style={{ color: "var(--color-text-muted)" }}>
+              {galleryUrls.length} / {photoLimit}{builder.photo_limit ? "" : " free"}
+            </span>
+          </div>
+
+          {galleryUrls.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+              {galleryUrls.map((url, i) => (
+                <div key={i} className="relative group">
+                  <img
+                    src={url}
+                    alt={`Shop photo ${i + 1}`}
+                    className="w-full aspect-[4/3] object-cover rounded-lg"
+                    style={{ background: "var(--color-bg-alt)" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: "rgba(0,0,0,0.6)" }}
+                    aria-label={`Remove photo ${i + 1}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {atPhotoLimit ? (
+            <div
+              className="p-4 border font-sans-ui text-sm"
+              style={{
+                borderColor: "var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--color-bg-alt)",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              You've reached your photo limit ({photoLimit} photos).
+              {!builder.photo_limit && " Remove a photo to upload a different one, or upgrade to a premium listing for more photos, featured placement, and profile analytics."}
+              {/* TODO: link to premium upgrade page when available */}
+            </div>
+          ) : (
+            <BuilderPhotoUpload
+              builderId={builder.id}
+              folder="gallery"
+              onUploaded={handlePhotoUploaded}
+              label={`Upload photo (${photoLimit - galleryUrls.length} remaining)`}
+            />
+          )}
+          {showServiceFields && (
+            <p
+              className="mt-2 font-sans-ui text-xs"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              Your logo and shop photos appear on both your builder profile
+              and your repair &amp; service profile.
+            </p>
+          )}
+        </div>
+
+        {/* Self-serve toggle: opt this shop into the Repairs & Services directory.
+            Hidden for service-only shops because flipping it off would orphan
+            their only listing — the DB function blocks that case too as
+            defense-in-depth. */}
+        {!isServiceOnly && (
+          <div
+            className="p-5 border space-y-3"
+            style={{
+              borderColor: showServiceFields
+                ? "var(--color-primary)"
+                : "var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              background: "var(--color-bg-alt)",
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="d-service-toggle"
+                checked={showServiceFields}
+                disabled={togglingService}
+                onChange={(e) => handleToggleServiceListing(e.target.checked)}
+                className="mt-1 w-4 h-4 shrink-0 cursor-pointer"
+                style={{ accentColor: "var(--color-primary)" }}
+              />
+              <div className="flex-1">
+                <label
+                  htmlFor="d-service-toggle"
+                  className="font-sans-ui text-sm font-medium block cursor-pointer"
+                  style={{ color: "var(--color-text)" }}
+                >
+                  Do you do repairs, upgrades, or small jobs in addition to full builds?
+                </label>
+                <p
+                  className="font-sans-ui text-xs mt-1.5 leading-relaxed"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  Many van owners search separately for shops that handle electrical
+                  diagnostics, solar add-ons, plumbing fixes, and one-off install
+                  work. If you take on this kind of job, check the box and your shop
+                  will also appear in the Repairs &amp; Services directory with its
+                  own profile page focused on service work. Your builder listing
+                  stays exactly as it is — this is an additional listing, not a
+                  replacement.
+                </p>
+                {showServiceFields && (
+                  <p
+                    className="font-sans-ui text-xs mt-1.5"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    Your service profile is live below. Use the form to give
+                    service customers a dedicated tagline, description, phone,
+                    and contact email.
+                  </p>
+                )}
+              </div>
+            </div>
+            {togglingService && (
+              <p
+                className="font-sans-ui text-xs"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Updating...
+              </p>
+            )}
+            {serviceToggleNotice && !togglingService && (
+              <p
+                className="font-sans-ui text-xs"
+                style={{ color: "var(--color-primary)" }}
+              >
+                {serviceToggleNotice}
+              </p>
+            )}
+            {serviceToggleError && (
+              <p className="font-sans-ui text-xs" style={{ color: "#b91c1c" }}>
+                {serviceToggleError}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Service-side content — only shown for shops that are tagged both
             as a builder and as a service shop. Filling in a service description
             generates a second, distinct profile page at /services/[state]/[slug]/
@@ -612,7 +858,9 @@ function DashboardInner() {
                 Your shop appears in both the builder directory and the repair &amp; service
                 directory, each with its own profile page. By default the service page mirrors
                 your builder copy. Fill the fields below to give service customers a dedicated
-                tagline and description focused on repairs, upgrades, or mobile installs.
+                tagline, description, phone, and contact email focused on repairs, upgrades,
+                or mobile installs. Logo and shop photos are shared with your builder
+                profile and managed in the section above.
               </p>
             </div>
 
@@ -702,87 +950,6 @@ function DashboardInner() {
             </div>
           </div>
         )}
-
-        {/* Logo upload */}
-        <div>
-          <label className="block font-sans-ui text-sm font-medium mb-1.5">Logo</label>
-          {logoUrl && (
-            <div className="mb-3">
-              <img
-                src={logoUrl}
-                alt="Current logo"
-                className="w-20 h-20 object-contain rounded-lg p-2 border"
-                style={{ background: "#2a2a2a", borderColor: "var(--color-border)" }}
-              />
-            </div>
-          )}
-          <BuilderPhotoUpload
-            builderId={builder.id}
-            folder="logos"
-            onUploaded={handleLogoUploaded}
-            label="Upload new logo"
-            maxSizeMB={2}
-          />
-        </div>
-
-        {/* Gallery photos — 3 free */}
-        <div>
-          <div className="flex items-baseline justify-between mb-1.5">
-            <label className="block font-sans-ui text-sm font-medium">
-              Build photos
-            </label>
-            <span className="font-sans-ui text-xs" style={{ color: "var(--color-text-muted)" }}>
-              {galleryUrls.length} / {photoLimit}{builder.photo_limit ? "" : " free"}
-            </span>
-          </div>
-
-          {galleryUrls.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-              {galleryUrls.map((url, i) => (
-                <div key={i} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Build photo ${i + 1}`}
-                    className="w-full aspect-[4/3] object-cover rounded-lg"
-                    style={{ background: "var(--color-bg-alt)" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(i)}
-                    className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "rgba(0,0,0,0.6)" }}
-                    aria-label={`Remove photo ${i + 1}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {atPhotoLimit ? (
-            <div
-              className="p-4 border font-sans-ui text-sm"
-              style={{
-                borderColor: "var(--color-border)",
-                borderRadius: "var(--radius-md)",
-                background: "var(--color-bg-alt)",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              You've reached your photo limit ({photoLimit} photos).
-              {!builder.photo_limit && " Remove a photo to upload a different one, or upgrade to a premium listing for more photos, featured placement, and profile analytics."}
-              {/* TODO: link to premium upgrade page when available */}
-            </div>
-          ) : (
-            <BuilderPhotoUpload
-              builderId={builder.id}
-              folder="gallery"
-              onUploaded={handlePhotoUploaded}
-              label={`Upload photo (${photoLimit - galleryUrls.length} remaining)`}
-            />
-          )}
-        </div>
 
         <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           <button
