@@ -68,12 +68,19 @@ export default function BuilderDashboard() {
 }
 
 function DashboardInner() {
-  const [builder, setBuilder] = useState<BuilderData | null>(null);
+  // A single auth user can own multiple builder listings. The dashboard
+  // holds the full list and tracks which one is currently being edited.
+  const [allBuilders, setAllBuilders] = useState<BuilderData[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [claims, setClaims] = useState<PendingClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Currently selected builder — derived from the list + selection. Keeping
+  // the variable name `builder` means the existing JSX below needs no edits.
+  const builder = allBuilders.find((b) => b.id === selectedId) ?? null;
 
   // Editable fields
   const [description, setDescription] = useState("");
@@ -92,27 +99,86 @@ function DashboardInner() {
   const [servicePhone, setServicePhone] = useState("");
   const [serviceEmailsStr, setServiceEmailsStr] = useState("");
 
+  // Reset every form field from a builder row. Called when loading data
+  // and when the owner switches between listings via the tabs.
+  function applyBuilderToForm(b: BuilderData) {
+    setDescription(b.description || "");
+    setTagline(b.tagline || "");
+    setPhone(b.phone || "");
+    setWebsite(b.website || "");
+    setStreet(b.street || "");
+    setPostalCode(b.postal_code || "");
+    setEmailsStr((b.emails || []).join(", "));
+    setLogoUrl(b.logo_url || "");
+    setGalleryUrls(b.gallery_urls || []);
+    setServiceDescription(b.service_description || "");
+    setServiceTagline(b.service_tagline || "");
+    setServicePhone(b.service_phone || "");
+    setServiceEmailsStr((b.service_emails || []).join(", "));
+  }
+
+  // Does the form hold any unsaved changes against the currently selected
+  // builder row? Mirrors the diff logic in handleSaveEdits. Used to warn
+  // the owner before they switch tabs away from a dirty form.
+  function isFormDirty(): boolean {
+    if (!builder) return false;
+    if (description !== (builder.description || "")) return true;
+    if (tagline !== (builder.tagline || "")) return true;
+    if (phone !== (builder.phone || "")) return true;
+    if (website !== (builder.website || "")) return true;
+    if (street !== (builder.street || "")) return true;
+    if (postalCode !== (builder.postal_code || "")) return true;
+    if (logoUrl !== (builder.logo_url || "")) return true;
+
+    const newEmails = emailsStr.split(",").map((e) => e.trim()).filter(Boolean);
+    if (JSON.stringify(newEmails) !== JSON.stringify(builder.emails || [])) return true;
+
+    if (JSON.stringify(galleryUrls) !== JSON.stringify(builder.gallery_urls || [])) return true;
+
+    if (builder.categories?.includes("service")) {
+      if (serviceDescription !== (builder.service_description || "")) return true;
+      if (serviceTagline !== (builder.service_tagline || "")) return true;
+      if (servicePhone !== (builder.service_phone || "")) return true;
+      const newServiceEmails = serviceEmailsStr
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean);
+      if (JSON.stringify(newServiceEmails) !== JSON.stringify(builder.service_emails || [])) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Switch to a different owned listing. Warns the owner first if the form
+  // holds unsaved changes so they don't silently lose work.
+  function handleSwitchBuilder(targetId: string) {
+    if (targetId === selectedId) return;
+    if (isFormDirty()) {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Switch listings anyway? Your changes will be discarded.",
+      );
+      if (!confirmed) return;
+    }
+    const target = allBuilders.find((b) => b.id === targetId);
+    if (!target) return;
+    setSelectedId(targetId);
+    applyBuilderToForm(target);
+    setSaved(false);
+    setError(null);
+  }
+
   const loadData = useCallback(async () => {
     const client = getAuthClient();
     if (!client) return;
 
     const { data: builderData } = await client.rpc("get_my_builder");
-    if (builderData && builderData.length > 0) {
-      const b = builderData[0] as BuilderData;
-      setBuilder(b);
-      setDescription(b.description || "");
-      setTagline(b.tagline || "");
-      setPhone(b.phone || "");
-      setWebsite(b.website || "");
-      setStreet(b.street || "");
-      setPostalCode(b.postal_code || "");
-      setEmailsStr((b.emails || []).join(", "));
-      setLogoUrl(b.logo_url || "");
-      setGalleryUrls(b.gallery_urls || []);
-      setServiceDescription(b.service_description || "");
-      setServiceTagline(b.service_tagline || "");
-      setServicePhone(b.service_phone || "");
-      setServiceEmailsStr((b.service_emails || []).join(", "));
+    const list = ((builderData ?? []) as BuilderData[]);
+    setAllBuilders(list);
+    if (list.length > 0) {
+      setSelectedId(list[0].id);
+      applyBuilderToForm(list[0]);
     }
 
     const { data: claimsData } = await client.rpc("get_my_claims");
@@ -203,7 +269,14 @@ function DashboardInner() {
       setError(rpcError.message || "Something went wrong. Please try again.");
     } else {
       setSaved(true);
-      loadData();
+      // Optimistically merge the saved changes into the in-memory builder row
+      // instead of reloading. A full reload would reset selectedId back to the
+      // first listing in the array, which would kick a multi-listing owner
+      // off the tab they just saved.
+      const savedId = builder.id;
+      setAllBuilders((prev) =>
+        prev.map((b) => (b.id === savedId ? { ...b, ...changes } : b)),
+      );
     }
   }
 
@@ -306,6 +379,41 @@ function DashboardInner() {
   // Builder linked — show edit form
   return (
     <div>
+      {allBuilders.length > 1 && (
+        <div
+          className="mb-6 border-b"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          <div
+            className="flex gap-1 overflow-x-auto"
+            role="tablist"
+            aria-label="Your listings"
+          >
+            {allBuilders.map((b) => {
+              const isActive = b.id === selectedId;
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => handleSwitchBuilder(b.id)}
+                  className="px-4 py-2.5 font-sans-ui text-sm whitespace-nowrap border-b-2 -mb-px transition-colors"
+                  style={{
+                    borderColor: isActive ? "var(--color-primary)" : "transparent",
+                    color: isActive ? "var(--color-text)" : "var(--color-text-muted)",
+                    fontWeight: isActive ? 500 : 400,
+                    background: "transparent",
+                  }}
+                  aria-selected={isActive}
+                  role="tab"
+                >
+                  {b.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           {logoUrl ? (
