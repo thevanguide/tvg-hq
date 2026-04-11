@@ -2,20 +2,31 @@
 -- TVG SECURITY DEFINER function snapshot
 -- ============================================================================
 -- Source: public schema, pg_proc WHERE prosecdef = true
--- Snapshot date: 2026-04-09
+-- Snapshot date: 2026-04-10
 -- Project: awnyqijglxczwyrhmdnc.supabase.co
 --
 -- This file is a DISASTER-RECOVERY SNAPSHOT, not a source-of-truth migration.
 -- The functions below are the live state of the TVG Supabase database at the
 -- time of capture. They are NOT auto-applied; do not run this file blindly.
 --
--- To re-capture the current state, query pg_proc via the Management API:
---   SELECT pg_get_functiondef(p.oid)
---   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
---   WHERE n.nspname = 'public' AND p.prosecdef = true
---   ORDER BY p.proname;
+-- To re-capture the current state, query pg_proc via the Management API or
+-- mcp__supabase__execute_sql:
+--   SELECT pg_get_functiondef(oid)
+--   FROM pg_proc
+--   WHERE pronamespace = 'public'::regnamespace AND prosecdef = true
+--   ORDER BY proname;
 --
 -- See memory/reference_supabase_management_api.md for the access pattern.
+--
+-- Changes since 2026-04-09 snapshot:
+--   * Added: toggle_service_listing (Apr 10, self-serve service-directory toggle)
+--   * Modified: 8 admin functions migrated from old admin user_id
+--     8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c (hello@emerycustombuilds.com) to
+--     b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac (andrew@thevanguide.com).
+--   * Hardened: 9 SECURITY DEFINER functions had search_path pinned via
+--     ALTER FUNCTION ... SET search_path = public, pg_temp.
+--   * Note: submit_builder_edit was already updated Apr 9 with the
+--     hero_image_url + service_hero_image_url whitelist additions.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -26,6 +37,7 @@ CREATE OR REPLACE FUNCTION public.approve_claim(p_claim_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_claim builder_claims%ROWTYPE;
@@ -34,7 +46,7 @@ DECLARE
   v_resend_key text;
   v_gh_token text;
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
@@ -43,23 +55,19 @@ BEGIN
     RAISE EXCEPTION 'Claim not found';
   END IF;
 
-  -- Get builder name and claimant email
   SELECT name INTO v_builder_name FROM builders WHERE id = v_claim.builder_id;
   SELECT email::text INTO v_user_email FROM auth.users WHERE id = v_claim.user_id;
 
-  -- Update claim status
   UPDATE builder_claims
   SET status = 'approved', reviewed_at = now()
   WHERE id = p_claim_id;
 
-  -- Reject other pending claims for same builder
   UPDATE builder_claims
   SET status = 'rejected', reviewed_at = now()
   WHERE builder_id = v_claim.builder_id
     AND id != p_claim_id
     AND status = 'pending';
 
-  -- Set owner on builder, mark as claimed
   UPDATE builders
   SET owner_id = v_claim.user_id,
       claimed = true,
@@ -67,7 +75,6 @@ BEGIN
       updated_at = now()
   WHERE id = v_claim.builder_id;
 
-  -- Send approval email to builder (fire-and-forget)
   BEGIN
     SELECT decrypted_secret INTO v_resend_key
     FROM vault.decrypted_secrets
@@ -101,7 +108,6 @@ BEGIN
     RAISE WARNING 'Approval notification email failed: %', SQLERRM;
   END;
 
-  -- Trigger site rebuild via GitHub Actions workflow dispatch (fire-and-forget)
   BEGIN
     SELECT decrypted_secret INTO v_gh_token
     FROM vault.decrypted_secrets
@@ -123,9 +129,7 @@ BEGIN
     RAISE WARNING 'GitHub deploy trigger failed: %', SQLERRM;
   END;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- approve_edit
@@ -147,17 +151,18 @@ BEGIN
     RAISE EXCEPTION 'Edit not found';
   END IF;
 
-  -- Apply each key in the changes jsonb to the builder row
-  -- Only allow safe columns
   FOR v_key, v_value IN SELECT * FROM jsonb_each(v_edit.changes)
   LOOP
-    IF v_key IN ('description', 'tagline', 'phone', 'website', 'street', 'city', 'postal_code', 'logo_url') THEN
+    IF v_key IN (
+      'description', 'tagline', 'phone', 'website', 'street', 'city',
+      'postal_code', 'logo_url',
+      'service_description', 'service_tagline', 'service_phone'
+    ) THEN
       EXECUTE format(
         'UPDATE builders SET %I = $1, updated_at = now() WHERE id = $2',
         v_key
       ) USING v_value #>> '{}', v_edit.builder_id;
-    ELSIF v_key IN ('emails', 'gallery_urls', 'platforms', 'services') THEN
-      -- Array columns: expect jsonb array, convert to text[]
+    ELSIF v_key IN ('emails', 'gallery_urls', 'platforms', 'services', 'service_emails') THEN
       EXECUTE format(
         'UPDATE builders SET %I = (SELECT array_agg(elem::text) FROM jsonb_array_elements_text($1) AS elem), updated_at = now() WHERE id = $2',
         v_key
@@ -169,9 +174,7 @@ BEGIN
   SET status = 'approved', reviewed_at = now()
   WHERE id = p_edit_id;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- approve_submission
@@ -181,6 +184,7 @@ CREATE OR REPLACE FUNCTION public.approve_submission(p_submission_id uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_sub builder_submissions%ROWTYPE;
@@ -192,7 +196,7 @@ DECLARE
   v_user_email text;
   v_resend_key text;
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
@@ -202,12 +206,10 @@ BEGIN
 
   v_state_code := public.state_name_to_code(v_sub.state);
 
-  -- Slugify business name
   v_slug_base := lower(regexp_replace(regexp_replace(v_sub.business_name, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g'));
   v_slug_base := trim(both '-' from regexp_replace(v_slug_base, '-+', '-', 'g'));
   v_slug := v_slug_base;
 
-  -- Handle slug collisions
   WHILE EXISTS (SELECT 1 FROM builders WHERE state = v_state_code AND slug = v_slug) LOOP
     v_suffix := v_suffix + 1;
     v_slug := v_slug_base || '-' || v_suffix;
@@ -229,7 +231,6 @@ BEGIN
 
   UPDATE builder_submissions SET status = 'approved', reviewed_at = now() WHERE id = p_submission_id;
 
-  -- Email submitter (fire-and-forget)
   BEGIN
     SELECT decrypted_secret INTO v_resend_key FROM vault.decrypted_secrets WHERE name = 'resend_api_key';
     SELECT email::text INTO v_user_email FROM auth.users WHERE id = v_sub.user_id;
@@ -259,9 +260,7 @@ BEGIN
 
   RETURN v_new_builder_id;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- get_admin_stats
@@ -271,10 +270,11 @@ CREATE OR REPLACE FUNCTION public.get_admin_stats()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE result jsonb;
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
   SELECT jsonb_build_object(
@@ -287,9 +287,7 @@ BEGIN
   ) INTO result;
   RETURN result;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- get_my_builder
@@ -306,12 +304,15 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
+  -- Return every builder listing owned by the current user. The dashboard
+  -- lets the owner pick which one they're editing when they own more than
+  -- one. Alphabetical order keeps the default deterministic.
   RETURN QUERY
-    SELECT * FROM builders WHERE owner_id = auth.uid() LIMIT 1;
+    SELECT * FROM builders
+    WHERE owner_id = auth.uid()
+    ORDER BY name ASC;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- get_my_claims
@@ -332,9 +333,7 @@ BEGIN
     SELECT * FROM builder_claims WHERE user_id = auth.uid()
     ORDER BY created_at DESC;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- get_pending_claims
@@ -344,9 +343,10 @@ CREATE OR REPLACE FUNCTION public.get_pending_claims()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
@@ -377,9 +377,7 @@ BEGIN
     ) t
   );
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- get_pending_edits
@@ -389,9 +387,10 @@ CREATE OR REPLACE FUNCTION public.get_pending_edits()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
@@ -419,9 +418,7 @@ BEGIN
     ) t
   );
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- get_pending_submissions
@@ -431,9 +428,10 @@ CREATE OR REPLACE FUNCTION public.get_pending_submissions()
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
@@ -465,9 +463,7 @@ BEGIN
     ) t
   );
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- reject_claim
@@ -477,6 +473,7 @@ CREATE OR REPLACE FUNCTION public.reject_claim(p_claim_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_claim builder_claims%ROWTYPE;
@@ -484,7 +481,7 @@ DECLARE
   v_user_email text;
   v_resend_key text;
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
 
@@ -493,16 +490,13 @@ BEGIN
     RAISE EXCEPTION 'Claim not found';
   END IF;
 
-  -- Get builder name and claimant email
   SELECT name INTO v_builder_name FROM builders WHERE id = v_claim.builder_id;
   SELECT email::text INTO v_user_email FROM auth.users WHERE id = v_claim.user_id;
 
-  -- Update claim status
   UPDATE builder_claims
   SET status = 'rejected', reviewed_at = now()
   WHERE id = p_claim_id;
 
-  -- Send rejection email to claimant (fire-and-forget)
   BEGIN
     SELECT decrypted_secret INTO v_resend_key
     FROM vault.decrypted_secrets
@@ -534,9 +528,7 @@ BEGIN
     RAISE WARNING 'Rejection notification email failed: %', SQLERRM;
   END;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- reject_submission
@@ -546,18 +538,17 @@ CREATE OR REPLACE FUNCTION public.reject_submission(p_submission_id uuid)
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 BEGIN
-  IF auth.uid() != '8a79afbf-b4ac-4efc-abbd-2c8ce1b61a1c' THEN
+  IF auth.uid() != 'b1b8b1ae-b7be-4b96-91f4-2ee74b31cdac' THEN
     RAISE EXCEPTION 'Admin access required';
   END IF;
   UPDATE builder_submissions SET status = 'rejected', reviewed_at = now()
   WHERE id = p_submission_id AND status = 'pending';
   IF NOT FOUND THEN RAISE EXCEPTION 'Submission not found or already reviewed'; END IF;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- submit_builder_claim
@@ -567,6 +558,7 @@ CREATE OR REPLACE FUNCTION public.submit_builder_claim(p_builder_id uuid, p_busi
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_user_id uuid;
@@ -598,7 +590,6 @@ BEGIN
   VALUES (p_builder_id, v_user_id, p_business_name, p_contact_name, p_evidence)
   RETURNING id INTO v_claim_id;
 
-  -- Send email notification via Resend (fire-and-forget)
   BEGIN
     SELECT decrypted_secret INTO v_resend_key
     FROM vault.decrypted_secrets
@@ -632,9 +623,7 @@ BEGIN
 
   RETURN v_claim_id;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- submit_builder_edit
@@ -655,7 +644,9 @@ DECLARE
   v_safe_fields text[] := ARRAY[
     'description', 'tagline', 'phone', 'website', 'street',
     'city', 'postal_code', 'logo_url', 'emails', 'gallery_urls',
-    'platforms', 'services'
+    'platforms', 'services',
+    'service_description', 'service_tagline', 'service_phone', 'service_emails',
+    'hero_image_url', 'service_hero_image_url'
   ];
 BEGIN
   v_user_id := auth.uid();
@@ -663,14 +654,12 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Verify ownership
   IF NOT EXISTS (
     SELECT 1 FROM builders WHERE id = p_builder_id AND owner_id = v_user_id
   ) THEN
     RAISE EXCEPTION 'You do not own this builder listing';
   END IF;
 
-  -- Enforce photo_limit on gallery_urls
   IF p_changes ? 'gallery_urls' THEN
     DECLARE
       v_limit int;
@@ -684,11 +673,10 @@ BEGIN
     END;
   END IF;
 
-  -- Auto-apply safe fields directly to the builder row
   FOR v_key, v_value IN SELECT * FROM jsonb_each(p_changes)
   LOOP
     IF v_key = ANY(v_safe_fields) THEN
-      IF v_key IN ('emails', 'gallery_urls', 'platforms', 'services') THEN
+      IF v_key IN ('emails', 'gallery_urls', 'platforms', 'services', 'service_emails') THEN
         EXECUTE format(
           'UPDATE builders SET %I = (SELECT array_agg(elem::text) FROM jsonb_array_elements_text($1) AS elem), updated_at = now() WHERE id = $2',
           v_key
@@ -702,12 +690,10 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Log the edit for audit purposes
   INSERT INTO builder_edits (builder_id, user_id, changes, status, reviewed_at)
   VALUES (p_builder_id, v_user_id, p_changes, 'approved', now())
   RETURNING id INTO v_edit_id;
 
-  -- Trigger site rebuild via GitHub Actions workflow dispatch
   BEGIN
     SELECT decrypted_secret INTO v_gh_token
     FROM vault.decrypted_secrets
@@ -731,9 +717,7 @@ BEGIN
 
   RETURN v_edit_id;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- submit_new_builder
@@ -755,10 +739,8 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Get user email
   SELECT email INTO v_user_email FROM auth.users WHERE id = v_user_id;
 
-  -- Check no pending submission from this user with the same name
   IF EXISTS (
     SELECT 1 FROM builder_submissions
     WHERE user_id = v_user_id AND lower(business_name) = lower(p_business_name) AND status = 'pending'
@@ -776,7 +758,6 @@ BEGIN
   )
   RETURNING id INTO v_submission_id;
 
-  -- Send notification (fire-and-forget via pg_net)
   PERFORM net.http_post(
     url := 'https://awnyqijglxczwyrhmdnc.supabase.co/functions/v1/notify-claim',
     body := json_build_object(
@@ -792,9 +773,7 @@ BEGIN
 
   RETURN v_submission_id;
 END;
-$function$
-;
-
+$function$;
 
 -- ----------------------------------------------------------------------------
 -- subscribe_to_newsletter
@@ -811,6 +790,140 @@ begin
   values (lower(trim(p_email)), coalesce(p_list, 'newsletter'), p_source)
   on conflict do nothing;
 end;
-$function$
-;
+$function$;
 
+-- ----------------------------------------------------------------------------
+-- toggle_service_listing  (NEW Apr 10)
+-- ----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.toggle_service_listing(p_builder_id uuid, p_enabled boolean)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_user_id uuid;
+  v_user_email text;
+  v_builder_name text;
+  v_builder_state text;
+  v_builder_slug text;
+  v_categories text[];
+  v_was_in boolean;
+  v_resend_key text;
+  v_gh_token text;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  SELECT
+    name,
+    state,
+    slug,
+    COALESCE(categories, ARRAY[]::text[])
+  INTO
+    v_builder_name,
+    v_builder_state,
+    v_builder_slug,
+    v_categories
+  FROM builders
+  WHERE id = p_builder_id AND owner_id = v_user_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'You do not own this builder listing';
+  END IF;
+
+  v_was_in := 'service' = ANY(v_categories);
+
+  IF p_enabled = v_was_in THEN
+    RETURN;
+  END IF;
+
+  IF p_enabled THEN
+    v_categories := array_append(v_categories, 'service');
+  ELSE
+    v_categories := array_remove(v_categories, 'service');
+  END IF;
+
+  IF array_length(v_categories, 1) IS NULL OR array_length(v_categories, 1) = 0 THEN
+    RAISE EXCEPTION 'Cannot remove service listing: shop has no other category';
+  END IF;
+
+  UPDATE builders
+  SET categories = v_categories,
+      updated_at = now()
+  WHERE id = p_builder_id;
+
+  INSERT INTO builder_edits (builder_id, user_id, changes, status, reviewed_at)
+  VALUES (
+    p_builder_id,
+    v_user_id,
+    jsonb_build_object('categories', to_jsonb(v_categories)),
+    'approved',
+    now()
+  );
+
+  BEGIN
+    SELECT decrypted_secret INTO v_resend_key
+    FROM vault.decrypted_secrets
+    WHERE name = 'resend_api_key';
+
+    SELECT email::text INTO v_user_email FROM auth.users WHERE id = v_user_id;
+
+    IF v_resend_key IS NOT NULL THEN
+      PERFORM net.http_post(
+        url := 'https://api.resend.com/emails',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer ' || v_resend_key,
+          'Content-Type', 'application/json'
+        ),
+        body := jsonb_build_object(
+          'from', 'The Van Guide <auth@thevanguide.com>',
+          'to', 'hello@thevanguide.com',
+          'subject', CASE
+            WHEN p_enabled THEN 'Service listing added: ' || COALESCE(v_builder_name, 'unknown')
+            ELSE 'Service listing removed: ' || COALESCE(v_builder_name, 'unknown')
+          END,
+          'html', '<div style="font-family: sans-serif; max-width: 480px;">'
+            || '<h2 style="color: #1B3D2F;">'
+            || CASE WHEN p_enabled THEN 'Service listing added' ELSE 'Service listing removed' END
+            || '</h2>'
+            || '<p><strong>Shop:</strong> ' || COALESCE(v_builder_name, 'unknown') || '</p>'
+            || '<p><strong>State:</strong> ' || COALESCE(v_builder_state, 'unknown') || '</p>'
+            || '<p><strong>Slug:</strong> ' || COALESCE(v_builder_slug, 'unknown') || '</p>'
+            || '<p><strong>Owner:</strong> ' || COALESCE(v_user_email, 'unknown') || '</p>'
+            || '<p><strong>Categories now:</strong> ' || array_to_string(v_categories, ', ') || '</p>'
+            || '<p style="margin-top: 16px; color: #666; font-size: 13px;">Auto-applied by the dashboard self-serve toggle. Site rebuild in progress.</p>'
+            || '<p style="margin-top: 20px;"><a href="https://thevanguide.com/builders/admin/" style="display: inline-block; background: #C49A2A; color: #fff; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Open admin</a></p>'
+            || '</div>'
+        )
+      );
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'Service toggle notification email failed: %', SQLERRM;
+  END;
+
+  BEGIN
+    SELECT decrypted_secret INTO v_gh_token
+    FROM vault.decrypted_secrets
+    WHERE name = 'github_deploy_token';
+
+    IF v_gh_token IS NOT NULL THEN
+      PERFORM net.http_post(
+        url := 'https://api.github.com/repos/thevanguide/tvg-hq/actions/workflows/deploy.yml/dispatches',
+        body := '{"ref": "main"}'::jsonb,
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer ' || v_gh_token,
+          'Accept', 'application/vnd.github+json',
+          'X-GitHub-Api-Version', '2022-11-28',
+          'User-Agent', 'TVG-Supabase'
+        )
+      );
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'GitHub deploy trigger failed: %', SQLERRM;
+  END;
+END;
+$function$;
