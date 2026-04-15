@@ -1,0 +1,196 @@
+# The Van Guide — llms-full.txt
+# The most comprehensive van builder directory in the US
+# https://thevanguide.com
+#
+# This extended file provides richer context about each section and page
+# to help AI models understand site content for accurate citation.
+
+## About The Van Guide
+The Van Guide is an independent, editorially maintained directory of van conversion companies across the United States. The site catalogs van builders and service shops by state, city, van platform (Mercedes Sprinter, Ram ProMaster, Ford Transit), conversion style, price tier, and services offered. Every listing is free and unbiased — there are no paid placements or sponsored rankings. The Van Guide also publishes in-depth guides on van conversion insurance, state-by-state registration and titling, RVIA certification, financing options, and conversion costs. The goal is to be the most useful starting point for anyone researching a van conversion.
+
+---
+
+## Van Builder Directory
+> URL: /builders/
+> A searchable, filterable directory of van conversion builders across the US. Includes an interactive map, search by name or location, and filter links by state, platform, price tier, build style, and services. Updated as new builders are verified and added.
+
+### Directory — By State
+Each state page lists all van conversion builders operating in that state, with city breakdowns, a searchable map, and links to individual builder profiles.
+
+- /builders/california/: California van builders — the largest concentration of van conversion shops in the US, spanning Southern California, the Bay Area, and the Central Coast.
+- /builders/colorado/: Colorado van builders — a growing hub for adventure-focused van conversions, centered around Denver and the Front Range.
+- /builders/oregon/: Oregon van builders — Pacific Northwest builders known for off-grid and adventure builds.
+- /builders/utah/: Utah van builders — shops catering to the outdoor recreation community.
+- /builders/arizona/: Arizona van builders — desert-based conversion shops.
+- /builders/texas/: Texas van builders — a large and growing market for van conversions.
+- /builders/washington/: Washington van builders — Seattle-area and Pacific Northwest conversion companies.
+- /builders/florida/: Florida van builders — shops building for warm-weather and travel-focused conversions.
+- /builders/north-carolina/: North Carolina van builders — East Coast conversion shops.
+
+### Directory — By Platform
+- /builders/platform/sprinter/: Mercedes Sprinter van builders — the most popular platform for professional van conversions. Sprinter vans are favored for their tall ceiling height, diesel reliability, and wide aftermarket support.
+- /builders/platform/promaster/: Ram ProMaster van builders — a front-wheel-drive platform popular for its wide interior, lower purchase price, and easier DIY modifications.
+- /builders/platform/transit/: Ford Transit van builders — Ford's full-size van platform, available in multiple roof heights and lengths, with strong dealer network support.
+
+### Directory — By Price Tier
+- /builders/tier/budget/: Budget van conversion builders — shops offering conversions typically under $30,000, often with simpler layouts and fewer custom features.
+- /builders/tier/mid/: Mid-range van conversion builders — the most common tier, with builds typically ranging from $30,000 to $80,000 including solar, plumbing, and full interior buildout.
+- /builders/tier/premium/: Premium van conversion builders — high-end shops building in the $80,000 to $150,000+ range with premium materials, advanced electrical systems, and custom cabinetry.
+- /builders/tier/luxury/: Luxury van conversion builders — top-tier builders creating bespoke conversions with the highest quality materials and fully custom designs.
+
+### Directory — By Build Style
+- /builders/style/custom/: Custom van conversion builders — shops that design and build to the customer's specifications rather than repeating a fixed floor plan.
+- /builders/style/standard/: Standard van conversion builders — shops offering pre-designed floor plans and packages for faster turnaround and more predictable pricing.
+
+### Directory — By Service Specialty
+- /builders/service/off-grid/: Off-grid van builders — specialists in self-contained builds with large battery banks, solar arrays, and water systems designed for extended boondocking.
+- /builders/service/solar/: Solar installation van builders — shops with expertise in rooftop solar panel installation and electrical system integration.
+- /builders/service/electrical/: Electrical system van builders — specialists in 12V/48V electrical systems, lithium battery banks, inverters, and shore power hookups.
+
+---
+
+## Van Repair & Service Directory
+> URL: /services/
+> A directory of van repair, maintenance, and upgrade shops. Covers mobile mechanics, Sprinter specialists, electrical upgrades, and general van service. Separate from the builder directory.
+
+---
+
+## Insurance Guides
+> URL: /insurance/
+> A comprehensive guide hub covering van conversion insurance from every angle — which carriers cover converted vans, how much coverage costs, what to do during the build, and how to handle claims. Each guide is fact-checked against carrier policy documents and updated regularly.
+
+### Pillar Content
+- /insurance/best-for-van-conversions/: The definitive comparison of insurance carriers that cover custom van conversions. Covers Progressive, Roamly, Good Sam, State Farm, National General, and others. Compares agreed value vs. actual cash value, coverage for contents and upgrades, and full-time living policies.
+
+### Situation Guides
+- /insurance/cost/: How much van conversion insurance costs — typical annual premiums by carrier, factors that affect price (agreed value, full-time use, RVIA certification), and how to get accurate quotes.
+- /insurance/diy-van-conversion/: Insurance for DIY van conversions — what carriers will and won't cover if you built the van yourself, and how documentation affects coverage.
+- /insurance/during-the-build/: How to insure a van during the conversion process — coverage gaps between purchasing the van and completing the build.
+- /insurance/full-time/: Insurance for full-time van life — carriers that offer full-time use coverage, domicile requirements, and how living in your van affects premiums.
+- /insurance/rental-insurance/: Insurance for renting out a converted van — coverage through Outdoorsy, RVshare, and private rental arrangements.
+- /insurance/rvia-and-insurance/: How RVIA certification affects van insurance — which carriers require it, premium differences, and whether certification is worth it for insurance purposes alone.
+- /insurance/switching-auto-to-rv/: Switching from auto insurance to RV insurance after a van conversion — when to switch, how the process works, and what to watch for.
+- /insurance/total-loss/: Total loss claims on converted vans — how carriers value custom builds, agreed value vs. depreciation, and how to protect your investment.
+- /insurance/address-and-domicile/: Address and domicile requirements for van insurance — how your legal address affects coverage, state requirements, and mail forwarding options for full-timers.
+- /insurance/overview/: Van conversion insurance overview — a primer on the types of coverage available and how van conversions differ from standard auto or RV insurance.
+
+### Carrier Reviews
+- /insurance/carriers/progressive/: Progressive van conversion insurance — coverage details, quoting process, RV classification requirements, and pros/cons for converted vans.
+- /insurance/carriers/roamly/: Roamly van conversion insurance — a newer carrier built specifically for van life and overlanding, with agreed value coverage and no RVIA requirement.
+- /insurance/carriers/good-sam/: Good Sam van insurance — National General-backed RV insurance marketed through the Good Sam Club, with details on coverage tiers and club membership.
+- /insurance/carriers/state-farm/: State Farm van insurance — what State Farm will and won't cover for converted vans, and how agent-dependent the quoting process is.
+- /insurance/carriers/national-general/: National General van insurance — RV-focused carrier offering specialty coverage for converted vans.
+- /insurance/carriers/geico/: GEICO van insurance — limited options for converted vans, with details on what GEICO classifies as an RV.
+- /insurance/carriers/allstate/: Allstate van insurance — coverage availability and limitations for custom van conversions.
+- /insurance/carriers/aaa/: AAA van insurance — roadside assistance and insurance options through AAA for converted vans.
+- /insurance/carriers/usaa/: USAA van insurance — military-affiliated insurance options for van conversions.
+
+### Carrier Comparisons
+- /insurance/compare/roamly-vs-progressive/: Roamly vs Progressive for van conversions — side-by-side comparison of coverage, pricing, agreed value, and conversion-specific features.
+- /insurance/compare/roamly-vs-good-sam/: Roamly vs Good Sam for van conversions — comparing a van-life-specific carrier against a traditional RV insurance provider.
+- /insurance/compare/roamly-vs-national-general/: Roamly vs National General — specialty van coverage vs. traditional RV policy.
+- /insurance/compare/progressive-vs-good-sam/: Progressive vs Good Sam — two of the most commonly recommended RV insurers compared for van conversions.
+- /insurance/compare/progressive-vs-state-farm/: Progressive vs State Farm — RV specialty carrier vs. general auto insurer for van conversions.
+- /insurance/compare/good-sam-vs-state-farm/: Good Sam vs State Farm — club-based RV insurance vs. traditional auto insurance for vans.
+
+### Vehicle-Specific Guides
+- /insurance/by-vehicle/sprinter/: Sprinter van insurance guide — insurance considerations specific to Mercedes Sprinter conversions, including commercial vs. passenger classification.
+- /insurance/by-vehicle/promaster/: ProMaster van insurance guide — insurance for Ram ProMaster conversions, including front-wheel-drive classification nuances.
+- /insurance/by-vehicle/transit/: Transit van insurance guide — insurance for Ford Transit conversions.
+
+---
+
+## Registration & Titling Guides (All 50 States)
+> URL: /registration/
+> State-by-state guides to titling and registering a converted van. Each guide covers the specific DMV process, required inspections, title change procedures, fees, and common pitfalls for that state. All guides are researched from official DMV documents and statutes.
+
+- /registration/overview/: General overview of the van conversion registration process across the US.
+- /registration/alabama/: Alabama — van conversion titling and registration requirements.
+- /registration/alaska/: Alaska — van conversion titling and registration requirements.
+- /registration/arizona/: Arizona — van conversion titling and registration requirements.
+- /registration/arkansas/: Arkansas — van conversion titling and registration requirements.
+- /registration/california/: California — van conversion titling and registration requirements. California has specific CARB and smog requirements for converted vehicles.
+- /registration/colorado/: Colorado — van conversion titling and registration requirements.
+- /registration/connecticut/: Connecticut — van conversion titling and registration requirements.
+- /registration/delaware/: Delaware — van conversion titling and registration requirements.
+- /registration/florida/: Florida — van conversion titling and registration requirements.
+- /registration/georgia/: Georgia — van conversion titling and registration requirements.
+- /registration/hawaii/: Hawaii — van conversion titling and registration requirements.
+- /registration/idaho/: Idaho — van conversion titling and registration requirements.
+- /registration/illinois/: Illinois — van conversion titling and registration requirements.
+- /registration/indiana/: Indiana — van conversion titling and registration requirements.
+- /registration/iowa/: Iowa — van conversion titling and registration requirements.
+- /registration/kansas/: Kansas — van conversion titling and registration requirements.
+- /registration/kentucky/: Kentucky — van conversion titling and registration requirements.
+- /registration/louisiana/: Louisiana — van conversion titling and registration requirements.
+- /registration/maine/: Maine — van conversion titling and registration requirements.
+- /registration/maryland/: Maryland — van conversion titling and registration requirements.
+- /registration/massachusetts/: Massachusetts — van conversion titling and registration requirements.
+- /registration/michigan/: Michigan — van conversion titling and registration requirements.
+- /registration/minnesota/: Minnesota — van conversion titling and registration requirements.
+- /registration/mississippi/: Mississippi — van conversion titling and registration requirements.
+- /registration/missouri/: Missouri — van conversion titling and registration requirements.
+- /registration/montana/: Montana — van conversion titling and registration requirements.
+- /registration/montana-llc/: Montana LLC registration — the Montana LLC loophole for avoiding sales tax on van and RV purchases, including legal risks and recent enforcement changes.
+- /registration/nebraska/: Nebraska — van conversion titling and registration requirements.
+- /registration/nevada/: Nevada — van conversion titling and registration requirements.
+- /registration/new-hampshire/: New Hampshire — van conversion titling and registration requirements.
+- /registration/new-jersey/: New Jersey — van conversion titling and registration requirements.
+- /registration/new-mexico/: New Mexico — van conversion titling and registration requirements.
+- /registration/new-york/: New York — van conversion titling and registration requirements.
+- /registration/north-carolina/: North Carolina — van conversion titling and registration requirements.
+- /registration/north-dakota/: North Dakota — van conversion titling and registration requirements.
+- /registration/ohio/: Ohio — van conversion titling and registration requirements.
+- /registration/oklahoma/: Oklahoma — van conversion titling and registration requirements.
+- /registration/oregon/: Oregon — van conversion titling and registration requirements.
+- /registration/pennsylvania/: Pennsylvania — van conversion titling and registration requirements.
+- /registration/rhode-island/: Rhode Island — van conversion titling and registration requirements.
+- /registration/south-carolina/: South Carolina — van conversion titling and registration requirements.
+- /registration/south-dakota/: South Dakota — van conversion titling and registration requirements.
+- /registration/tennessee/: Tennessee — van conversion titling and registration requirements.
+- /registration/texas/: Texas — van conversion titling and registration requirements.
+- /registration/utah/: Utah — van conversion titling and registration requirements.
+- /registration/vermont/: Vermont — van conversion titling and registration requirements.
+- /registration/vermont-loophole/: Vermont title loophole — using Vermont's mail-in titling process to register vehicles without a title, including limitations and recent changes.
+- /registration/virginia/: Virginia — van conversion titling and registration requirements.
+- /registration/washington/: Washington — van conversion titling and registration requirements.
+- /registration/west-virginia/: West Virginia — van conversion titling and registration requirements.
+- /registration/wisconsin/: Wisconsin — van conversion titling and registration requirements.
+- /registration/wyoming/: Wyoming — van conversion titling and registration requirements.
+
+---
+
+## Certification Guides
+> URL: /certification/
+> Guides covering van conversion certifications including RVIA (Recreation Vehicle Industry Association), NOAH (National Organization of Alternative Housing), and NFPA 1192. Explains what each certification means, who needs it, and how it affects insurance, financing, and resale.
+
+- /certification/overview/: Overview of van conversion certifications — what they are, who issues them, and when they matter.
+- /certification/rvia/: RVIA certification for van conversions — detailed guide on the RVIA inspection process, costs, requirements, and whether certification is worth it for your build.
+
+---
+
+## Financing Guides
+> URL: /financing/
+> Guides on financing a custom van conversion — loan types, lender options, interest rates, and strategies for builds that don't fit neatly into traditional auto or RV lending categories.
+
+- /financing/rv-loans/: RV loans for van conversions — how RV loans work for converted vans, minimum loan amounts, typical terms, and which lenders offer them.
+- /financing/personal-vs-rv-loans/: Personal loans vs RV loans for van builds — comparing interest rates, approval requirements, collateral rules, and total cost of each option.
+- /financing/without-rvia/: Financing a van conversion without RVIA certification — options when your build doesn't have RVIA certification, including personal loans, credit unions, and builder financing.
+
+---
+
+## Blog
+- /blog/van-conversion-cost/: How much does a van conversion cost — a detailed breakdown of van conversion costs by tier, covering base vehicle prices, build labor, materials, and common budget overruns. Includes real price ranges from builders in the directory.
+
+---
+
+## Interactive Tools
+- /tools/van-insurance-finder/: Van insurance finder quiz — a guided 6-question tool that recommends insurance carriers based on your van type, build status, usage pattern, and coverage preferences.
+
+---
+
+## About & Editorial
+- /about/: About The Van Guide — explains the site's mission, editorial independence, and how it's funded.
+- /editorial-standards/: Editorial standards — how content is researched, fact-checked, and updated.
+- /builders/how-we-review/: How we review van builders — the criteria and methodology used to list and evaluate builders in the directory.
+- /contact/: Contact The Van Guide.

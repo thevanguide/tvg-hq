@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import StateSearch from "../../components/StateSearch";
 import { getCollection } from "astro:content";
+import { faqPageJsonLd } from "../../lib/seo";
 
 const all = await getCollection("registration", ({ data }) => !data.draft);
 const pillar = all.find((e) => e.data.pillar);
@@ -21,6 +22,27 @@ const lastUpdated = pillar?.data.lastUpdated;
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "long" });
+
+const stateCount = others.length;
+
+const registrationFaqs = [
+  {
+    question: "Do I need to retitle my van after converting it?",
+    answer: "In most states, yes. Converting a cargo van or passenger van into a camper or motorhome changes its vehicle classification. Most states require you to apply for a title change from 'van' or 'cargo van' to 'motorhome,' 'RV,' or 'camper.' The specific process, inspections, and fees vary by state — The Van Guide covers all 50 states with step-by-step guides.",
+  },
+  {
+    question: "How do I register a converted van as an RV?",
+    answer: "The general process involves: (1) completing your conversion with required equipment (typically a bed, cooking facility, and potable water), (2) scheduling a state inspection or self-certifying depending on your state, (3) submitting a title change application to your state DMV, and (4) paying applicable fees. Requirements vary significantly — some states require professional inspections while others accept a self-certification affidavit.",
+  },
+  {
+    question: "What equipment does a van need to be classified as an RV?",
+    answer: "Most states require at least a sleeping area, cooking facility, and potable water system to classify a vehicle as a motorhome or RV. Some states also require a toilet or specific electrical systems. The exact requirements are defined by each state's motor vehicle code. Check your state's guide on The Van Guide for the specific equipment list.",
+  },
+  {
+    question: "Can I register a converted van in a different state?",
+    answer: "Some states allow out-of-state registration through mail-in processes, most notably Vermont and Montana (via LLC). These options are popular for vehicles without clean titles or for avoiding sales tax, but they come with legal risks if you reside in a different state. The Van Guide covers the Vermont loophole and Montana LLC process in dedicated guides.",
+  },
+];
 ---
 
 <BaseLayout title={title} description={description} ogType="article" ogImage="/og/registration-hub.png">
@@ -44,6 +66,22 @@ const fmtDate = (d: Date) =>
       </div>
     )}
   </article>
+
+  {/* FAQ section — visible content for AEO */}
+  <section class="container-wide py-14 md:py-20">
+    <h2 class="text-2xl md:text-4xl mb-6">Frequently asked questions</h2>
+    <dl class="space-y-6 max-w-3xl">
+      {registrationFaqs.map((faq) => (
+        <div>
+          <dt class="font-sans-ui font-semibold text-lg mb-2">{faq.question}</dt>
+          <dd style="color: var(--color-text-muted);">{faq.answer}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  {/* FAQPage structured data */}
+  <script type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd(registrationFaqs))} />
 
   {others.length > 0 && (
     <section id="state-guides" class="border-t py-14 md:py-20" style="border-color: var(--color-border); background: var(--color-surface);">

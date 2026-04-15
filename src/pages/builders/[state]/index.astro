@@ -8,7 +8,7 @@ import {
   stateToSlug,
   cityToSlug,
 } from "../../../lib/supabase";
-import { stateMeta, itemListJsonLd } from "../../../lib/seo";
+import { stateMeta, itemListJsonLd, faqPageJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const builders = await getAllBuilders();
@@ -48,6 +48,67 @@ const breadcrumbs = [
 
 const stateSlug = stateToSlug(stateName);
 
+// --- AEO: Compute stats for answerable content & FAQ schema ---
+const platformCounts = new Map<string, number>();
+const tierCounts = new Map<string, number>();
+for (const b of builders) {
+  if (b.platforms) {
+    for (const p of b.platforms) {
+      platformCounts.set(p, (platformCounts.get(p) ?? 0) + 1);
+    }
+  }
+  if (b.price_tier) {
+    tierCounts.set(b.price_tier, (tierCounts.get(b.price_tier) ?? 0) + 1);
+  }
+}
+const topPlatforms = [...platformCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 3)
+  .map(([name]) => name);
+const tierLabels: Record<string, string> = {
+  budget: "budget ($15k–$30k)",
+  mid: "mid-range ($30k–$80k)",
+  premium: "premium ($80k–$150k+)",
+  luxury: "luxury ($150k+)",
+};
+const tierList = [...tierCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .filter(([t]) => t in tierLabels)
+  .map(([t]) => tierLabels[t]);
+
+const platformSentence = topPlatforms.length > 0
+  ? `The most common platforms are ${topPlatforms.join(", ")}.`
+  : "";
+const tierSentence = tierList.length > 0
+  ? `Builders in ${stateName} span ${tierList.join(", ")} price ranges.`
+  : "";
+
+// FAQ items for structured data
+const faqs = builders.length > 0
+  ? [
+      {
+        question: `How many van builders are in ${stateName}?`,
+        answer: `The Van Guide lists ${builders.length} van conversion ${builders.length === 1 ? "company" : "companies"} in ${stateName}. The directory is updated regularly as new builders are verified.`,
+      },
+      ...(topPlatforms.length > 0
+        ? [{
+            question: `What van platforms do ${stateName} builders work on?`,
+            answer: `The most popular platforms among ${stateName} van builders are ${topPlatforms.join(", ")}. Many shops work on multiple platforms — use the directory filters to find builders for your specific van.`,
+          }]
+        : []),
+      ...(tierList.length > 0
+        ? [{
+            question: `How much does a van conversion cost in ${stateName}?`,
+            answer: `Van conversion pricing in ${stateName} varies by builder and scope. ${tierSentence} Costs depend on the base vehicle, layout complexity, electrical system, and materials. Contact builders directly for project-specific quotes.`,
+          }]
+        : []),
+      {
+        question: `How do I choose a van builder in ${stateName}?`,
+        answer: `Start by narrowing your search to builders that work on your platform (Sprinter, ProMaster, or Transit) and fit your budget. Review their portfolio, check Google reviews, ask about warranties and build timelines, and visit the shop if possible. The Van Guide profiles include ratings, services, and direct contact info to help you compare.`,
+      },
+    ]
+  : [];
+
 // Serialize builder data for the React search island (includes lat/lng for map)
 const searchData = builders.map((b) => ({
   id: b.id,
@@ -83,6 +144,22 @@ const searchData = builders.map((b) => ({
     : `We're building out the ${stateName} directory. Check back soon.`}
   breadcrumbs={breadcrumbs}
 >
+  {/* Answerable content block for AI citation */}
+  {builders.length > 0 && (
+    <section class="mb-10 prose max-w-none">
+      <p>
+        {stateName} is home to {builders.length} van conversion {builders.length === 1 ? "company" : "companies"} listed
+        in The Van Guide directory.{" "}
+        {platformSentence}{" "}
+        {tierSentence}
+      </p>
+      <p>
+        Each builder profile includes services offered, pricing tier, Google review ratings, and direct contact
+        information. Use the search and map below to find shops near you, or browse by city to narrow your options.
+      </p>
+    </section>
+  )}
+
   {builders.length === 0 ? (
     <div
       class="p-10 text-center border border-dashed"
@@ -135,6 +212,21 @@ const searchData = builders.map((b) => ({
     </div>
   </section>
 
+  {/* FAQ section — visible content for AEO */}
+  {faqs.length > 0 && (
+    <section class="mt-12 mb-8">
+      <h2 class="text-2xl mb-6">Frequently asked questions</h2>
+      <dl class="space-y-6">
+        {faqs.map((faq) => (
+          <div>
+            <dt class="font-sans-ui font-semibold text-lg mb-2">{faq.question}</dt>
+            <dd style="color: var(--color-text-muted);">{faq.answer}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )}
+
   {/* Cross-links */}
   <nav class="mt-8 pt-8 border-t font-sans-ui text-sm flex flex-wrap gap-x-6 gap-y-2" style="border-color: var(--color-border);">
     <a href="/builders/">← All states</a>
@@ -146,5 +238,10 @@ const searchData = builders.map((b) => ({
   {/* ItemList structured data */}
   {builders.length > 0 && (
     <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(builders, `Van Conversion Builders in ${stateName}`))} />
+  )}
+
+  {/* FAQPage structured data */}
+  {faqs.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd(faqs))} />
   )}
 </DirectoryLayout>

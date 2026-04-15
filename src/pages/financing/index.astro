@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArticleCard from "../../components/ArticleCard.astro";
 import { getCollection } from "astro:content";
+import { faqPageJsonLd } from "../../lib/seo";
 
 const all = await getCollection("financing", ({ data }) => !data.draft);
 const pillar = all.find((e) => e.data.pillar);
@@ -28,6 +29,25 @@ const lastUpdated = pillar?.data.lastUpdated;
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "long" });
+
+const financingFaqs = [
+  {
+    question: "Can I get a loan for a van conversion?",
+    answer: "Yes, but your options depend on the build. RVIA-certified conversions qualify for RV loans with lower interest rates (typically 5–8% APR) and longer terms (10–20 years). Conversions without RVIA certification are usually financed through personal loans (8–15% APR, 3–7 year terms) or credit union vehicle loans. Some van builders offer in-house financing or partnerships with lenders.",
+  },
+  {
+    question: "What is the difference between a personal loan and an RV loan for a van conversion?",
+    answer: "RV loans use the vehicle as collateral, offering lower interest rates and longer repayment terms, but most require RVIA certification and a minimum loan amount ($25,000–$50,000 depending on the lender). Personal loans are unsecured, faster to close, and don't require certification, but come with higher rates and shorter terms. For builds under $25,000, a personal loan is often the only option.",
+  },
+  {
+    question: "Do I need RVIA certification to finance a van conversion?",
+    answer: "For RV-specific loans through banks and credit unions, yes — most require the RVIA seal. Without certification, your options include personal loans, home equity loans, credit union vehicle loans, or builder financing programs. Some credit unions are more flexible than national banks about lending on non-certified conversions.",
+  },
+  {
+    question: "How much should I budget for a van conversion?",
+    answer: "Total project costs include the base vehicle ($20,000–$60,000 for a used or new Sprinter, ProMaster, or Transit) plus the conversion itself ($15,000–$150,000+ depending on scope). Budget builds with basic electrical and simple layouts run $15,000–$30,000 for the conversion alone. Mid-range builds with solar, plumbing, and full cabinetry typically cost $30,000–$80,000. Premium and luxury builds start at $80,000.",
+  },
+];
 ---
 
 <BaseLayout title={title} description={description} ogType="article">
@@ -51,6 +71,22 @@ const fmtDate = (d: Date) =>
       </div>
     )}
   </article>
+
+  {/* FAQ section — visible content for AEO */}
+  <section class="container-wide py-14 md:py-20">
+    <h2 class="text-2xl md:text-4xl mb-6">Frequently asked questions</h2>
+    <dl class="space-y-6 max-w-3xl">
+      {financingFaqs.map((faq) => (
+        <div>
+          <dt class="font-sans-ui font-semibold text-lg mb-2">{faq.question}</dt>
+          <dd style="color: var(--color-text-muted);">{faq.answer}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  {/* FAQPage structured data */}
+  <script type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd(financingFaqs))} />
 
   {others.length > 0 && (
     <section class="border-t py-14 md:py-20" style="border-color: var(--color-border); background: var(--color-surface);">

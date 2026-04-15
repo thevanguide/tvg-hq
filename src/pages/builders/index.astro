@@ -7,7 +7,7 @@ import {
   getShopProfileUrl,
   stateToSlug,
 } from "../../lib/supabase";
-import { itemListJsonLd } from "../../lib/seo";
+import { itemListJsonLd, faqPageJsonLd } from "../../lib/seo";
 
 const builders = await getAllBuilders();
 const states = await getDistinctStates();
@@ -26,6 +26,28 @@ const breadcrumbs = [
   { label: "Home", href: "/" },
   { label: "Builders", href: "/builders/" },
 ];
+
+// FAQ items for structured data + visible section
+const hubFaqs = builderCount > 0
+  ? [
+      {
+        question: "How do I choose a van conversion builder?",
+        answer: `Start by deciding on your van platform (Sprinter, ProMaster, or Transit), your budget range, and which features matter most. Then compare builders in your state using The Van Guide directory — each profile includes services, pricing tier, Google reviews, and contact information. Visit the shop if you can, ask to see completed builds, and get detailed written quotes from at least two or three builders before committing.`,
+      },
+      {
+        question: "What questions should I ask a van conversion company?",
+        answer: "Key questions include: What platforms do you build on? What's your typical build timeline? Do you offer a warranty on labor and materials? Can I see photos or visit completed builds? Are you RVIA-certified? What's included in the quoted price vs. what's an add-on? How do you handle change orders during the build? Do you provide a detailed build spec before starting?",
+      },
+      {
+        question: "How much does a van conversion cost?",
+        answer: "Van conversion costs range widely depending on the builder and scope. Budget builds typically run $15,000 to $30,000, mid-range conversions $30,000 to $80,000, and premium or luxury builds $80,000 to $150,000+. These figures cover the build labor and materials only — the base van is a separate purchase. Factors that affect price include electrical system size, cabinetry materials, plumbing complexity, and insulation type.",
+      },
+      {
+        question: `How many van builders are listed in The Van Guide?`,
+        answer: `The Van Guide currently lists ${builderCount} van conversion companies across ${stateCount} US states. The directory is updated regularly as new builders are verified and added. Each listing is editorially maintained with no paid placements.`,
+      },
+    ]
+  : [];
 
 // Serialize builder data for the React search island (includes lat/lng for map)
 const searchData = builders.map((b) => ({
@@ -65,6 +87,23 @@ const searchData = builders.map((b) => ({
   heroImage="/images/vintage-vw-van-sunset-lakeside.jpg"
   heroAlt="A vintage VW van parked at sunset by a lake"
 >
+  {/* Answerable content block for AI citation */}
+  {builderCount > 0 && (
+    <section class="mb-10 prose max-w-none">
+      <p>
+        The Van Guide is an independent directory of {builderCount} van conversion companies across {stateCount} US
+        states. Every listing is free and editorially maintained — there are no paid placements or sponsored rankings.
+        Browse by state, filter by van platform (Sprinter, ProMaster, Transit), price range, build style, or service
+        specialty to find the right builder for your project.
+      </p>
+      <p>
+        Each builder profile includes services offered, pricing tier, Google review ratings, portfolio photos, and
+        direct contact information. Whether you're planning a weekend camper or a full-time live-in conversion, the
+        directory helps you compare options and connect with builders directly.
+      </p>
+    </section>
+  )}
+
   {builders.length === 0 ? (
     <div
       class="p-10 text-center border border-dashed"
@@ -155,8 +194,28 @@ const searchData = builders.map((b) => ({
     </>
   )}
 
+  {/* FAQ section — visible content for AEO */}
+  {hubFaqs.length > 0 && (
+    <section class="mb-12">
+      <h2 class="text-2xl mb-6">Frequently asked questions</h2>
+      <dl class="space-y-6">
+        {hubFaqs.map((faq) => (
+          <div>
+            <dt class="font-sans-ui font-semibold text-lg mb-2">{faq.question}</dt>
+            <dd style="color: var(--color-text-muted);">{faq.answer}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )}
+
   {/* ItemList structured data */}
   {builders.length > 0 && (
     <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd(builders, "Van Conversion Builder Directory"))} />
+  )}
+
+  {/* FAQPage structured data */}
+  {hubFaqs.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd(hubFaqs))} />
   )}
 </DirectoryLayout>

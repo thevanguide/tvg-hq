@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArticleCard from "../../components/ArticleCard.astro";
 import { getCollection } from "astro:content";
+import { faqPageJsonLd } from "../../lib/seo";
 
 const all = await getCollection("certification", ({ data }) => !data.draft);
 const pillar = all.find((e) => e.data.pillar);
@@ -21,6 +22,25 @@ const lastUpdated = pillar?.data.lastUpdated;
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-US", { year: "numeric", month: "long" });
+
+const certificationFaqs = [
+  {
+    question: "What is RVIA certification for a van conversion?",
+    answer: "RVIA certification means a van conversion was built by a manufacturer registered with the Recreation Vehicle Industry Association and inspected against NFPA 1192 (the Standard on Recreational Vehicles). The RVIA seal on the van confirms it meets fire, electrical, plumbing, and structural safety standards. Certification is voluntary but affects insurance options, financing eligibility, and resale value.",
+  },
+  {
+    question: "Do I need RVIA certification for my van conversion?",
+    answer: "RVIA certification is not legally required in most states, but it has practical benefits. Some insurance carriers (like Progressive) require or prefer RVIA-certified vehicles for RV policies. Most RV-specific lenders require RVIA certification for loan approval. Some states also accept the RVIA seal as proof of RV status for titling purposes, simplifying the registration process.",
+  },
+  {
+    question: "How much does RVIA certification cost?",
+    answer: "RVIA certification costs are borne by the builder, not the buyer. Builders pay annual RVIA membership fees and per-unit inspection fees. The cost is typically built into the price of the conversion. DIY builders cannot get RVIA certification — only registered RVIA manufacturers can certify vehicles.",
+  },
+  {
+    question: "What is the difference between RVIA and NOAH certification?",
+    answer: "RVIA (Recreation Vehicle Industry Association) certifies recreational vehicles against NFPA 1192 safety standards. NOAH (National Organization of Alternative Housing) certifies tiny homes and alternative dwellings, including some van conversions, against ANSI 119.5 standards. RVIA is more widely recognized by insurance carriers and lenders for van conversions. NOAH certification is more common in the tiny house community.",
+  },
+];
 ---
 
 <BaseLayout title={title} description={description} ogType="article">
@@ -44,6 +64,22 @@ const fmtDate = (d: Date) =>
       </div>
     )}
   </article>
+
+  {/* FAQ section — visible content for AEO */}
+  <section class="container-wide py-14 md:py-20">
+    <h2 class="text-2xl md:text-4xl mb-6">Frequently asked questions</h2>
+    <dl class="space-y-6 max-w-3xl">
+      {certificationFaqs.map((faq) => (
+        <div>
+          <dt class="font-sans-ui font-semibold text-lg mb-2">{faq.question}</dt>
+          <dd style="color: var(--color-text-muted);">{faq.answer}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  {/* FAQPage structured data */}
+  <script type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd(certificationFaqs))} />
 
   {others.length > 0 && (
     <section class="border-t py-14 md:py-20" style="border-color: var(--color-border); background: var(--color-surface);">

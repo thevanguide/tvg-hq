@@ -1,0 +1,157 @@
+# The Van Guide — llms.txt
+# The most comprehensive van builder directory in the US
+# https://thevanguide.com
+
+## About
+The Van Guide is an independent directory of van conversion companies across the United States. We catalog builders by state, city, van platform (Sprinter, ProMaster, Transit), conversion style, price tier, and services offered. Our goal is to help people find the right van builder for their project. No paid placements — every listing is editorially maintained.
+
+## Directory — Main
+- /builders/: Full US van builder directory (searchable, filterable)
+- /services/: Van repair and service shop directory
+
+## Directory — By State
+- /builders/california/: California van builders
+- /builders/colorado/: Colorado van builders
+- /builders/oregon/: Oregon van builders
+- /builders/utah/: Utah van builders
+- /builders/arizona/: Arizona van builders
+- /builders/texas/: Texas van builders
+- /builders/washington/: Washington van builders
+- /builders/florida/: Florida van builders
+- /builders/north-carolina/: North Carolina van builders
+
+## Directory — By Platform
+- /builders/platform/sprinter/: Mercedes Sprinter van builders
+- /builders/platform/promaster/: Ram ProMaster van builders
+- /builders/platform/transit/: Ford Transit van builders
+
+## Directory — By Price Tier
+- /builders/tier/budget/: Budget van conversion builders
+- /builders/tier/mid/: Mid-range van conversion builders
+- /builders/tier/premium/: Premium van conversion builders
+- /builders/tier/luxury/: Luxury van conversion builders
+
+## Directory — By Build Style
+- /builders/style/custom/: Custom van conversion builders
+- /builders/style/standard/: Standard van conversion builders
+
+## Directory — By Service
+- /builders/service/off-grid/: Off-grid van builders
+- /builders/service/solar/: Solar installation van builders
+- /builders/service/electrical/: Electrical system van builders
+
+## Insurance Guides
+- /insurance/: Van conversion insurance hub (pillar guide)
+- /insurance/best-for-van-conversions/: Best insurance for van conversions
+- /insurance/cost/: How much van conversion insurance costs
+- /insurance/diy-van-conversion/: Insurance for DIY van conversions
+- /insurance/during-the-build/: Insurance during the conversion process
+- /insurance/full-time/: Insurance for full-time van life
+- /insurance/rental-insurance/: Rental insurance for converted vans
+- /insurance/rvia-and-insurance/: How RVIA certification affects insurance
+- /insurance/switching-auto-to-rv/: Switching from auto to RV insurance
+- /insurance/total-loss/: Total loss claims on converted vans
+- /insurance/address-and-domicile/: Address and domicile for van insurance
+- /insurance/overview/: Van conversion insurance overview
+
+## Insurance — Carrier Reviews
+- /insurance/carriers/progressive/: Progressive van conversion insurance review
+- /insurance/carriers/roamly/: Roamly van conversion insurance review
+- /insurance/carriers/good-sam/: Good Sam van insurance review
+- /insurance/carriers/state-farm/: State Farm van insurance review
+- /insurance/carriers/national-general/: National General van insurance review
+- /insurance/carriers/geico/: GEICO van insurance review
+- /insurance/carriers/allstate/: Allstate van insurance review
+- /insurance/carriers/aaa/: AAA van insurance review
+- /insurance/carriers/usaa/: USAA van insurance review
+
+## Insurance — Carrier Comparisons
+- /insurance/compare/roamly-vs-progressive/: Roamly vs Progressive for van conversions
+- /insurance/compare/roamly-vs-good-sam/: Roamly vs Good Sam for van conversions
+- /insurance/compare/roamly-vs-national-general/: Roamly vs National General
+- /insurance/compare/progressive-vs-good-sam/: Progressive vs Good Sam
+- /insurance/compare/progressive-vs-state-farm/: Progressive vs State Farm
+- /insurance/compare/good-sam-vs-state-farm/: Good Sam vs State Farm
+
+## Insurance — By Vehicle
+- /insurance/by-vehicle/sprinter/: Sprinter van insurance guide
+- /insurance/by-vehicle/promaster/: ProMaster van insurance guide
+- /insurance/by-vehicle/transit/: Transit van insurance guide
+
+## Registration Guides (All 50 States)
+- /registration/: Van conversion registration hub
+- /registration/overview/: Registration overview and general process
+- /registration/alabama/: Alabama van conversion registration
+- /registration/alaska/: Alaska van conversion registration
+- /registration/arizona/: Arizona van conversion registration
+- /registration/arkansas/: Arkansas van conversion registration
+- /registration/california/: California van conversion registration
+- /registration/colorado/: Colorado van conversion registration
+- /registration/connecticut/: Connecticut van conversion registration
+- /registration/delaware/: Delaware van conversion registration
+- /registration/florida/: Florida van conversion registration
+- /registration/georgia/: Georgia van conversion registration
+- /registration/hawaii/: Hawaii van conversion registration
+- /registration/idaho/: Idaho van conversion registration
+- /registration/illinois/: Illinois van conversion registration
+- /registration/indiana/: Indiana van conversion registration
+- /registration/iowa/: Iowa van conversion registration
+- /registration/kansas/: Kansas van conversion registration
+- /registration/kentucky/: Kentucky van conversion registration
+- /registration/louisiana/: Louisiana van conversion registration
+- /registration/maine/: Maine van conversion registration
+- /registration/maryland/: Maryland van conversion registration
+- /registration/massachusetts/: Massachusetts van conversion registration
+- /registration/michigan/: Michigan van conversion registration
+- /registration/minnesota/: Minnesota van conversion registration
+- /registration/mississippi/: Mississippi van conversion registration
+- /registration/missouri/: Missouri van conversion registration
+- /registration/montana/: Montana van conversion registration
+- /registration/montana-llc/: Montana LLC van registration loophole
+- /registration/nebraska/: Nebraska van conversion registration
+- /registration/nevada/: Nevada van conversion registration
+- /registration/new-hampshire/: New Hampshire van conversion registration
+- /registration/new-jersey/: New Jersey van conversion registration
+- /registration/new-mexico/: New Mexico van conversion registration
+- /registration/new-york/: New York van conversion registration
+- /registration/north-carolina/: North Carolina van conversion registration
+- /registration/north-dakota/: North Dakota van conversion registration
+- /registration/ohio/: Ohio van conversion registration
+- /registration/oklahoma/: Oklahoma van conversion registration
+- /registration/oregon/: Oregon van conversion registration
+- /registration/pennsylvania/: Pennsylvania van conversion registration
+- /registration/rhode-island/: Rhode Island van conversion registration
+- /registration/south-carolina/: South Carolina van conversion registration
+- /registration/south-dakota/: South Dakota van conversion registration
+- /registration/tennessee/: Tennessee van conversion registration
+- /registration/texas/: Texas van conversion registration
+- /registration/utah/: Utah van conversion registration
+- /registration/vermont/: Vermont van conversion registration
+- /registration/vermont-loophole/: Vermont title loophole for van conversions
+- /registration/virginia/: Virginia van conversion registration
+- /registration/washington/: Washington van conversion registration
+- /registration/west-virginia/: West Virginia van conversion registration
+- /registration/wisconsin/: Wisconsin van conversion registration
+- /registration/wyoming/: Wyoming van conversion registration
+
+## Certification Guides
+- /certification/: Van conversion certification hub (RVIA, NOAH, NFPA 1192)
+- /certification/rvia/: RVIA certification for van conversions
+
+## Financing Guides
+- /financing/: Van conversion financing hub
+- /financing/rv-loans/: RV loans for van conversions
+- /financing/personal-vs-rv-loans/: Personal loans vs RV loans for van builds
+- /financing/without-rvia/: Financing a van conversion without RVIA certification
+
+## Blog
+- /blog/van-conversion-cost/: How much does a van conversion cost
+
+## Tools
+- /tools/van-insurance-finder/: Interactive van insurance finder quiz
+
+## Other Pages
+- /about/: About The Van Guide
+- /contact/: Contact page
+- /editorial-standards/: Editorial standards and methodology
+- /builders/how-we-review/: How we review and list van builders
