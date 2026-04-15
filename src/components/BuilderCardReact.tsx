@@ -81,6 +81,8 @@ export default function BuilderCardReact({
             alt={`${name} logo`}
             className="w-14 h-14 object-contain rounded shrink-0 p-1.5 border"
             style={{ background: "#2a2a2a", borderColor: "var(--color-border)" }}
+            width={56}
+            height={56}
             loading="lazy"
           />
         ) : (
@@ -91,7 +93,7 @@ export default function BuilderCardReact({
               borderColor: "var(--color-border)",
             }}
           >
-            <img src="/images/van-icon.svg" alt="" className="w-9 h-9 opacity-30" />
+            <img src="/images/van-icon.svg" alt="" className="w-9 h-9 opacity-30" width={36} height={36} />
           </div>
         )}
         <div className="flex-1 min-w-0">
