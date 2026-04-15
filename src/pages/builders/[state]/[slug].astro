@@ -92,13 +92,15 @@ function platformSlug(p: string): string {
             alt={`${builder.name} logo`}
             class="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg shrink-0 p-2 border"
             style="background: #2a2a2a; border-color: var(--color-border);"
+            width="80"
+            height="80"
           />
         ) : (
           <div
             class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-lg shrink-0 border"
             style="background: var(--color-bg-alt); border-color: var(--color-border);"
           >
-            <img src="/images/van-icon.svg" alt="" class="w-10 h-10 md:w-12 md:h-12 opacity-30" />
+            <img src="/images/van-icon.svg" alt="" class="w-10 h-10 md:w-12 md:h-12 opacity-30" width="48" height="48" />
           </div>
         )}
 
@@ -266,6 +268,8 @@ function platformSlug(p: string): string {
               alt={`${builder.name} build photo ${i + 1}`}
               class="w-full aspect-[4/3] object-cover rounded-lg"
               style="background: var(--color-bg-alt);"
+              width="600"
+              height="450"
               loading={i === 0 ? "eager" : "lazy"}
             />
           ))}
