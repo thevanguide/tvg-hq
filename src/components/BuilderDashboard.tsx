@@ -2,8 +2,108 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getAuthClient } from "../lib/supabase-auth";
 import BuilderAuth from "./BuilderAuth";
 import BuilderPhotoUpload from "./BuilderPhotoUpload";
+import RichTextEditor from "./RichTextEditor";
 
 const FREE_PHOTO_LIMIT = 3;
+
+// Canonical platforms — owners pick one or more. Grouped for UI readability;
+// stored flat as string[] on the builder row. Labels match the DB after the
+// Apr 17 normalization migration (Mercedes Sprinter → Sprinter, etc.) so
+// filter routes and profile chips stay coherent.
+const PLATFORM_GROUPS: { label: string; platforms: string[] }[] = [
+  {
+    label: "Most common",
+    platforms: ["Sprinter", "ProMaster", "Transit"],
+  },
+  {
+    label: "Full-size American vans",
+    platforms: [
+      "Chevy Express",
+      "Ford E-Series",
+      "Chevy/GMC Van",
+      "Nissan NV",
+      "Dodge Ram Van",
+    ],
+  },
+  {
+    label: "Vintage & European",
+    platforms: [
+      "VW Vanagon/Westfalia",
+      "VW Transporter",
+      "VW ID.Buzz",
+      "Toyota HiAce",
+    ],
+  },
+  {
+    label: "Non-van chassis",
+    platforms: [
+      "Class B RV",
+      "Cargo Trailer",
+      "Box Truck",
+      "School Bus/Skoolie",
+    ],
+  },
+  {
+    label: "Other",
+    platforms: ["Other"],
+  },
+];
+
+// Grouped services taxonomy. Stored flat as string[] on the builder row;
+// the groups exist only for dashboard UI organization and filter chip ordering.
+// Adding or renaming values here also affects the /builders/service/[service]/
+// dynamic route slugs, so change with care.
+const SERVICE_GROUPS: { label: string; services: string[] }[] = [
+  {
+    label: "Power & climate",
+    services: [
+      "Electrical / wiring",
+      "Solar",
+      "Heating",
+      "Ventilation & A/C",
+    ],
+  },
+  {
+    label: "Water",
+    services: ["Plumbing & water systems", "Shower install"],
+  },
+  {
+    label: "Interior",
+    services: [
+      "Insulation & soundproofing",
+      "Cabinetry & millwork",
+      "Beds & layout",
+      "Flooring",
+      "Seat installation / swivels",
+    ],
+  },
+  {
+    label: "Exterior",
+    services: [
+      "Window installation",
+      "Roof rack & awning",
+      "Pop-top / roof conversion",
+      "Exterior add-ons",
+    ],
+  },
+  {
+    label: "Off-road",
+    services: ["4x4 conversion", "Lift kits & suspension"],
+  },
+  {
+    label: "Service & repair",
+    services: [
+      "Vehicle maintenance",
+      "Electrical diagnostics & repair",
+      "Plumbing repair",
+      "HVAC service",
+    ],
+  },
+  {
+    label: "Other",
+    services: ["Full custom builds"],
+  },
+];
 
 const stateCodeToSlug: Record<string, string> = {
   AL: "alabama", AK: "alaska", AZ: "arizona", AR: "arkansas", CA: "california",
@@ -34,6 +134,8 @@ interface BuilderData {
   emails: string[];
   logo_url: string | null;
   gallery_urls: string[];
+  hero_image_url: string | null;
+  service_hero_image_url: string | null;
   platforms: string[];
   services: string[];
   categories: string[] | null;
@@ -92,12 +194,16 @@ function DashboardInner() {
   const [emailsStr, setEmailsStr] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [heroUrl, setHeroUrl] = useState("");
+  const [platforms, setPlatforms] = useState<string[]>([]);
+  const [services, setServices] = useState<string[]>([]);
 
   // Service-side editable fields (only shown when shop is dual-tagged)
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceTagline, setServiceTagline] = useState("");
   const [servicePhone, setServicePhone] = useState("");
   const [serviceEmailsStr, setServiceEmailsStr] = useState("");
+  const [serviceHeroUrl, setServiceHeroUrl] = useState("");
 
   // Self-serve service-directory toggle. Independent of the main form save —
   // calls toggle_service_listing RPC and updates local state on success.
@@ -117,10 +223,14 @@ function DashboardInner() {
     setEmailsStr((b.emails || []).join(", "));
     setLogoUrl(b.logo_url || "");
     setGalleryUrls(b.gallery_urls || []);
+    setHeroUrl(b.hero_image_url || "");
+    setPlatforms(b.platforms || []);
+    setServices(b.services || []);
     setServiceDescription(b.service_description || "");
     setServiceTagline(b.service_tagline || "");
     setServicePhone(b.service_phone || "");
     setServiceEmailsStr((b.service_emails || []).join(", "));
+    setServiceHeroUrl(b.service_hero_image_url || "");
   }
 
   // Does the form hold any unsaved changes against the currently selected
@@ -135,16 +245,27 @@ function DashboardInner() {
     if (street !== (builder.street || "")) return true;
     if (postalCode !== (builder.postal_code || "")) return true;
     if (logoUrl !== (builder.logo_url || "")) return true;
+    if (heroUrl !== (builder.hero_image_url || "")) return true;
 
     const newEmails = emailsStr.split(",").map((e) => e.trim()).filter(Boolean);
     if (JSON.stringify(newEmails) !== JSON.stringify(builder.emails || [])) return true;
 
     if (JSON.stringify(galleryUrls) !== JSON.stringify(builder.gallery_urls || [])) return true;
 
+    // Platforms and services compared as sets — checkbox order shouldn't dirty the form.
+    const sortedPlatforms = [...platforms].sort();
+    const sortedBuilderPlatforms = [...(builder.platforms || [])].sort();
+    if (JSON.stringify(sortedPlatforms) !== JSON.stringify(sortedBuilderPlatforms)) return true;
+
+    const sortedServices = [...services].sort();
+    const sortedBuilderServices = [...(builder.services || [])].sort();
+    if (JSON.stringify(sortedServices) !== JSON.stringify(sortedBuilderServices)) return true;
+
     if (builder.categories?.includes("service")) {
       if (serviceDescription !== (builder.service_description || "")) return true;
       if (serviceTagline !== (builder.service_tagline || "")) return true;
       if (servicePhone !== (builder.service_phone || "")) return true;
+      if (serviceHeroUrl !== (builder.service_hero_image_url || "")) return true;
       const newServiceEmails = serviceEmailsStr
         .split(",")
         .map((e) => e.trim())
@@ -214,6 +335,7 @@ function DashboardInner() {
     if (street !== (builder.street || "")) changes.street = street;
     if (postalCode !== (builder.postal_code || "")) changes.postal_code = postalCode;
     if (logoUrl !== (builder.logo_url || "")) changes.logo_url = logoUrl;
+    if (heroUrl !== (builder.hero_image_url || "")) changes.hero_image_url = heroUrl;
 
     const newEmails = emailsStr.split(",").map((e) => e.trim()).filter(Boolean);
     const oldEmails = builder.emails || [];
@@ -224,6 +346,18 @@ function DashboardInner() {
     const oldGallery = builder.gallery_urls || [];
     if (JSON.stringify(galleryUrls) !== JSON.stringify(oldGallery)) {
       changes.gallery_urls = galleryUrls;
+    }
+
+    const sortedPlatforms = [...platforms].sort();
+    const sortedBuilderPlatforms = [...(builder.platforms || [])].sort();
+    if (JSON.stringify(sortedPlatforms) !== JSON.stringify(sortedBuilderPlatforms)) {
+      changes.platforms = platforms;
+    }
+
+    const sortedServices = [...services].sort();
+    const sortedBuilderServices = [...(builder.services || [])].sort();
+    if (JSON.stringify(sortedServices) !== JSON.stringify(sortedBuilderServices)) {
+      changes.services = services;
     }
 
     // Service-side fields — only diff them if the shop is dual-tagged.
@@ -239,6 +373,9 @@ function DashboardInner() {
       }
       if (servicePhone !== (builder.service_phone || "")) {
         changes.service_phone = servicePhone;
+      }
+      if (serviceHeroUrl !== (builder.service_hero_image_url || "")) {
+        changes.service_hero_image_url = serviceHeroUrl;
       }
       const newServiceEmails = serviceEmailsStr
         .split(",")
@@ -356,12 +493,32 @@ function DashboardInner() {
     setLogoUrl(url);
   }
 
+  function handleHeroUploaded(url: string) {
+    setHeroUrl(url);
+  }
+
+  function handleServiceHeroUploaded(url: string) {
+    setServiceHeroUrl(url);
+  }
+
   function handlePhotoUploaded(url: string) {
     setGalleryUrls((prev) => [...prev, url]);
   }
 
   function removePhoto(index: number) {
     setGalleryUrls((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function togglePlatform(value: string) {
+    setPlatforms((prev) =>
+      prev.includes(value) ? prev.filter((p) => p !== value) : [...prev, value],
+    );
+  }
+
+  function toggleService(value: string) {
+    setServices((prev) =>
+      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
+    );
   }
 
   if (loading) {
@@ -554,20 +711,21 @@ function DashboardInner() {
         </div>
 
         <div>
-          <label htmlFor="d-description" className="block font-sans-ui text-sm font-medium mb-1.5">
+          <label className="block font-sans-ui text-sm font-medium mb-1.5">
             Description
           </label>
-          <textarea
-            id="d-description"
+          <p
+            className="font-sans-ui text-xs mb-2"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Use headings, bullets, and links to tell searchers what makes your
+            shop different. Links open in a new tab and help customers find
+            your work elsewhere.
+          </p>
+          <RichTextEditor
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="w-full px-4 py-3 font-sans-ui text-base border bg-white resize-y"
-            style={{
-              borderColor: "var(--color-border-strong)",
-              borderRadius: "var(--radius-md)",
-              color: "var(--color-text)",
-            }}
+            onChange={setDescription}
+            placeholder="What do you build? Who do you build for? What sets you apart?"
           />
         </div>
 
@@ -686,7 +844,51 @@ function DashboardInner() {
             folder="logos"
             onUploaded={handleLogoUploaded}
             label="Upload new logo"
-            maxSizeMB={2}
+          />
+        </div>
+
+        {/* Hero image — full-bleed banner behind the profile hero. Single image,
+            not a gallery. 16:9 is recommended for the masthead aspect; anything
+            smaller still uploads but is softly flagged as a warning at render. */}
+        <div>
+          <label className="block font-sans-ui text-sm font-medium mb-1.5">
+            Hero image
+          </label>
+          <p
+            className="font-sans-ui text-xs mb-2"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            A wide banner that shows behind your shop name at the top of your
+            profile. A sharp photo of a finished build, your shop floor, or a
+            signature van works well. 1600×900 (16:9) looks best.
+          </p>
+          {heroUrl && (
+            <div className="mb-3">
+              <img
+                src={heroUrl}
+                alt="Current hero image"
+                className="w-full max-w-lg object-cover rounded-lg border"
+                style={{
+                  aspectRatio: "16/9",
+                  borderColor: "var(--color-border)",
+                  background: "var(--color-bg-alt)",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setHeroUrl("")}
+                className="mt-2 font-sans-ui text-xs underline"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Remove hero image
+              </button>
+            </div>
+          )}
+          <BuilderPhotoUpload
+            builderId={builder.id}
+            folder="hero"
+            onUploaded={handleHeroUploaded}
+            label={heroUrl ? "Replace hero image" : "Upload hero image"}
           />
         </div>
 
@@ -756,6 +958,135 @@ function DashboardInner() {
               and your repair &amp; service profile.
             </p>
           )}
+        </div>
+
+        {/* Platforms — which chassis your shop works on. Drives the filter chips
+            on /builders/ and the /builders/platform/[platform]/ routes. Grouped
+            for readability; stored flat. */}
+        <div>
+          <label className="block font-sans-ui text-sm font-medium mb-1.5">
+            Platforms
+          </label>
+          <p
+            className="font-sans-ui text-xs mb-3"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Which van chassis do you build on? Check every platform you work
+            with. These power the platform filters on the directory.
+          </p>
+          <div className="space-y-4">
+            {PLATFORM_GROUPS.map((group) => (
+              <div key={group.label}>
+                <div
+                  className="font-sans-ui text-xs uppercase tracking-wider mb-2"
+                  style={{ color: "var(--color-text-subtle, #888)" }}
+                >
+                  {group.label}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.platforms.map((p) => {
+                    const checked = platforms.includes(p);
+                    return (
+                      <label
+                        key={p}
+                        className="inline-flex items-center gap-2 px-3 py-2 font-sans-ui text-sm border cursor-pointer transition-colors"
+                        style={{
+                          borderColor: checked
+                            ? "var(--color-primary)"
+                            : "var(--color-border-strong)",
+                          borderRadius: "var(--radius-md)",
+                          background: checked
+                            ? "var(--color-bg-alt)"
+                            : "transparent",
+                          color: checked
+                            ? "var(--color-text)"
+                            : "var(--color-text-muted)",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => togglePlatform(p)}
+                          className="w-4 h-4"
+                          style={{ accentColor: "var(--color-primary)" }}
+                        />
+                        {p}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Services — what this shop offers, either as build capabilities
+            (for full builders) or standalone services (for repair/upgrade
+            shops). One array either way; the context is implied by which
+            directory the listing appears in. */}
+        <div>
+          <label className="block font-sans-ui text-sm font-medium mb-1.5">
+            Services
+          </label>
+          <p
+            className="font-sans-ui text-xs mb-4"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Check every service or capability that applies. If you do full
+            builds, pick the systems you install. If you do repairs or
+            upgrades, pick what you offer.
+          </p>
+          <div className="space-y-5">
+            {SERVICE_GROUPS.map((group) => (
+              <div key={group.label}>
+                <div
+                  className="font-sans-ui text-xs uppercase tracking-wider mb-2"
+                  style={{ color: "var(--color-text-subtle, #888)" }}
+                >
+                  {group.label}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.services.map((s) => {
+                    const checked = services.includes(s);
+                    return (
+                      <label
+                        key={s}
+                        className="inline-flex items-center gap-2 px-3 py-2 font-sans-ui text-sm border cursor-pointer transition-colors"
+                        style={{
+                          borderColor: checked
+                            ? "var(--color-primary)"
+                            : "var(--color-border-strong)",
+                          borderRadius: "var(--radius-md)",
+                          background: checked
+                            ? "var(--color-bg-alt)"
+                            : "transparent",
+                          color: checked
+                            ? "var(--color-text)"
+                            : "var(--color-text-muted)",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleService(s)}
+                          className="w-4 h-4"
+                          style={{ accentColor: "var(--color-primary)" }}
+                        />
+                        {s}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p
+            className="mt-4 font-sans-ui text-xs"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Missing something your shop offers? Reply to your welcome email
+            and we'll add it to the list.
+          </p>
         </div>
 
         {/* Self-serve toggle: opt this shop into the Repairs & Services directory.
@@ -884,25 +1215,71 @@ function DashboardInner() {
             </div>
 
             <div>
-              <label htmlFor="d-service-description" className="block font-sans-ui text-sm font-medium mb-1.5">
+              <label className="block font-sans-ui text-sm font-medium mb-1.5">
                 Service description
               </label>
-              <textarea
-                id="d-service-description"
+              <RichTextEditor
                 value={serviceDescription}
-                onChange={(e) => setServiceDescription(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 font-sans-ui text-base border bg-white resize-y"
-                style={{
-                  borderColor: "var(--color-border-strong)",
-                  borderRadius: "var(--radius-md)",
-                  color: "var(--color-text)",
-                }}
+                onChange={setServiceDescription}
                 placeholder="Describe the repair and service work you do — diagnostics, electrical upgrades, solar, mobile installs, etc."
               />
               <p className="mt-1 font-sans-ui text-xs" style={{ color: "var(--color-text-muted)" }}>
                 Leave blank to fall back to your builder description on the service profile.
               </p>
+            </div>
+
+            {/* Service hero image — falls back to the builder-side hero on the
+                /services/ profile when blank. Upload a different image here if
+                your service work has a distinct visual identity. */}
+            <div>
+              <label className="block font-sans-ui text-sm font-medium mb-1.5">
+                Service hero image{" "}
+                <span
+                  className="font-normal"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  (optional)
+                </span>
+              </label>
+              <p
+                className="font-sans-ui text-xs mb-2"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Shown at the top of your /services/ profile. Leave blank to
+                reuse your builder hero image.
+              </p>
+              {serviceHeroUrl && (
+                <div className="mb-3">
+                  <img
+                    src={serviceHeroUrl}
+                    alt="Current service hero image"
+                    className="w-full max-w-lg object-cover rounded-lg border"
+                    style={{
+                      aspectRatio: "16/9",
+                      borderColor: "var(--color-border)",
+                      background: "var(--color-bg-alt)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setServiceHeroUrl("")}
+                    className="mt-2 font-sans-ui text-xs underline"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    Remove service hero image
+                  </button>
+                </div>
+              )}
+              <BuilderPhotoUpload
+                builderId={builder.id}
+                folder="service-hero"
+                onUploaded={handleServiceHeroUploaded}
+                label={
+                  serviceHeroUrl
+                    ? "Replace service hero image"
+                    : "Upload service hero image"
+                }
+              />
             </div>
 
             <div>

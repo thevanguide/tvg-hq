@@ -59,6 +59,16 @@ export type Builder = {
   service_emails: string[] | null;
   logo_url: string | null;
   gallery_urls: string[];
+  /**
+   * Full-bleed hero image shown behind the builder profile hero section.
+   * Owner-uploaded via the dashboard. 16:9 recommended (1600×900).
+   */
+  hero_image_url: string | null;
+  /**
+   * Service-side hero image for dual-tagged shops. Falls back to hero_image_url
+   * on the service profile when null.
+   */
+  service_hero_image_url: string | null;
   build_style: "Custom" | "Standard" | null;
   /**
    * Legacy single-value category. Kept for rollback safety; new code should
