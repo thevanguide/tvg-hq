@@ -1,4 +1,5 @@
 import { stateToSlug, type Builder } from "./supabase";
+import { stripHtml } from "./rich-text";
 
 /**
  * SEO helpers for the Van Builder Directory.
@@ -13,10 +14,11 @@ export function profileMeta(builder: Builder) {
   const location = builder.city
     ? `${builder.city}, ${builder.state}`
     : builder.state;
+  const descText = stripHtml(builder.description);
   return {
     title: `${builder.name} — Van Conversion Builder in ${location} | The Van Guide`,
     description:
-      builder.description?.slice(0, 155) ??
+      (descText && descText.slice(0, 155)) ||
       `${builder.name} is a van conversion shop in ${location}. View services, pricing, reviews, and contact info.`,
   };
 }
@@ -84,11 +86,11 @@ export function styleMeta(style: string, count: number) {
 export function serviceShopProfileMeta(shop: Builder) {
   const location = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
   // Prefer service-side copy when a dual-tagged shop has filled it in.
-  const copy = shop.service_description ?? shop.description ?? null;
+  const copy = stripHtml(shop.service_description ?? shop.description ?? null);
   return {
     title: `${shop.name} — Van Repair & Service in ${location} | The Van Guide`,
     description:
-      copy?.slice(0, 155) ??
+      (copy && copy.slice(0, 155)) ||
       `${shop.name} is a van repair and service shop in ${location}. View services, reviews, and contact info.`,
   };
 }
@@ -119,9 +121,11 @@ export function localBusinessJsonLd(
   side: "builder" | "service" = "builder",
 ) {
   const useServiceSide = side === "service";
-  const description = useServiceSide
-    ? (builder.service_description ?? builder.description)
-    : builder.description;
+  const description = stripHtml(
+    useServiceSide
+      ? (builder.service_description ?? builder.description)
+      : builder.description,
+  );
   const phone = useServiceSide
     ? (builder.service_phone ?? builder.phone)
     : builder.phone;
