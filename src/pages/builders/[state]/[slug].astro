@@ -13,6 +13,7 @@ import {
   type Builder,
 } from "../../../lib/supabase";
 import { profileMeta, localBusinessJsonLd } from "../../../lib/seo";
+import { toRenderHtml } from "../../../lib/rich-text";
 
 export async function getStaticPaths() {
   // Every shop tagged as a builder gets a /builders/[state]/[slug]/ profile.
@@ -79,34 +80,57 @@ function platformSlug(p: string): string {
 <BaseLayout title={meta.title} description={meta.description}>
   <script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(jsonLd)} />
 
-  {/* Hero section */}
-  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
-    <div class="container-wide py-10 md:py-20">
-      <Breadcrumbs items={breadcrumbs} />
+  {/* Breadcrumbs on the normal page background — always readable regardless
+      of hero image content. */}
+  <div class="container-wide pt-4">
+    <Breadcrumbs items={breadcrumbs} />
+  </div>
 
+  {/* Hero banner — purely visual. The profile card below carries the text,
+      so the banner is free to be any image without fighting for legibility.
+      `?width=1600&quality=80` caps bandwidth via Supabase image transforms. */}
+  <div
+    class="h-48 md:h-96 border-b"
+    style={
+      builder.hero_image_url
+        ? `border-color: var(--color-border); background: #1a1a1a url('${builder.hero_image_url}?width=1600&quality=80') center/cover no-repeat;`
+        : "border-color: var(--color-border); background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-bg-alt) 100%);"
+    }
+    aria-hidden="true"
+  />
+
+  {/* Profile card — LinkedIn-style, overlaps the bottom of the hero banner.
+      Everything that matters (name, tagline, metadata, CTAs) lives on white so
+      it stays legible no matter what the banner looks like. */}
+  <section class="container-wide relative -mt-12 md:-mt-20 mb-8 md:mb-12">
+    <div
+      class="bg-white border rounded-lg p-5 md:p-8"
+      style="border-color: var(--color-border); box-shadow: 0 4px 16px rgba(0,0,0,0.06);"
+    >
       <div class="flex flex-col md:flex-row md:items-start gap-4 md:gap-6">
-        {/* Logo or initial */}
+        {/* Logo — lifted off the card with its own border + shadow so it reads
+            as a distinct element, like a profile photo. */}
         {builder.logo_url ? (
           <img
             src={builder.logo_url}
             alt={`${builder.name} logo`}
-            class="w-16 h-16 md:w-20 md:h-20 object-contain rounded-lg shrink-0 p-2 border"
-            style="background: #2a2a2a; border-color: var(--color-border);"
-            width="80"
-            height="80"
+            class="w-20 h-20 md:w-24 md:h-24 object-contain rounded-lg shrink-0 p-2 border self-start"
+            style="background: #2a2a2a; border-color: var(--color-border); box-shadow: 0 2px 8px rgba(0,0,0,0.08);"
+            width="96"
+            height="96"
           />
         ) : (
           <div
-            class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-lg shrink-0 border"
+            class="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center rounded-lg shrink-0 border self-start"
             style="background: var(--color-bg-alt); border-color: var(--color-border);"
           >
-            <img src="/images/van-icon.svg" alt="" class="w-10 h-10 md:w-12 md:h-12 opacity-30" width="48" height="48" />
+            <img src="/images/van-icon.svg" alt="" class="w-12 h-12 md:w-14 md:h-14 opacity-30" width="56" height="56" />
           </div>
         )}
 
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 flex-wrap">
-            <h1 class="text-3xl md:text-5xl leading-tight">{builder.name}</h1>
+            <h1 class="text-3xl md:text-4xl leading-tight">{builder.name}</h1>
             {builder.verified && (
               <span
                 class="text-xs font-sans-ui uppercase tracking-wider px-2 py-1 rounded shrink-0"
@@ -124,11 +148,12 @@ function platformSlug(p: string): string {
             </p>
           )}
 
-          <div class="mt-3 font-sans-ui text-sm" style="color: var(--color-text-muted);">
+          <div class="mt-2 font-sans-ui text-sm" style="color: var(--color-text-muted);">
             {location}
           </div>
 
-          {/* Badges row */}
+          {/* Metadata badges — now inside the card so they render on white.
+              Platforms, tier, build style, tenure, cross-directory link. */}
           <div class="mt-4 flex flex-wrap gap-2">
             {builder.platforms.map((p) => (
               <a
@@ -178,7 +203,7 @@ function platformSlug(p: string): string {
           </div>
 
           {/* CTAs */}
-          <div class="mt-5 md:mt-6 flex flex-wrap gap-2 sm:gap-3">
+          <div class="mt-5 flex flex-wrap gap-2 sm:gap-3">
             {builder.website && (
               <a
                 href={builder.website}
@@ -243,13 +268,13 @@ function platformSlug(p: string): string {
   )}
 
   <div class="container-wide py-12 md:py-16 max-w-4xl">
-    {/* About section */}
+    {/* About section. `description` may be legacy plain text or HTML emitted
+        by the dashboard rich-text editor; toRenderHtml sanitizes + wraps
+        plain text in <p> so the prose container styles both consistently. */}
     {builder.description && (
       <section class="mb-12">
         <h2 class="text-2xl mb-4">About {builder.name}</h2>
-        <div class="prose">
-          <p>{builder.description}</p>
-        </div>
+        <div class="prose" set:html={toRenderHtml(builder.description)} />
         {builder.year_founded && (
           <p class="mt-4 font-sans-ui text-sm" style="color: var(--color-text-muted);">
             Established {builder.year_founded}
