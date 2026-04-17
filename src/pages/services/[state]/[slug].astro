@@ -13,6 +13,7 @@ import {
 } from "../../../lib/supabase";
 import { serviceShopProfileMeta, localBusinessJsonLd } from "../../../lib/seo";
 import { toRenderHtml } from "../../../lib/rich-text";
+import { groupServices } from "../../../lib/taxonomy";
 
 export async function getStaticPaths() {
   // Every shop tagged as a service shop gets a /services/[state]/[slug]/
@@ -253,14 +254,26 @@ function renderStars(rating: number): string {
     {shop.services.length > 0 && (
       <section class="mb-12">
         <h2 class="text-2xl mb-4">Services</h2>
-        <div class="flex flex-wrap gap-2">
-          {shop.services.map((s) => (
-            <span
-              class="text-sm font-sans-ui px-3 py-1.5 rounded-full border"
-              style="border-color: var(--color-border-strong); color: var(--color-text);"
-            >
-              {s}
-            </span>
+        <div class="space-y-4">
+          {groupServices(shop.services).map((group) => (
+            <div>
+              <div
+                class="font-sans-ui text-xs uppercase tracking-wider mb-2"
+                style="color: var(--color-text-subtle, #888);"
+              >
+                {group.label}
+              </div>
+              <div class="flex flex-wrap gap-2">
+                {group.services.map((s) => (
+                  <span
+                    class="text-sm font-sans-ui px-3 py-1.5 rounded-full border"
+                    style="border-color: var(--color-border-strong); color: var(--color-text);"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </section>
