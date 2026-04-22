@@ -108,6 +108,20 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileView, setMobileView] = useState<ViewMode>("list");
 
+  // Secondary filter drawer state. Auto-expands on mount if any secondary
+  // filter is already active (e.g. from a ?style=bespoke URL) so users
+  // coming in via a link see their active filter without extra clicks.
+  const hasSecondaryFilterOnMount =
+    !!initParams.get("style") ||
+    initParams.getAll("service").length > 0 ||
+    initParams.getAll("lead_time").length > 0 ||
+    initParams.get("warranty") === "1" ||
+    initParams.getAll("conversion").length > 0 ||
+    initParams.getAll("tier").length > 0;
+  const [showMoreFilters, setShowMoreFilters] = useState<boolean>(
+    hasSecondaryFilterOnMount,
+  );
+
   // Cross-highlighting state
   const [hoveredBuilderId, setHoveredBuilderId] = useState<string | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -534,24 +548,107 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
     </div>
   );
 
-  const filterPanel = filtersOpen ? (
-    <div
-      className="p-4 sm:p-5 mb-6 border rounded-lg grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
-      style={{
-        borderColor: "var(--color-border)",
-        background: "var(--color-surface)",
-      }}
-    >
-      <div>
-        <label
-          className="block text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          State
-        </label>
-        <select
-          value={selectedState}
-          onChange={(e) => setSelectedState(e.target.value)}
+  // ----- Individual filter tiles (rendered into primary + secondary sections) -----
+  // Each tile is a self-contained <div>. They used to be interleaved in a
+  // single flat grid; now they're grouped so the 4 most-asked questions are
+  // always visible and the rest sit behind a "More filters" disclosure.
+
+  const stateTile = (
+    <div>
+      <label
+        className="block text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        State
+      </label>
+      <select
+        value={selectedState}
+        onChange={(e) => setSelectedState(e.target.value)}
+        className="w-full px-3 py-2 text-sm border rounded-md"
+        style={{
+          borderColor: "var(--color-border-strong)",
+          background: "var(--color-bg)",
+          color: "var(--color-text)",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        <option value="">All states</option>
+        {states.map((s) => (
+          <option key={s} value={s}>{s}</option>
+        ))}
+      </select>
+    </div>
+  );
+
+  const platformTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Platform
+      </div>
+      <div className="space-y-1.5">
+        {allPlatforms.map((p) => (
+          <label key={p} className="flex items-center gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input type="checkbox" checked={selectedPlatforms.has(p)}
+              onChange={() => setSelectedPlatforms(toggleSet(selectedPlatforms, p))}
+              style={{ accentColor: "var(--color-primary)" }} />
+            {p}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  const workOfferedTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        What you need
+      </div>
+      <div className="space-y-1.5">
+        {[
+          { value: "new_build", label: "New builds" },
+          { value: "service_repair", label: "Service & repair" },
+          { value: "warranty_work", label: "Warranty work" },
+          { value: "rentals", label: "Rentals" },
+          { value: "parts_kits", label: "Parts / DIY kits" },
+        ].map((opt) => (
+          <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input type="checkbox" checked={selectedEngagementTypes.has(opt.value)}
+              onChange={() => setSelectedEngagementTypes(toggleSet(selectedEngagementTypes, opt.value))}
+              style={{ accentColor: "var(--color-primary)" }} />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  const maxBudgetTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Max budget
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm" style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}>$</span>
+        <input
+          type="number"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          min={5000}
+          max={500000}
+          step={5000}
+          inputMode="numeric"
+          placeholder="50000"
           className="w-full px-3 py-2 text-sm border rounded-md"
           style={{
             borderColor: "var(--color-border-strong)",
@@ -559,269 +656,227 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
             color: "var(--color-text)",
             fontFamily: "var(--font-sans)",
           }}
-        >
-          <option value="">All states</option>
-          {states.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        />
+      </div>
+      <p
+        className="text-xs mt-1.5"
+        style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
+      >
+        Shops without a listed price are hidden.
+      </p>
+    </div>
+  );
+
+  const buildStyleTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Build style
+      </div>
+      <div className="space-y-1.5">
+        {[
+          { value: "", label: "Any" },
+          { value: "bespoke", label: "Bespoke", desc: "One-of-one custom" },
+          { value: "semi-custom", label: "Semi-custom", desc: "Template + chosen finishes" },
+          { value: "production", label: "Production", desc: "Fixed floorplans" },
+        ].map((opt) => (
+          <label key={opt.value || "any"} className="flex items-start gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input
+              type="radio"
+              name="build-style-filter"
+              checked={selectedStyle === opt.value}
+              onChange={() => setSelectedStyle(opt.value)}
+              className="mt-0.5 shrink-0"
+              style={{ accentColor: "var(--color-primary)" }}
+            />
+            <span className="flex-1">
+              <span className="block">{opt.label}</span>
+              {opt.desc && (
+                <span className="block text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  {opt.desc}
+                </span>
+              )}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  const servicesTile = topServices.length > 0 ? (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Services
+      </div>
+      <div className="space-y-1.5">
+        {topServices.map((s) => (
+          <label key={s} className="flex items-center gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input type="checkbox" checked={selectedServices.has(s)}
+              onChange={() => setSelectedServices(toggleSet(selectedServices, s))}
+              style={{ accentColor: "var(--color-primary)" }} />
+            {s}
+          </label>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
+  const leadTimeTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Lead time
+      </div>
+      <div className="space-y-1.5">
+        {[
+          { value: "under_1_month", label: "Under 1 month" },
+          { value: "1_to_3_months", label: "1–3 months" },
+          { value: "3_to_6_months", label: "3–6 months" },
+          { value: "6_months_plus", label: "6+ months" },
+        ].map((opt) => (
+          <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input type="checkbox" checked={selectedLeadTimes.has(opt.value)}
+              onChange={() => setSelectedLeadTimes(toggleSet(selectedLeadTimes, opt.value))}
+              style={{ accentColor: "var(--color-primary)" }} />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+      <p
+        className="text-xs mt-1.5"
+        style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
+      >
+        Shops without a listed lead time are hidden.
+      </p>
+    </div>
+  );
+
+  const warrantyTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Warranty
+      </div>
+      <label className="flex items-center gap-2 text-sm cursor-pointer"
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+        <input type="checkbox" checked={warrantyOnly}
+          onChange={(e) => setWarrantyOnly(e.target.checked)}
+          style={{ accentColor: "var(--color-primary)" }} />
+        Offers a warranty
+      </label>
+    </div>
+  );
+
+  const conversionTypeTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Conversion type
+      </div>
+      <div className="space-y-1.5">
+        {[
+          { value: "conversion_only", label: "Conversion only" },
+          { value: "full_build", label: "Turnkey (van + conversion)" },
+        ].map((opt) => (
+          <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input type="checkbox" checked={selectedConversionTypes.has(opt.value)}
+              onChange={() => setSelectedConversionTypes(toggleSet(selectedConversionTypes, opt.value))}
+              style={{ accentColor: "var(--color-primary)" }} />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  const priceTierTile = (
+    <div>
+      <div
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      >
+        Price range
+      </div>
+      <div className="space-y-1.5">
+        {allTiers.map((t) => (
+          <label key={t} className="flex items-center gap-2 text-sm cursor-pointer"
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+            <input type="checkbox" checked={selectedTiers.has(t)}
+              onChange={() => setSelectedTiers(toggleSet(selectedTiers, t))}
+              style={{ accentColor: "var(--color-primary)" }} />
+            {t}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filterPanel = filtersOpen ? (
+    <div
+      className="p-4 sm:p-5 mb-6 border rounded-lg"
+      style={{
+        borderColor: "var(--color-border)",
+        background: "var(--color-surface)",
+      }}
+    >
+      {/* Primary — the 4 axes customers use to narrow to a shortlist: where
+          they are, which van chassis, the kind of work, and the budget. */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {stateTile}
+        {platformTile}
+        {workOfferedTile}
+        {maxBudgetTile}
       </div>
 
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+      {/* More filters toggle. Auto-expanded on mount if any secondary filter
+          is already active (e.g. arriving via a ?style=bespoke link). */}
+      <div className="mt-4 pt-4 border-t flex items-center gap-4"
+        style={{ borderColor: "var(--color-border)" }}>
+        <button
+          type="button"
+          onClick={() => setShowMoreFilters((v) => !v)}
+          className="text-sm cursor-pointer bg-transparent border-0 p-0"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)", fontWeight: 500 }}
         >
-          Platform
-        </div>
-        <div className="space-y-1.5">
-          {allPlatforms.map((p) => (
-            <label key={p} className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input type="checkbox" checked={selectedPlatforms.has(p)}
-                onChange={() => setSelectedPlatforms(toggleSet(selectedPlatforms, p))}
-                className="accent-current" style={{ accentColor: "var(--color-primary)" }} />
-              {p}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Price range
-        </div>
-        <div className="space-y-1.5">
-          {allTiers.map((t) => (
-            <label key={t} className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input type="checkbox" checked={selectedTiers.has(t)}
-                onChange={() => setSelectedTiers(toggleSet(selectedTiers, t))}
-                style={{ accentColor: "var(--color-primary)" }} />
-              {t}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        {/* P2 PR 2: Build style filter. Three-value radio — Any / Bespoke /
-            Semi-custom / Production. Lowercase-hyphenated URL value matches
-            the existing selectedStyle toLowerCase filter logic. Legacy
-            Custom/Standard values on 7 claimed rows are invisible in this UI
-            until owners reclassify via the dashboard. */}
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Build style
-        </div>
-        <div className="space-y-1.5 mb-4">
-          {[
-            { value: "", label: "Any" },
-            { value: "bespoke", label: "Bespoke", desc: "One-of-one custom" },
-            { value: "semi-custom", label: "Semi-custom", desc: "Template + chosen finishes" },
-            { value: "production", label: "Production", desc: "Fixed floorplans" },
-          ].map((opt) => (
-            <label key={opt.value || "any"} className="flex items-start gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input
-                type="radio"
-                name="build-style-filter"
-                checked={selectedStyle === opt.value}
-                onChange={() => setSelectedStyle(opt.value)}
-                className="mt-0.5 shrink-0"
-                style={{ accentColor: "var(--color-primary)" }}
-              />
-              <span className="flex-1">
-                <span className="block">{opt.label}</span>
-                {opt.desc && (
-                  <span className="block text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    {opt.desc}
-                  </span>
-                )}
-              </span>
-            </label>
-          ))}
-        </div>
-
-        {topServices.length > 0 && (
-          <>
-            <div
-              className="text-xs font-semibold uppercase tracking-wider mb-2"
-              style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-            >
-              Services
-            </div>
-            <div className="space-y-1.5">
-              {topServices.map((s) => (
-                <label key={s} className="flex items-center gap-2 text-sm cursor-pointer"
-                  style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-                  <input type="checkbox" checked={selectedServices.has(s)}
-                    onChange={() => setSelectedServices(toggleSet(selectedServices, s))}
-                    style={{ accentColor: "var(--color-primary)" }} />
-                  {s}
-                </label>
-              ))}
-            </div>
-          </>
+          {showMoreFilters ? "− Fewer filters" : "+ More filters"}
+        </button>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearAll}
+            className="text-sm underline cursor-pointer bg-transparent border-0 p-0"
+            style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+          >
+            Clear all
+          </button>
         )}
       </div>
 
-      {/* P1: Max starting price. Simple single-number input rather than a
-          range slider — the primary user intent is "what fits my budget". */}
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Max starting price
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm" style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}>$</span>
-          <input
-            type="number"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            min={5000}
-            max={500000}
-            step={5000}
-            inputMode="numeric"
-            placeholder="50000"
-            className="w-full px-3 py-2 text-sm border rounded-md"
-            style={{
-              borderColor: "var(--color-border-strong)",
-              background: "var(--color-bg)",
-              color: "var(--color-text)",
-              fontFamily: "var(--font-sans)",
-            }}
-          />
-        </div>
-        <p
-          className="text-xs mt-1.5"
-          style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
-        >
-          Shops without a listed price are hidden.
-        </p>
-      </div>
-
-      {/* P1: Conversion type. Shops matching any selected value pass the
-          filter — "conversion_only" + "full_build" selected = both pools. */}
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Conversion type
-        </div>
-        <div className="space-y-1.5">
-          {[
-            { value: "conversion_only", label: "Conversion only" },
-            { value: "full_build", label: "Turnkey (van + conversion)" },
-          ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input type="checkbox" checked={selectedConversionTypes.has(opt.value)}
-                onChange={() => setSelectedConversionTypes(toggleSet(selectedConversionTypes, opt.value))}
-                style={{ accentColor: "var(--color-primary)" }} />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* P2 PR 1: Work offered (engagement types). Multi-select; any match
-          passes. Shops without engagement_types filled in are hidden when
-          this filter is active. */}
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Work offered
-        </div>
-        <div className="space-y-1.5">
-          {[
-            { value: "new_build", label: "New builds" },
-            { value: "service_repair", label: "Service & repair" },
-            { value: "warranty_work", label: "Warranty work" },
-            { value: "rentals", label: "Rentals" },
-            { value: "parts_kits", label: "Parts / DIY kits" },
-          ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input type="checkbox" checked={selectedEngagementTypes.has(opt.value)}
-                onChange={() => setSelectedEngagementTypes(toggleSet(selectedEngagementTypes, opt.value))}
-                style={{ accentColor: "var(--color-primary)" }} />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* P2 PR 1: Lead time. Multi-select so a customer can widen the window
-          ("within 3 months" = under_1_month + 1_to_3_months). */}
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Lead time
-        </div>
-        <div className="space-y-1.5">
-          {[
-            { value: "under_1_month", label: "Under 1 month" },
-            { value: "1_to_3_months", label: "1–3 months" },
-            { value: "3_to_6_months", label: "3–6 months" },
-            { value: "6_months_plus", label: "6+ months" },
-          ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-              <input type="checkbox" checked={selectedLeadTimes.has(opt.value)}
-                onChange={() => setSelectedLeadTimes(toggleSet(selectedLeadTimes, opt.value))}
-                style={{ accentColor: "var(--color-primary)" }} />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-        <p
-          className="text-xs mt-1.5"
-          style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
-        >
-          Shops without a listed lead time are hidden.
-        </p>
-      </div>
-
-      {/* P2 PR 1: Warranty. Simple on/off — show only shops that offer any
-          warranty at all. Finer controls (minimum months) deferred. */}
-      <div>
-        <div
-          className="text-xs font-semibold uppercase tracking-wider mb-2"
-          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-        >
-          Warranty
-        </div>
-        <label className="flex items-center gap-2 text-sm cursor-pointer"
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
-          <input type="checkbox" checked={warrantyOnly}
-            onChange={(e) => setWarrantyOnly(e.target.checked)}
-            style={{ accentColor: "var(--color-primary)" }} />
-          Offers a warranty
-        </label>
-      </div>
-
-      {hasActiveFilters && (
-        <div className="sm:col-span-2 lg:col-span-4">
-          <button
-            onClick={clearAll}
-            className="text-sm underline cursor-pointer bg-transparent border-0"
-            style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
-          >
-            Clear all filters
-          </button>
+      {/* Secondary — refinement filters. Hidden by default; shows when the
+          user expands the drawer or navigates in with any of these already set. */}
+      {showMoreFilters && (
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {buildStyleTile}
+          {servicesTile}
+          {leadTimeTile}
+          {warrantyTile}
+          {conversionTypeTile}
+          {priceTierTile}
         </div>
       )}
     </div>
