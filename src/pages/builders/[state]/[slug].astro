@@ -1,11 +1,13 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import BuildShowcaseSection from "../../../components/BuildShowcaseSection.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
 import EditListingLink from "../../../components/EditListingLink";
 import EmailButton from "../../../components/EmailButton.astro";
 import {
+  getBuildShowcaseByBuilderId,
   getBuilderProfileShops,
   getNearbyBuilders,
   getShopProfileUrl,
@@ -109,6 +111,11 @@ const BUILD_STYLE_FILTER_PARAMS: Record<string, string> = {
 };
 
 const isNewBuildStyle = builder.build_style != null && builder.build_style in BUILD_STYLE_DESCRIPTIONS;
+
+// P3 PR B — the one featured build the claimed owner has opted to highlight.
+// Null when the owner hasn't created one yet; the section render is gated
+// on this so unclaimed and unpopulated listings show nothing new.
+const buildShowcase = await getBuildShowcaseByBuilderId(builder.id);
 ---
 
 <BaseLayout title={meta.title} description={meta.description}>
@@ -418,6 +425,13 @@ const isNewBuildStyle = builder.build_style != null && builder.build_style in BU
   )}
 
   <div class="container-wide py-12 md:py-16 max-w-4xl">
+    {/* Featured build — P3. Appears only when the claimed owner has created
+        a showcase via the dashboard. Sits at the top of the content column
+        so it's the first thing visitors see below the profile card. */}
+    {buildShowcase && (
+      <BuildShowcaseSection showcase={buildShowcase} builderName={builder.name} />
+    )}
+
     {/* About section. `description` may be legacy plain text or HTML emitted
         by the dashboard rich-text editor; toRenderHtml sanitizes + wraps
         plain text in <p> so the prose container styles both consistently. */}
