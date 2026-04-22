@@ -1,97 +1,104 @@
-import { stateToSlug, type Builder } from "./supabase";
+import { stateNameToCode, stateToSlug, type Builder } from "./supabase";
 import { stripHtml } from "./rich-text";
 
 /**
  * SEO helpers for the Van Builder Directory.
  * Generates meta titles, descriptions, and structured data.
+ *
+ * Title budget is ~60 chars; BaseLayout appends " — The Van Guide" only when
+ * it fits, so template titles here omit the brand suffix. Meta descriptions
+ * aim for ≥110 chars (Ahrefs' too-short threshold).
  */
 
 // ---------------------------------------------------------------------------
 // Meta title/description templates
 // ---------------------------------------------------------------------------
 
+function abbr(stateName: string): string {
+  return stateNameToCode[stateName] ?? stateName;
+}
+
 export function profileMeta(builder: Builder) {
   const location = builder.city
+    ? `${builder.city}, ${abbr(builder.state)}`
+    : abbr(builder.state);
+  const fullLocation = builder.city
     ? `${builder.city}, ${builder.state}`
     : builder.state;
   const descText = stripHtml(builder.description);
+  const fallback = `${builder.name} is a custom van conversion shop in ${fullLocation}. Compare services, pricing, reviews, platforms, and contact details for this builder.`;
   return {
-    title: `${builder.name} — Van Conversion Builder in ${location} | The Van Guide`,
+    title: `${builder.name} — Van Builder in ${location}`,
     description:
-      (descText && descText.slice(0, 155)) ||
-      `${builder.name} is a van conversion shop in ${location}. View services, pricing, reviews, and contact info.`,
+      descText && descText.length >= 110
+        ? descText.slice(0, 155)
+        : fallback,
   };
 }
 
 export function stateMeta(stateName: string, count: number) {
+  const n = count || 0;
+  const word = n === 1 ? "shop" : "shops";
   return {
-    title: `Van Conversion Builders in ${stateName} | The Van Guide`,
-    description: `Browse ${count || ""} custom van conversion ${count === 1 ? "shop" : "shops"} in ${stateName}. Compare platforms, pricing, reviews, and services.`.replace(
-      "  ",
-      " ",
-    ),
+    title: `Van Conversion Builders in ${stateName}`,
+    description: `Compare ${n || "all"} custom van conversion ${word} in ${stateName}. Browse by city, platform, build tier, services, and reviews — every listing editorially verified.`,
   };
 }
 
 export function cityMeta(city: string, stateName: string, count: number) {
+  const n = count || 0;
+  const word = n === 1 ? "builder" : "builders";
   return {
-    title: `Van Conversion Builders in ${city}, ${stateName} | The Van Guide`,
-    description: `${count || "Find"} van conversion ${count === 1 ? "builder" : "builders"} in ${city}, ${stateName}. Compare services, pricing, and reviews.`.replace(
-      "  ",
-      " ",
-    ),
+    title: `Van Conversion Builders in ${city}, ${stateName}`,
+    description: `Compare ${n || "every"} custom van conversion ${word} in ${city}, ${stateName}. Reviews, pricing, platforms, services, and contact info for local van builds.`,
   };
 }
 
 export function platformMeta(platform: string, count: number) {
+  const n = count || 0;
   return {
-    title: `${platform} Van Conversion Builders | The Van Guide`,
-    description: `${count || "Browse"} van conversion shops that build on the ${platform} platform. Compare builders by location, pricing, and services.`.replace(
-      "  ",
-      " ",
-    ),
+    title: `${platform} Van Conversion Builders`,
+    description: `Browse ${n || "every"} custom van conversion shop that builds on the ${platform} platform. Compare US builders by location, pricing, services, and reviews.`,
   };
 }
 
 export function tierMeta(tier: string, count: number) {
+  const n = count || 0;
   return {
-    title: `${tier} Van Conversion Builders | The Van Guide`,
-    description: `${count || "Browse"} ${tier.toLowerCase()}-tier van conversion builders across the US. Compare services, locations, and reviews.`.replace(
-      "  ",
-      " ",
-    ),
+    title: `${tier} Van Conversion Builders`,
+    description: `Browse ${n || "all"} ${tier.toLowerCase()}-tier custom van conversion builders across the US. Compare shops by location, platform, services, and reviews.`,
   };
 }
 
 export function serviceMeta(service: string, count: number) {
+  const n = count || 0;
   return {
-    title: `${service} Van Builders | The Van Guide`,
-    description: `${count || "Find"} van conversion builders offering ${service.toLowerCase()} services. Compare shops across the US.`.replace(
-      "  ",
-      " ",
-    ),
+    title: `${service} Van Builders`,
+    description: `Find ${n || "every"} van conversion builder offering ${service.toLowerCase()} services. Compare US shops by location, pricing, platforms, and reviews.`,
   };
 }
 
 export function serviceShopProfileMeta(shop: Builder) {
-  const location = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
+  const location = shop.city
+    ? `${shop.city}, ${abbr(shop.state)}`
+    : abbr(shop.state);
+  const fullLocation = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
   // Prefer service-side copy when a dual-tagged shop has filled it in.
   const copy = stripHtml(shop.service_description ?? shop.description ?? null);
+  const fallback = `${shop.name} offers van repair, service, and upgrades in ${fullLocation}. Compare services, platforms, reviews, and contact details for this shop.`;
   return {
-    title: `${shop.name} — Van Repair & Service in ${location} | The Van Guide`,
+    title: `${shop.name} — Van Repair & Service in ${location}`,
     description:
-      (copy && copy.slice(0, 155)) ||
-      `${shop.name} is a van repair and service shop in ${location}. View services, reviews, and contact info.`,
+      copy && copy.length >= 110 ? copy.slice(0, 155) : fallback,
   };
 }
 
 export function serviceShopStateMeta(stateName: string, count: number) {
+  const n = count || 0;
+  const word = n === 1 ? "shop" : "shops";
   return {
-    title: `Van Repair & Service Shops in ${stateName} | The Van Guide`,
-    description: `Browse ${count || ""} van repair and service ${count === 1 ? "shop" : "shops"} in ${stateName}. Find Sprinter specialists, mobile installers, and upgrade shops.`.replace(
-      "  ",
-      " ",
-    ),
+    title: `Van Repair & Service Shops in ${stateName}`,
+    description: `Find ${n || "every"} van repair and service ${word} in ${stateName}. Compare Sprinter specialists, mobile installers, upgrade shops, and warranty work.`,
   };
 }
 
