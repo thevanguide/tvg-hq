@@ -26,6 +26,10 @@ interface BuilderData {
   // matching filter is active, included when no filter is applied.
   starting_price?: number | null;
   conversion_types?: string[] | null;
+  // P2 PR 1 filter fields. Same null-safe convention.
+  engagement_types?: string[] | null;
+  lead_time?: string | null;
+  warranty_months?: number | null;
   /**
    * Pre-computed profile URL for this shop in the current listing context.
    * Parent Astro page calls getShopProfileUrl(shop, basePath) when building
@@ -85,6 +89,18 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   const [maxPrice, setMaxPrice] = useState<string>(initParams.get("max_price") ?? "");
   const [selectedConversionTypes, setSelectedConversionTypes] = useState<Set<string>>(
     () => new Set(initParams.getAll("conversion")),
+  );
+  // P2 PR 1 filters. Engagement + lead time as multi-select Sets (same pattern
+  // as platforms/conversion). Warranty is a simple on/off checkbox — "show me
+  // shops that offer a warranty of any length".
+  const [selectedEngagementTypes, setSelectedEngagementTypes] = useState<Set<string>>(
+    () => new Set(initParams.getAll("engagement")),
+  );
+  const [selectedLeadTimes, setSelectedLeadTimes] = useState<Set<string>>(
+    () => new Set(initParams.getAll("lead_time")),
+  );
+  const [warrantyOnly, setWarrantyOnly] = useState<boolean>(
+    initParams.get("warranty") === "1",
   );
   const [sort, setSort] = useState<SortOption>(
     (initParams.get("sort") as SortOption) || "rating",
@@ -146,6 +162,9 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       sortVal: SortOption,
       maxPriceVal: string,
       conversionTypes: Set<string>,
+      engagementTypes: Set<string>,
+      leadTimes: Set<string>,
+      warrantyOnlyVal: boolean,
     ) => {
       if (typeof window === "undefined") return;
       const params = new URLSearchParams();
@@ -157,6 +176,9 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       services.forEach((s) => params.append("service", s));
       if (maxPriceVal) params.set("max_price", maxPriceVal);
       conversionTypes.forEach((c) => params.append("conversion", c));
+      engagementTypes.forEach((e) => params.append("engagement", e));
+      leadTimes.forEach((l) => params.append("lead_time", l));
+      if (warrantyOnlyVal) params.set("warranty", "1");
       if (sortVal !== "rating") params.set("sort", sortVal);
       const qs = params.toString();
       const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
@@ -166,8 +188,8 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   );
 
   useEffect(() => {
-    updateUrl(query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, maxPrice, selectedConversionTypes);
-  }, [query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, maxPrice, selectedConversionTypes, updateUrl]);
+    updateUrl(query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, maxPrice, selectedConversionTypes, selectedEngagementTypes, selectedLeadTimes, warrantyOnly);
+  }, [query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, maxPrice, selectedConversionTypes, selectedEngagementTypes, selectedLeadTimes, warrantyOnly, updateUrl]);
 
   // Filter + sort
   const results = useMemo(() => {
@@ -230,6 +252,29 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       );
     }
 
+    // P2 PR 1 filters. Same "hide profiles that didn't answer" rule as the P1
+    // conversion filter — a customer asking for warranty work doesn't want to
+    // see shops that never filled the field in.
+    if (selectedEngagementTypes.size > 0) {
+      filtered = filtered.filter(
+        (b) =>
+          b.engagement_types != null &&
+          b.engagement_types.some((e) => selectedEngagementTypes.has(e)),
+      );
+    }
+
+    if (selectedLeadTimes.size > 0) {
+      filtered = filtered.filter(
+        (b) => b.lead_time != null && selectedLeadTimes.has(b.lead_time),
+      );
+    }
+
+    if (warrantyOnly) {
+      filtered = filtered.filter(
+        (b) => b.warranty_months != null && b.warranty_months > 0,
+      );
+    }
+
     const sorted = [...filtered];
 
     if (sort === "distance" && userLocation) {
@@ -265,7 +310,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
     }
 
     return sorted;
-  }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, maxPrice, selectedConversionTypes, sort, userLocation]);
+  }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, maxPrice, selectedConversionTypes, selectedEngagementTypes, selectedLeadTimes, warrantyOnly, sort, userLocation]);
 
   // Distances from user (for display on cards)
   const distances = useMemo(() => {
@@ -367,7 +412,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   }
 
   const hasActiveFilters =
-    query || selectedState || selectedPlatforms.size > 0 || selectedTiers.size > 0 || selectedStyle || selectedServices.size > 0 || maxPrice || selectedConversionTypes.size > 0;
+    query || selectedState || selectedPlatforms.size > 0 || selectedTiers.size > 0 || selectedStyle || selectedServices.size > 0 || maxPrice || selectedConversionTypes.size > 0 || selectedEngagementTypes.size > 0 || selectedLeadTimes.size > 0 || warrantyOnly;
 
   function clearAll() {
     setQuery("");
@@ -378,6 +423,9 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
     setSelectedServices(new Set());
     setMaxPrice("");
     setSelectedConversionTypes(new Set());
+    setSelectedEngagementTypes(new Set());
+    setSelectedLeadTimes(new Set());
+    setWarrantyOnly(false);
     setSort("rating");
     setUserLocation(null);
   }
@@ -645,6 +693,86 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
             </label>
           ))}
         </div>
+      </div>
+
+      {/* P2 PR 1: Work offered (engagement types). Multi-select; any match
+          passes. Shops without engagement_types filled in are hidden when
+          this filter is active. */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Work offered
+        </div>
+        <div className="space-y-1.5">
+          {[
+            { value: "new_build", label: "New builds" },
+            { value: "service_repair", label: "Service & repair" },
+            { value: "warranty_work", label: "Warranty work" },
+            { value: "rentals", label: "Rentals" },
+            { value: "parts_kits", label: "Parts / DIY kits" },
+          ].map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input type="checkbox" checked={selectedEngagementTypes.has(opt.value)}
+                onChange={() => setSelectedEngagementTypes(toggleSet(selectedEngagementTypes, opt.value))}
+                style={{ accentColor: "var(--color-primary)" }} />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* P2 PR 1: Lead time. Multi-select so a customer can widen the window
+          ("within 3 months" = under_1_month + 1_to_3_months). */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Lead time
+        </div>
+        <div className="space-y-1.5">
+          {[
+            { value: "under_1_month", label: "Under 1 month" },
+            { value: "1_to_3_months", label: "1–3 months" },
+            { value: "3_to_6_months", label: "3–6 months" },
+            { value: "6_months_plus", label: "6+ months" },
+          ].map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input type="checkbox" checked={selectedLeadTimes.has(opt.value)}
+                onChange={() => setSelectedLeadTimes(toggleSet(selectedLeadTimes, opt.value))}
+                style={{ accentColor: "var(--color-primary)" }} />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+        <p
+          className="text-xs mt-1.5"
+          style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
+        >
+          Shops without a listed lead time are hidden.
+        </p>
+      </div>
+
+      {/* P2 PR 1: Warranty. Simple on/off — show only shops that offer any
+          warranty at all. Finer controls (minimum months) deferred. */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Warranty
+        </div>
+        <label className="flex items-center gap-2 text-sm cursor-pointer"
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+          <input type="checkbox" checked={warrantyOnly}
+            onChange={(e) => setWarrantyOnly(e.target.checked)}
+            style={{ accentColor: "var(--color-primary)" }} />
+          Offers a warranty
+        </label>
       </div>
 
       {hasActiveFilters && (

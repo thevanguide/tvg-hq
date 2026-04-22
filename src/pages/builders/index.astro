@@ -74,6 +74,10 @@ const searchData = builders.map((b) => ({
   // excluded when a filter is active, included when no filter is applied.
   starting_price: b.starting_price,
   conversion_types: b.conversion_types,
+  // P2 PR 1 filter fields — same null-safe convention.
+  engagement_types: b.engagement_types,
+  lead_time: b.lead_time,
+  warranty_months: b.warranty_months,
   profile_href: getShopProfileUrl(b, "/builders"),
 }));
 ---
