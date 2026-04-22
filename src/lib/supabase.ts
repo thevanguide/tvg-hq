@@ -142,6 +142,28 @@ export type Builder = {
   updated_at: string;
 };
 
+/**
+ * P3 Build Showcase — one featured build per claimed builder. 1:1 with
+ * `builders` via unique builder_id. Accessed only through SECURITY DEFINER
+ * RPCs (get_my_build_showcases, upsert_build_showcase, delete_build_showcase);
+ * the table has RLS enabled with no client policies. PR A ships the data
+ * model + dashboard CRUD invisibly; PR B will render on profile pages.
+ */
+export type BuildShowcase = {
+  id: string;
+  builder_id: string;
+  hero_image_url: string;
+  title: string;
+  platform: "Sprinter" | "ProMaster" | "Transit" | "Other" | null;
+  year: number | null;
+  conversion_type: "weekender" | "full_time" | "adventure" | "work_vehicle" | null;
+  description: string | null;
+  specs: { label: string; value: string }[];
+  gallery_urls: string[];
+  created_at: string;
+  updated_at: string;
+};
+
 // ---------------------------------------------------------------------------
 // State name <-> code lookup
 // ---------------------------------------------------------------------------
