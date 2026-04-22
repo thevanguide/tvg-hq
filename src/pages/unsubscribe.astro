@@ -1,0 +1,85 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const SUPABASE_URL = "https://awnyqijglxczwyrhmdnc.supabase.co";
+const UNSUBSCRIBE_FN = `${SUPABASE_URL}/functions/v1/unsubscribe`;
+---
+
+<BaseLayout
+  title="Unsubscribe"
+  description="Unsubscribe from The Van Guide outreach emails."
+  noindex={true}
+>
+  <section class="container-read py-10 md:py-24">
+    <div class="eyebrow mb-4">Email preferences</div>
+    <h1 class="text-3xl md:text-5xl leading-tight mb-6">Unsubscribe</h1>
+
+    <div class="prose">
+      <p>
+        Confirm your email below to stop receiving outreach from The Van Guide. You'll
+        still be able to get transactional emails about a listing you claim, but no further
+        outreach will be sent to this address.
+      </p>
+
+      <form id="unsub-form" class="not-prose mt-8 flex flex-col gap-3 max-w-md">
+        <label for="email" class="text-sm font-medium">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          class="border border-gray-300 rounded px-3 py-2"
+        />
+        <button
+          type="submit"
+          class="bg-black text-white rounded px-4 py-2 font-medium hover:bg-gray-800"
+        >
+          Unsubscribe
+        </button>
+      </form>
+
+      <p id="unsub-status" class="not-prose mt-4 text-sm" aria-live="polite"></p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script is:inline define:vars={{ UNSUBSCRIBE_FN }}>
+  const form = document.getElementById("unsub-form");
+  const status = document.getElementById("unsub-status");
+  const input = document.getElementById("email");
+
+  // Pre-fill from ?e= query param (one-click links from emails)
+  const params = new URLSearchParams(window.location.search);
+  const prefill = params.get("e");
+  if (prefill) input.value = prefill;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = input.value.trim().toLowerCase();
+    if (!email) return;
+
+    status.textContent = "Working...";
+    status.style.color = "#666";
+
+    try {
+      const res = await fetch(UNSUBSCRIBE_FN, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        status.textContent = `Done. ${email} won't receive any more outreach.`;
+        status.style.color = "#0a7d3a";
+        form.querySelector("button").disabled = true;
+      } else {
+        status.textContent = `Couldn't process: ${data.error || "unknown error"}. Email hello@thevanguide.com and I'll handle it manually.`;
+        status.style.color = "#b91c1c";
+      }
+    } catch (err) {
+      status.textContent = `Network error. Email hello@thevanguide.com to unsubscribe.`;
+      status.style.color = "#b91c1c";
+    }
+  });
+</script>
