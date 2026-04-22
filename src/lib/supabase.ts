@@ -108,6 +108,23 @@ export type Builder = {
   instagram_handle: string | null;
   /** Full YouTube channel or page URL. */
   youtube_url: string | null;
+  /**
+   * P2 PR 1 directory fields. engagement_types captures the *kind* of work the
+   * shop does (distinct from `services` which lists systems). lead_time is a
+   * bucket of typical waiting time before a new project can start.
+   * warranty_months is the length of warranty the shop offers on its work
+   * (0 = no warranty, null = unspecified).
+   */
+  engagement_types:
+    | ("new_build" | "service_repair" | "warranty_work" | "rentals" | "parts_kits")[]
+    | null;
+  lead_time:
+    | "under_1_month"
+    | "1_to_3_months"
+    | "3_to_6_months"
+    | "6_months_plus"
+    | null;
+  warranty_months: number | null;
   created_at: string;
   updated_at: string;
 };

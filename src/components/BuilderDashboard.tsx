@@ -46,6 +46,15 @@ function toFriendlyError(err: { message?: string } | null | undefined): string {
   if (/builders_conversion_types_values_check/i.test(raw)) {
     return "One of the conversion-type values isn't recognized. Try unchecking and re-checking, and save again.";
   }
+  if (/builders_engagement_types_values_check/i.test(raw)) {
+    return "One of the work-offered values isn't recognized. Try unchecking and re-checking, and save again.";
+  }
+  if (/builders_lead_time_values_check/i.test(raw)) {
+    return "Lead time must be one of the listed options. Please re-select and save again.";
+  }
+  if (/builders_warranty_months_range_check/i.test(raw)) {
+    return "Warranty length must be between 0 and 120 months.";
+  }
   // Type mismatches (we shouldn't hit these once the RPC is patched, but keep
   // a friendlier fallback in case another integer/bool field is added without
   // updating the RPC's branch list).
@@ -105,6 +114,12 @@ interface BuilderData {
   conversion_types: string[] | null;
   instagram_handle: string | null;
   youtube_url: string | null;
+  // P2 PR 1 fields — kind of work, lead time bucket, warranty length.
+  // engagement_types is a subset of ['new_build','service_repair','warranty_work','rentals','parts_kits'].
+  // lead_time is one of the four bucket strings or null. warranty_months is 0..120 or null.
+  engagement_types: string[] | null;
+  lead_time: string | null;
+  warranty_months: number | null;
 }
 
 interface PendingClaim {
@@ -169,6 +184,13 @@ function DashboardInner() {
   const [instagramUrl, setInstagramUrl] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
 
+  // P2 PR 1 fields. engagementTypes is the kind-of-work multi-select.
+  // leadTime is "" when unspecified (render as the "Unspecified" radio).
+  // warrantyMonths is a string so the input can stay empty; parsed to int or null at save.
+  const [engagementTypes, setEngagementTypes] = useState<string[]>([]);
+  const [leadTime, setLeadTime] = useState<string>("");
+  const [warrantyMonths, setWarrantyMonths] = useState<string>("");
+
   // Service-side editable fields (only shown when shop is dual-tagged)
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceTagline, setServiceTagline] = useState("");
@@ -208,6 +230,9 @@ function DashboardInner() {
     // what the user sees. Empty stays empty.
     setInstagramUrl(b.instagram_handle ? `https://instagram.com/${b.instagram_handle}` : "");
     setYoutubeUrl(b.youtube_url || "");
+    setEngagementTypes(b.engagement_types || []);
+    setLeadTime(b.lead_time || "");
+    setWarrantyMonths(b.warranty_months != null ? String(b.warranty_months) : "");
   }
 
   // Does the form hold any unsaved changes against the currently selected
@@ -251,6 +276,17 @@ function DashboardInner() {
     // has a handle (or vice versa) doesn't falsely mark the form dirty.
     if (parseInstagramHandle(instagramUrl) !== (builder.instagram_handle || "")) return true;
     if (youtubeUrl !== (builder.youtube_url || "")) return true;
+
+    // P2 PR 1 fields. Engagement types compared as sets; lead_time + warranty
+    // normalized to string / int-or-null.
+    const sortedEngagementTypes = [...engagementTypes].sort();
+    const sortedBuilderEngagementTypes = [...(builder.engagement_types || [])].sort();
+    if (JSON.stringify(sortedEngagementTypes) !== JSON.stringify(sortedBuilderEngagementTypes)) return true;
+
+    if (leadTime !== (builder.lead_time || "")) return true;
+
+    const currentWarranty = warrantyMonths === "" ? null : parseInt(warrantyMonths, 10);
+    if (currentWarranty !== (builder.warranty_months ?? null)) return true;
 
     if (builder.categories?.includes("service")) {
       if (serviceDescription !== (builder.service_description || "")) return true;
@@ -378,6 +414,30 @@ function DashboardInner() {
     }
     if (youtubeUrl.trim() !== (builder.youtube_url || "")) {
       changes.youtube_url = youtubeUrl.trim();
+    }
+
+    // P2 PR 1 fields. Engagement types compared as sets (same as platforms /
+    // services). Lead time and warranty are text / int; send null to clear.
+    const sortedEngagementTypes = [...engagementTypes].sort();
+    const sortedBuilderEngagementTypes = [...(builder.engagement_types || [])].sort();
+    if (JSON.stringify(sortedEngagementTypes) !== JSON.stringify(sortedBuilderEngagementTypes)) {
+      changes.engagement_types = engagementTypes;
+    }
+
+    if (leadTime !== (builder.lead_time || "")) {
+      // Empty string means "clear the field" — send null so the RPC writes NULL
+      // instead of the empty string, which would violate the check constraint.
+      changes.lead_time = leadTime === "" ? null : leadTime;
+    }
+
+    const currentWarranty = warrantyMonths === "" ? null : parseInt(warrantyMonths, 10);
+    if (currentWarranty !== null && (isNaN(currentWarranty) || currentWarranty < 0 || currentWarranty > 120)) {
+      setError("Warranty length must be between 0 and 120 months.");
+      setSaving(false);
+      return;
+    }
+    if (currentWarranty !== (builder.warranty_months ?? null)) {
+      changes.warranty_months = currentWarranty;
     }
 
     // Service-side fields — only diff them if the shop is dual-tagged.
@@ -541,6 +601,12 @@ function DashboardInner() {
 
   function toggleConversionType(value: string) {
     setConversionTypes((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
+    );
+  }
+
+  function toggleEngagementType(value: string) {
+    setEngagementTypes((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
     );
   }
@@ -1240,6 +1306,151 @@ function DashboardInner() {
                   </label>
                 );
               })}
+            </div>
+          </div>
+        </div>
+
+        {/* P2 PR 1 — What we do / Policies. Engagement types capture the kind
+            of work the shop takes on (distinct from `services` systems).
+            Lead time and warranty are high-signal trust fields no other
+            directory surfaces. All three optional — leave blank to hide. */}
+        <div className="space-y-5">
+          <div>
+            <label className="block font-sans-ui text-sm font-medium mb-1.5">
+              What we do <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-3"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              Which of these best describes the work you take on? Check every
+              option that applies. Shows as chips on your profile and powers
+              the "What you need" filter in the directory.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "new_build", label: "New builds" },
+                { value: "service_repair", label: "Service & repair" },
+                { value: "warranty_work", label: "Warranty work (on others' builds)" },
+                { value: "rentals", label: "Rentals" },
+                { value: "parts_kits", label: "Parts / DIY kits" },
+              ].map((opt) => {
+                const checked = engagementTypes.includes(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className="inline-flex items-center gap-2 px-3 py-2 font-sans-ui text-sm border cursor-pointer transition-colors"
+                    style={{
+                      borderColor: checked
+                        ? "var(--color-primary)"
+                        : "var(--color-border-strong)",
+                      borderRadius: "var(--radius-md)",
+                      background: checked
+                        ? "var(--color-bg-alt)"
+                        : "transparent",
+                      color: checked
+                        ? "var(--color-text)"
+                        : "var(--color-text-muted)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleEngagementType(opt.value)}
+                      className="w-4 h-4"
+                      style={{ accentColor: "var(--color-primary)" }}
+                    />
+                    {opt.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-sans-ui text-sm font-medium mb-1.5">
+              Typical lead time <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-3"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              How soon can a new customer expect their project to start? Rough
+              answers are fine — customers just want to know if you're booked
+              out weeks or months.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "", label: "Unspecified" },
+                { value: "under_1_month", label: "Under 1 month" },
+                { value: "1_to_3_months", label: "1–3 months" },
+                { value: "3_to_6_months", label: "3–6 months" },
+                { value: "6_months_plus", label: "6+ months" },
+              ].map((opt) => {
+                const checked = leadTime === opt.value;
+                return (
+                  <label
+                    key={opt.value || "unspecified"}
+                    className="inline-flex items-center gap-2 px-3 py-2 font-sans-ui text-sm border cursor-pointer transition-colors"
+                    style={{
+                      borderColor: checked
+                        ? "var(--color-primary)"
+                        : "var(--color-border-strong)",
+                      borderRadius: "var(--radius-md)",
+                      background: checked
+                        ? "var(--color-bg-alt)"
+                        : "transparent",
+                      color: checked
+                        ? "var(--color-text)"
+                        : "var(--color-text-muted)",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="d-lead-time"
+                      checked={checked}
+                      onChange={() => setLeadTime(opt.value)}
+                      className="w-4 h-4"
+                      style={{ accentColor: "var(--color-primary)" }}
+                    />
+                    {opt.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="d-warranty-months" className="block font-sans-ui text-sm font-medium mb-1.5">
+              Warranty length <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-2"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              How many months of warranty do you offer on your builds? Enter 0
+              if you don't offer one, or leave blank to hide this from your
+              profile. Customers see this as a trust signal.
+            </p>
+            <div className="flex items-center gap-2 max-w-xs">
+              <input
+                type="number"
+                id="d-warranty-months"
+                value={warrantyMonths}
+                onChange={(e) => setWarrantyMonths(e.target.value)}
+                min={0}
+                max={120}
+                step={1}
+                inputMode="numeric"
+                className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+                style={{
+                  borderColor: "var(--color-border-strong)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--color-text)",
+                }}
+                placeholder="12"
+              />
+              <span className="font-sans-ui text-sm" style={{ color: "var(--color-text-muted)" }}>months</span>
             </div>
           </div>
         </div>

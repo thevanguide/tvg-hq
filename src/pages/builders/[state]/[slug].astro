@@ -76,6 +76,22 @@ function renderStars(rating: number): string {
 function platformSlug(p: string): string {
   return toUrlSlug(p);
 }
+
+// P2 PR 1 — display labels for engagement_types and lead_time buckets.
+const ENGAGEMENT_TYPE_LABELS: Record<string, string> = {
+  new_build: "New builds",
+  service_repair: "Service & repair",
+  warranty_work: "Warranty work",
+  rentals: "Rentals",
+  parts_kits: "Parts / DIY kits",
+};
+
+const LEAD_TIME_LABELS: Record<string, string> = {
+  under_1_month: "Under 1 month",
+  "1_to_3_months": "1–3 months",
+  "3_to_6_months": "3–6 months",
+  "6_months_plus": "6+ months",
+};
 ---
 
 <BaseLayout title={meta.title} description={meta.description}>
@@ -246,7 +262,10 @@ function platformSlug(p: string): string {
     builder.starting_price != null ||
     (builder.price_tier && builder.price_tier !== "Unknown") ||
     (builder.conversion_types && builder.conversion_types.length > 0) ||
+    (builder.engagement_types && builder.engagement_types.length > 0) ||
     builder.build_style === "Custom" ||
+    builder.lead_time ||
+    builder.warranty_months != null ||
     (yearsInBusiness != null && yearsInBusiness >= 5)
   ) && (
     <section class="container-wide mb-8 md:mb-12">
@@ -297,6 +316,17 @@ function platformSlug(p: string): string {
             </div>
           </div>
         )}
+        {builder.engagement_types && builder.engagement_types.length > 0 && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Work offered</div>
+            <div class="font-sans-ui text-sm" style="color: var(--color-text);">
+              {builder.engagement_types
+                .map((t) => ENGAGEMENT_TYPE_LABELS[t])
+                .filter(Boolean)
+                .join(", ")}
+            </div>
+          </div>
+        )}
         {builder.build_style === "Custom" && (
           <div>
             <div class="eyebrow text-xs mb-1">Build style</div>
@@ -307,6 +337,26 @@ function platformSlug(p: string): string {
             >
               Custom
             </a>
+          </div>
+        )}
+        {builder.lead_time && LEAD_TIME_LABELS[builder.lead_time] && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Lead time</div>
+            <div class="font-sans-ui text-sm" style="color: var(--color-text);">
+              {LEAD_TIME_LABELS[builder.lead_time]}
+            </div>
+          </div>
+        )}
+        {builder.warranty_months != null && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Warranty</div>
+            <div class="font-sans-ui text-sm" style="color: var(--color-text);">
+              {builder.warranty_months === 0
+                ? "None"
+                : builder.warranty_months >= 12 && builder.warranty_months % 12 === 0
+                  ? `${builder.warranty_months / 12} ${builder.warranty_months === 12 ? "year" : "years"}`
+                  : `${builder.warranty_months} months`}
+            </div>
           </div>
         )}
         {yearsInBusiness != null && yearsInBusiness >= 5 && (
