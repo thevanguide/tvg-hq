@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import EmailButton from "../../components/EmailButton.astro";
 ---
 
 <BaseLayout
@@ -35,7 +36,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       <h2>Corrections</h2>
       <p>
-        If something on this site is wrong, send the URL and what needs fixing to <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a>. Include a source if you have one.
+        If something on this site is wrong, send the URL and what needs fixing to <EmailButton email="hello@thevanguide.com" reveal />. Include a source if you have one.
       </p>
     </div>
   </section>

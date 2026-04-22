@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import EmailCapture from "../../components/EmailCapture.astro";
+import EmailButton from "../../components/EmailButton.astro";
 ---
 
 <BaseLayout
@@ -102,7 +103,7 @@ import EmailCapture from "../../components/EmailCapture.astro";
   <section style="background: var(--color-surface); border-top: 1px solid var(--color-border);">
     <div class="container-wide py-12 max-w-3xl">
       <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
-        Questions? Email <a href="mailto:hello@thevanguide.com" style="color: var(--color-accent);">hello@thevanguide.com</a>
+        Questions? Email <EmailButton email="hello@thevanguide.com" reveal class="email-link" style="color: var(--color-accent);" />
       </p>
     </div>
   </section>

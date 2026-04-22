@@ -1,6 +1,7 @@
 ---
 const year = new Date().getFullYear();
 import EmailCapture from "./EmailCapture.astro";
+import EmailButton from "./EmailButton.astro";
 ---
 
 <footer class="mt-12 md:mt-24" style="background: var(--color-primary); color: #FBFAF7;">
@@ -79,7 +80,7 @@ import EmailCapture from "./EmailCapture.astro";
   <div class="border-t" style="border-color: rgba(255,255,255,0.12);">
     <div class="container-wide py-5 flex flex-col md:flex-row items-center justify-between gap-3 font-sans-ui text-xs" style="color: #B8B5A8;">
       <div>© {year} The Van Guide.</div>
-      <div><a href="mailto:hello@thevanguide.com" class="no-underline hover:underline" style="color: #D4AA66;">hello@thevanguide.com</a></div>
+      <div><EmailButton email="hello@thevanguide.com" reveal class="email-link no-underline hover:underline" style="color: #D4AA66;" /></div>
     </div>
   </div>
 </footer>

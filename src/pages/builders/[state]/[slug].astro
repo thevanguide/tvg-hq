@@ -4,6 +4,7 @@ import Breadcrumbs from "../../../components/Breadcrumbs.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
 import EditListingLink from "../../../components/EditListingLink";
+import EmailButton from "../../../components/EmailButton.astro";
 import {
   getBuilderProfileShops,
   getNearbyBuilders,
@@ -216,14 +217,7 @@ const isNewBuildStyle = builder.build_style != null && builder.build_style in BU
               </a>
             )}
             {builder.emails && builder.emails.length > 0 && (
-              <button
-                class="btn btn-ghost"
-                data-email={builder.emails[0]}
-                id="reveal-email-btn"
-                type="button"
-              >
-                Email
-              </button>
+              <EmailButton email={builder.emails[0]} label="Email" class="btn btn-ghost" />
             )}
             {(builder.instagram_handle || builder.youtube_url) && (
               <div class="flex items-center gap-1 sm:ml-auto">
@@ -682,18 +676,3 @@ const isNewBuildStyle = builder.build_style != null && builder.build_style in BU
   </div>
 </BaseLayout>
 
-<script>
-  const btn = document.getElementById("reveal-email-btn");
-  if (btn) {
-    btn.addEventListener("click", () => {
-      const email = btn.getAttribute("data-email");
-      if (email) {
-        btn.textContent = email;
-        btn.removeAttribute("data-email");
-        btn.classList.remove("btn-ghost");
-        btn.classList.add("btn-accent");
-        btn.setAttribute("disabled", "true");
-      }
-    });
-  }
-</script>

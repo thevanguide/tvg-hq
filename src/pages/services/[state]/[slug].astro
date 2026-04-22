@@ -4,6 +4,7 @@ import Breadcrumbs from "../../../components/Breadcrumbs.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
 import EditListingLink from "../../../components/EditListingLink";
+import EmailButton from "../../../components/EmailButton.astro";
 import {
   getServiceShopProfileShops,
   getNearbyServiceShops,
@@ -186,14 +187,7 @@ function renderStars(rating: number): string {
               </a>
             )}
             {displayEmail && (
-              <button
-                class="btn btn-ghost"
-                data-email={displayEmail}
-                id="reveal-email-btn"
-                type="button"
-              >
-                Email
-              </button>
+              <EmailButton email={displayEmail} label="Email" class="btn btn-ghost" />
             )}
           </div>
 
@@ -421,18 +415,3 @@ function renderStars(rating: number): string {
   </div>
 </BaseLayout>
 
-<script>
-  const btn = document.getElementById("reveal-email-btn");
-  if (btn) {
-    btn.addEventListener("click", () => {
-      const email = btn.getAttribute("data-email");
-      if (email) {
-        btn.textContent = email;
-        btn.removeAttribute("data-email");
-        btn.classList.remove("btn-ghost");
-        btn.classList.add("btn-accent");
-        btn.setAttribute("disabled", "true");
-      }
-    });
-  }
-</script>

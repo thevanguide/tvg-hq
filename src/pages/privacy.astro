@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import EmailButton from "../components/EmailButton.astro";
 const lastUpdated = "April 2026";
 ---
 
@@ -38,7 +39,7 @@ const lastUpdated = "April 2026";
 
       <h2>Your rights</h2>
       <p>
-        You can request deletion of your newsletter subscription or any data we hold about you at any time by emailing <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a>. If you're in California, the EU, or the UK, this request is processed within the timelines required by applicable law.
+        You can request deletion of your newsletter subscription or any data we hold about you at any time by emailing <EmailButton email="hello@thevanguide.com" reveal />. If you're in California, the EU, or the UK, this request is processed within the timelines required by applicable law.
       </p>
 
       <h2>Changes</h2>

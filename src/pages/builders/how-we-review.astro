@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import EmailButton from "../../components/EmailButton.astro";
 
 const breadcrumbs = [
   { label: "Home", href: "/" },
@@ -75,7 +76,7 @@ const breadcrumbs = [
         Refresh cycles vary by state and are not on a fixed schedule. Builders who have <a href="/builders/claim/">claimed their listing</a> can update their own information at any time, which keeps those profiles current between refresh cycles.
       </p>
       <p>
-        If you notice outdated information on any listing, email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> and we'll prioritize the correction.
+        If you notice outdated information on any listing, email <EmailButton email="hello@thevanguide.com" reveal /> and we'll prioritize the correction.
       </p>
 
       <h2>What the ratings mean</h2>
@@ -109,7 +110,7 @@ const breadcrumbs = [
 
       <h2>How we handle disputes</h2>
       <p>
-        <strong>Builder removal requests.</strong> A builder can ask to be removed from the directory at any time by emailing <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> from a verifiable business email address. Removal requests are honored promptly and without argument.
+        <strong>Builder removal requests.</strong> A builder can ask to be removed from the directory at any time by emailing <EmailButton email="hello@thevanguide.com" reveal /> from a verifiable business email address. Removal requests are honored promptly and without argument.
       </p>
       <p>
         <strong>Factual corrections.</strong> If a listing contains incorrect information (wrong location, outdated phone number, misattributed services), email us with the correction and a source. We fix factual errors within a few business days.
@@ -118,7 +119,7 @@ const breadcrumbs = [
         <strong>Customer complaints about a builder.</strong> The Van Guide is a directory, not a mediator. We do not resolve disputes between builders and their customers. If a pattern of complaints suggests a listing is actively misleading buyers, we may investigate and apply the removal criteria above. Individual disputes should be directed to the builder, the BBB, or the relevant state contractor licensing board.
       </p>
       <p>
-        <strong>Defamation claims.</strong> If a builder believes their listing contains defamatory content, they should email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> identifying the specific claim and why it is false. We will review the claim against our sources and correct or remove any statement we cannot substantiate. Listings are built from public information and editorial analysis, not user-submitted reviews, so this situation should be rare.
+        <strong>Defamation claims.</strong> If a builder believes their listing contains defamatory content, they should email <EmailButton email="hello@thevanguide.com" reveal /> identifying the specific claim and why it is false. We will review the claim against our sources and correct or remove any statement we cannot substantiate. Listings are built from public information and editorial analysis, not user-submitted reviews, so this situation should be rare.
       </p>
 
       <h2>Claiming your listing</h2>
@@ -132,12 +133,12 @@ const breadcrumbs = [
         <li>Display a "verified" badge on your profile</li>
       </ul>
       <p>
-        The claim process verifies your identity by matching your email domain to the business website on file. If your email domain doesn't match (or the listing has no website), email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> and we'll verify manually.
+        The claim process verifies your identity by matching your email domain to the business website on file. If your email domain doesn't match (or the listing has no website), email <EmailButton email="hello@thevanguide.com" reveal /> and we'll verify manually.
       </p>
 
       <h2>Reporting incorrect information</h2>
       <p>
-        If you see an error in a listing (wrong phone number, closed business, incorrect location), email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> with the builder name and the correction. We review reports within a few business days.
+        If you see an error in a listing (wrong phone number, closed business, incorrect location), email <EmailButton email="hello@thevanguide.com" reveal /> with the builder name and the correction. We review reports within a few business days.
       </p>
     </div>
   </div>
