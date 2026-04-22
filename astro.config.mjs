@@ -28,6 +28,8 @@ export default defineConfig({
         if (path.startsWith("/builders/admin/")) return false;
         if (path.startsWith("/builders/dashboard/")) return false;
         if (path.startsWith("/auth/callback/")) return false;
+        // Email-link landing pages — no indexing
+        if (path.startsWith("/unsubscribe")) return false;
         return true;
       },
     }),
