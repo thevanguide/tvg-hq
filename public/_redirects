@@ -1,3 +1,12 @@
 # Builder profile redirects (state corrections)
 /builders/wisconsin/adventure-van-conversions/ /builders/california/adventure-van-conversions/ 301
 /builders/wisconsin/adventure-van-conversions /builders/california/adventure-van-conversions/ 301
+
+# Legacy build-style hub pages (P2 PR 2, Apr 2026) — replaced by the
+# /builders/?style= filter. Custom maps to Bespoke; Standard maps to
+# Production (closest single match; Semi-custom is a new value with no
+# legacy equivalent).
+/builders/style/custom/ /builders/?style=bespoke 301
+/builders/style/custom /builders/?style=bespoke 301
+/builders/style/standard/ /builders/?style=production 301
+/builders/style/standard /builders/?style=production 301

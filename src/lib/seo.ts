@@ -73,16 +73,6 @@ export function serviceMeta(service: string, count: number) {
   };
 }
 
-export function styleMeta(style: string, count: number) {
-  return {
-    title: `${style} Van Conversion Builders | The Van Guide`,
-    description: `${count || "Browse"} ${style.toLowerCase()} van conversion builders across the US. Compare pricing, services, and reviews.`.replace(
-      "  ",
-      " ",
-    ),
-  };
-}
-
 export function serviceShopProfileMeta(shop: Builder) {
   const location = shop.city ? `${shop.city}, ${shop.state}` : shop.state;
   // Prefer service-side copy when a dual-tagged shop has filled it in.

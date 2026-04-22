@@ -608,7 +608,45 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       </div>
 
       <div>
-        {/* Build style filter hidden until data is populated */}
+        {/* P2 PR 2: Build style filter. Three-value radio — Any / Bespoke /
+            Semi-custom / Production. Lowercase-hyphenated URL value matches
+            the existing selectedStyle toLowerCase filter logic. Legacy
+            Custom/Standard values on 7 claimed rows are invisible in this UI
+            until owners reclassify via the dashboard. */}
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Build style
+        </div>
+        <div className="space-y-1.5 mb-4">
+          {[
+            { value: "", label: "Any" },
+            { value: "bespoke", label: "Bespoke", desc: "One-of-one custom" },
+            { value: "semi-custom", label: "Semi-custom", desc: "Template + chosen finishes" },
+            { value: "production", label: "Production", desc: "Fixed floorplans" },
+          ].map((opt) => (
+            <label key={opt.value || "any"} className="flex items-start gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input
+                type="radio"
+                name="build-style-filter"
+                checked={selectedStyle === opt.value}
+                onChange={() => setSelectedStyle(opt.value)}
+                className="mt-0.5 shrink-0"
+                style={{ accentColor: "var(--color-primary)" }}
+              />
+              <span className="flex-1">
+                <span className="block">{opt.label}</span>
+                {opt.desc && (
+                  <span className="block text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    {opt.desc}
+                  </span>
+                )}
+              </span>
+            </label>
+          ))}
+        </div>
 
         {topServices.length > 0 && (
           <>

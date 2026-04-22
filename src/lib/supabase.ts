@@ -69,7 +69,20 @@ export type Builder = {
    * on the service profile when null.
    */
   service_hero_image_url: string | null;
-  build_style: "Custom" | "Standard" | null;
+  /**
+   * Build style. "Bespoke" / "Semi-custom" / "Production" are the current
+   * 3-value taxonomy (P2 PR 2, Apr 2026). "Custom" / "Standard" are legacy
+   * values from the pre-P2 scrape — only still present on 7 claimed rows
+   * pending owner reclassification; a follow-up migration will drop them
+   * from the check constraint once reclassified.
+   */
+  build_style:
+    | "Bespoke"
+    | "Semi-custom"
+    | "Production"
+    | "Custom"
+    | "Standard"
+    | null;
   /**
    * Legacy single-value category. Kept for rollback safety; new code should
    * use `categories` (array) and `primary_category` instead.
@@ -425,12 +438,6 @@ export async function getBuildersByService(service: string): Promise<Builder[]> 
   return all.filter((b) =>
     b.services.some((svc) => svc.toLowerCase() === s),
   );
-}
-
-export async function getBuildersByStyle(style: string): Promise<Builder[]> {
-  const all = await getAllBuilders();
-  const s = style.toLowerCase();
-  return all.filter((b) => b.build_style && b.build_style.toLowerCase() === s);
 }
 
 export async function getDistinctStates(): Promise<string[]> {

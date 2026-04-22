@@ -92,6 +92,22 @@ const LEAD_TIME_LABELS: Record<string, string> = {
   "3_to_6_months": "3–6 months",
   "6_months_plus": "6+ months",
 };
+
+// P2 PR 2 — build style descriptions + filter hrefs. Legacy Custom/Standard
+// values render nothing (owner-reclassification pending for 7 claimed rows).
+const BUILD_STYLE_DESCRIPTIONS: Record<string, string> = {
+  Bespoke: "One-of-one custom builds designed around each customer.",
+  "Semi-custom": "Template floorplan with customer-chosen finishes and systems.",
+  Production: "Fixed floorplans built to spec.",
+};
+
+const BUILD_STYLE_FILTER_PARAMS: Record<string, string> = {
+  Bespoke: "bespoke",
+  "Semi-custom": "semi-custom",
+  Production: "production",
+};
+
+const isNewBuildStyle = builder.build_style != null && builder.build_style in BUILD_STYLE_DESCRIPTIONS;
 ---
 
 <BaseLayout title={meta.title} description={meta.description}>
@@ -263,7 +279,7 @@ const LEAD_TIME_LABELS: Record<string, string> = {
     (builder.price_tier && builder.price_tier !== "Unknown") ||
     (builder.conversion_types && builder.conversion_types.length > 0) ||
     (builder.engagement_types && builder.engagement_types.length > 0) ||
-    builder.build_style === "Custom" ||
+    isNewBuildStyle ||
     builder.lead_time ||
     builder.warranty_months != null ||
     (yearsInBusiness != null && yearsInBusiness >= 5)
@@ -327,16 +343,23 @@ const LEAD_TIME_LABELS: Record<string, string> = {
             </div>
           </div>
         )}
-        {builder.build_style === "Custom" && (
+        {isNewBuildStyle && builder.build_style && (
           <div>
             <div class="eyebrow text-xs mb-1">Build style</div>
             <a
-              href="/builders/style/custom/"
+              href={`/builders/?style=${BUILD_STYLE_FILTER_PARAMS[builder.build_style]}`}
               class="font-sans-ui text-sm no-underline hover:underline"
               style="color: var(--color-text);"
+              title={BUILD_STYLE_DESCRIPTIONS[builder.build_style]}
             >
-              Custom
+              {builder.build_style}
             </a>
+            <div
+              class="font-sans-ui text-xs mt-0.5"
+              style="color: var(--color-text-muted);"
+            >
+              {BUILD_STYLE_DESCRIPTIONS[builder.build_style]}
+            </div>
           </div>
         )}
         {builder.lead_time && LEAD_TIME_LABELS[builder.lead_time] && (
