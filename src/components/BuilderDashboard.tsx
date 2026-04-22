@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getAuthClient } from "../lib/supabase-auth";
+import type { BuildShowcase } from "../lib/supabase";
 import BuilderAuth from "./BuilderAuth";
 import BuilderPhotoUpload from "./BuilderPhotoUpload";
 import RichTextEditor from "./RichTextEditor";
@@ -58,6 +59,18 @@ function toFriendlyError(err: { message?: string } | null | undefined): string {
   if (/builders_build_style_check/i.test(raw)) {
     return "Build style value isn't recognized. Please pick one of the listed options and save again.";
   }
+  // Build showcase (P3 PR A)
+  if (/hero image is required/i.test(raw)) return "A hero image is required.";
+  if (/title is required/i.test(raw)) return "A title is required.";
+  if (/build_showcases_title_len/i.test(raw)) return "Title must be 1–100 characters.";
+  if (/build_showcases_description_len/i.test(raw)) return "Description must be 600 characters or fewer.";
+  if (/build_showcases_platform_values/i.test(raw)) return "Platform must be Sprinter, ProMaster, Transit, or Other.";
+  if (/build_showcases_conversion_type_values/i.test(raw)) return "Conversion type value isn't recognized. Please pick one of the listed options.";
+  if (/build_showcases_year_range/i.test(raw)) return "Year must be between 1980 and 2030.";
+  if (/build_showcases_gallery_len/i.test(raw)) return "Gallery can have at most 5 photos.";
+  if (/build_showcases_specs_shape/i.test(raw)) return "Specs list is too long — max 8 entries.";
+  if (/each spec must be a \{label, value\} object/i.test(raw)) return "Each spec needs both a label and a value.";
+  if (/specs can have at most/i.test(raw)) return "Specs list can have at most 8 entries.";
   // Type mismatches (we shouldn't hit these once the RPC is patched, but keep
   // a friendlier fallback in case another integer/bool field is added without
   // updating the RPC's branch list).
@@ -216,6 +229,30 @@ function DashboardInner() {
   const [serviceToggleError, setServiceToggleError] = useState<string | null>(null);
   const [serviceToggleNotice, setServiceToggleNotice] = useState<string | null>(null);
 
+  // P3 PR A — Build Showcase. Keyed by builder_id so the dashboard can swap
+  // between listings without re-fetching. Null entry = owner has no showcase
+  // yet for that listing (UI shows the empty form). A populated row means
+  // the owner has saved one and the form is prefilled for editing.
+  const [showcasesById, setShowcasesById] = useState<
+    Record<string, BuildShowcase | null>
+  >({});
+
+  // Showcase form state — separate from the main form because the showcase
+  // has its own save button, required fields, and delete action. Tracked in
+  // parallel with the main form so switching listings resets both.
+  const [scHeroUrl, setScHeroUrl] = useState("");
+  const [scTitle, setScTitle] = useState("");
+  const [scPlatform, setScPlatform] = useState<string>("");
+  const [scYear, setScYear] = useState<string>("");
+  const [scConversionType, setScConversionType] = useState<string>("");
+  const [scDescription, setScDescription] = useState("");
+  const [scSpecs, setScSpecs] = useState<{ label: string; value: string }[]>([]);
+  const [scGalleryUrls, setScGalleryUrls] = useState<string[]>([]);
+  const [scSaving, setScSaving] = useState(false);
+  const [scSaved, setScSaved] = useState(false);
+  const [scDeleting, setScDeleting] = useState(false);
+  const [scError, setScError] = useState<string | null>(null);
+
   // Reset every form field from a builder row. Called when loading data
   // and when the owner switches between listings via the tabs.
   function applyBuilderToForm(b: BuilderData) {
@@ -249,6 +286,23 @@ function DashboardInner() {
     // value from the 3-value set. Clean DB values pass through unchanged.
     const legacyStyles = new Set(["Custom", "Standard"]);
     setBuildStyle(b.build_style && !legacyStyles.has(b.build_style) ? b.build_style : "");
+  }
+
+  // Reset the showcase form from a loaded row (or clear it if null). Called
+  // on initial load, when switching listings, and after a successful save or
+  // delete. Keeps the showcase form in sync with what's actually in the DB
+  // for the currently selected builder.
+  function applyShowcaseToForm(sc: BuildShowcase | null) {
+    setScHeroUrl(sc?.hero_image_url ?? "");
+    setScTitle(sc?.title ?? "");
+    setScPlatform(sc?.platform ?? "");
+    setScYear(sc?.year != null ? String(sc.year) : "");
+    setScConversionType(sc?.conversion_type ?? "");
+    setScDescription(sc?.description ?? "");
+    setScSpecs(sc?.specs ?? []);
+    setScGalleryUrls(sc?.gallery_urls ?? []);
+    setScSaved(false);
+    setScError(null);
   }
 
   // Does the form hold any unsaved changes against the currently selected
@@ -342,6 +396,7 @@ function DashboardInner() {
     if (!target) return;
     setSelectedId(targetId);
     applyBuilderToForm(target);
+    applyShowcaseToForm(showcasesById[targetId] ?? null);
     setSaved(false);
     setError(null);
   }
@@ -353,9 +408,22 @@ function DashboardInner() {
     const { data: builderData } = await client.rpc("get_my_builder");
     const list = ((builderData ?? []) as BuilderData[]);
     setAllBuilders(list);
+
+    // Load every showcase owned by this user up front so switching listings
+    // is instant. Missing entries (owners who haven't created a showcase for
+    // a listing yet) render the empty form. Failures just leave the map
+    // empty — owner can still create new showcases.
+    const { data: showcaseData } = await client.rpc("get_my_build_showcases");
+    const showcases = (showcaseData ?? []) as BuildShowcase[];
+    const map: Record<string, BuildShowcase | null> = {};
+    for (const b of list) map[b.id] = null;
+    for (const sc of showcases) map[sc.builder_id] = sc;
+    setShowcasesById(map);
+
     if (list.length > 0) {
       setSelectedId(list[0].id);
       applyBuilderToForm(list[0]);
+      applyShowcaseToForm(map[list[0].id] ?? null);
     }
 
     const { data: claimsData } = await client.rpc("get_my_claims");
@@ -597,6 +665,159 @@ function DashboardInner() {
         : "Removed from the Repairs & Services directory. The change goes live within about a minute.",
     );
   }
+
+  // ------- P3 Build Showcase handlers --------------------------------------
+
+  async function handleSaveShowcase(e: React.FormEvent) {
+    e.preventDefault();
+    if (!builder) return;
+
+    // Required fields must match the RPC's expectations so the user gets a
+    // clean client-side error instead of a raw SQL exception.
+    if (!scHeroUrl) {
+      setScError("A hero image is required.");
+      return;
+    }
+    if (!scTitle.trim()) {
+      setScError("A title is required.");
+      return;
+    }
+
+    const trimmedSpecs = scSpecs
+      .map((s) => ({ label: s.label.trim(), value: s.value.trim() }))
+      .filter((s) => s.label || s.value);
+
+    // Optional integer year. Empty input = omit field; bad numbers fail fast.
+    let parsedYear: number | null = null;
+    if (scYear.trim() !== "") {
+      const n = parseInt(scYear, 10);
+      if (isNaN(n) || n < 1980 || n > 2030) {
+        setScError("Year must be between 1980 and 2030.");
+        return;
+      }
+      parsedYear = n;
+    }
+
+    setScSaving(true);
+    setScError(null);
+    setScSaved(false);
+
+    const payload = {
+      hero_image_url: scHeroUrl,
+      title: scTitle.trim(),
+      platform: scPlatform === "" ? null : scPlatform,
+      year: parsedYear,
+      conversion_type: scConversionType === "" ? null : scConversionType,
+      description: scDescription.trim() === "" ? null : scDescription.trim(),
+      specs: trimmedSpecs,
+      gallery_urls: scGalleryUrls,
+    };
+
+    const client = getAuthClient();
+    if (!client) {
+      setScError("Auth not configured");
+      setScSaving(false);
+      return;
+    }
+
+    const { error: rpcError } = await client.rpc("upsert_build_showcase", {
+      p_builder_id: builder.id,
+      p_payload: payload,
+    });
+
+    setScSaving(false);
+
+    if (rpcError) {
+      console.error("[tvg] showcase save error:", rpcError.message || rpcError);
+      setScError(toFriendlyError(rpcError));
+      return;
+    }
+
+    setScSaved(true);
+    // Optimistically update the local map so switching listings and back
+    // shows the saved values without refetching.
+    const existingId = showcasesById[builder.id]?.id;
+    const now = new Date().toISOString();
+    const nextShowcase: BuildShowcase = {
+      id: existingId ?? "pending",
+      builder_id: builder.id,
+      hero_image_url: payload.hero_image_url,
+      title: payload.title,
+      platform: (payload.platform ?? null) as BuildShowcase["platform"],
+      year: payload.year,
+      conversion_type: (payload.conversion_type ?? null) as BuildShowcase["conversion_type"],
+      description: payload.description,
+      specs: payload.specs,
+      gallery_urls: payload.gallery_urls,
+      created_at: showcasesById[builder.id]?.created_at ?? now,
+      updated_at: now,
+    };
+    setShowcasesById((prev) => ({ ...prev, [builder.id]: nextShowcase }));
+  }
+
+  async function handleDeleteShowcase() {
+    if (!builder) return;
+    const confirmed = window.confirm(
+      "Remove your featured build? This clears the hero, title, specs, and gallery. You can add a new one anytime.",
+    );
+    if (!confirmed) return;
+
+    setScDeleting(true);
+    setScError(null);
+
+    const client = getAuthClient();
+    if (!client) {
+      setScError("Auth not configured");
+      setScDeleting(false);
+      return;
+    }
+
+    const { error: rpcError } = await client.rpc("delete_build_showcase", {
+      p_builder_id: builder.id,
+    });
+
+    setScDeleting(false);
+
+    if (rpcError) {
+      console.error("[tvg] showcase delete error:", rpcError.message || rpcError);
+      setScError(toFriendlyError(rpcError));
+      return;
+    }
+
+    setShowcasesById((prev) => ({ ...prev, [builder.id]: null }));
+    applyShowcaseToForm(null);
+  }
+
+  function handleShowcaseHeroUploaded(url: string) {
+    setScHeroUrl(url);
+    setScSaved(false);
+  }
+
+  function handleShowcaseGalleryUploaded(url: string) {
+    setScGalleryUrls((prev) => [...prev, url]);
+    setScSaved(false);
+  }
+
+  function removeShowcaseGalleryPhoto(index: number) {
+    setScGalleryUrls((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addShowcaseSpec() {
+    if (scSpecs.length >= 8) return;
+    setScSpecs((prev) => [...prev, { label: "", value: "" }]);
+  }
+
+  function updateShowcaseSpec(index: number, field: "label" | "value", val: string) {
+    setScSpecs((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, [field]: val } : s)),
+    );
+  }
+
+  function removeShowcaseSpec(index: number) {
+    setScSpecs((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  // -------------------------------------------------------------------------
 
   function handleLogoUploaded(url: string) {
     setLogoUrl(url);
@@ -1840,6 +2061,354 @@ function DashboardInner() {
           </p>
         )}
       </form>
+
+      {/* P3 Build Showcase — lives outside the main form so it can have its
+          own save/delete and required-field validation. Will render publicly
+          on the profile page once PR B ships; until then it's dashboard-only. */}
+      <section
+        className="mt-10 pt-8 border-t"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        <div className="mb-5">
+          <h3 className="text-xl mb-1.5">Featured build</h3>
+          <p
+            className="font-sans-ui text-sm"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Highlight one standout build on your profile. Add a hero photo, the
+            story, key specs, and up to 5 gallery images. Swap it out whenever
+            you finish something better.
+          </p>
+          <p
+            className="font-sans-ui text-xs mt-2"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Your featured build is saved now but will start appearing on your
+            public profile once the next site update ships.
+          </p>
+        </div>
+
+        <form onSubmit={handleSaveShowcase} className="space-y-5">
+          {/* Hero image (required) */}
+          <div>
+            <label className="block font-sans-ui text-sm font-medium mb-1.5">
+              Hero image <span style={{ color: "#b91c1c" }}>*</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-2"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              A sharp wide photo of the finished build. This is the anchor for
+              your featured section — make it count.
+            </p>
+            {scHeroUrl && (
+              <div className="mb-3">
+                <img
+                  src={scHeroUrl}
+                  alt="Featured build hero"
+                  className="w-full max-w-lg object-cover rounded-lg border"
+                  style={{
+                    aspectRatio: "16/9",
+                    borderColor: "var(--color-border)",
+                    background: "var(--color-bg-alt)",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setScHeroUrl("")}
+                  className="mt-2 font-sans-ui text-xs underline"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
+                  Remove hero image
+                </button>
+              </div>
+            )}
+            <BuilderPhotoUpload
+              builderId={builder.id}
+              folder="build-showcase"
+              onUploaded={handleShowcaseHeroUploaded}
+              label={scHeroUrl ? "Replace hero image" : "Upload hero image"}
+            />
+          </div>
+
+          {/* Title (required) */}
+          <div>
+            <label htmlFor="sc-title" className="block font-sans-ui text-sm font-medium mb-1.5">
+              Build name <span style={{ color: "#b91c1c" }}>*</span>
+            </label>
+            <input
+              type="text"
+              id="sc-title"
+              value={scTitle}
+              onChange={(e) => setScTitle(e.target.value)}
+              maxLength={100}
+              className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+              style={{
+                borderColor: "var(--color-border-strong)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--color-text)",
+              }}
+              placeholder='e.g. "The Mojave" or "2023 Sprinter 170 WB"'
+            />
+          </div>
+
+          {/* Platform / Year / Conversion type row */}
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="sc-platform" className="block font-sans-ui text-sm font-medium mb-1.5">
+                Platform <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+              </label>
+              <select
+                id="sc-platform"
+                value={scPlatform}
+                onChange={(e) => setScPlatform(e.target.value)}
+                className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+                style={{
+                  borderColor: "var(--color-border-strong)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--color-text)",
+                }}
+              >
+                <option value="">—</option>
+                <option value="Sprinter">Sprinter</option>
+                <option value="ProMaster">ProMaster</option>
+                <option value="Transit">Transit</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="sc-year" className="block font-sans-ui text-sm font-medium mb-1.5">
+                Year <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+              </label>
+              <input
+                type="number"
+                id="sc-year"
+                value={scYear}
+                onChange={(e) => setScYear(e.target.value)}
+                min={1980}
+                max={2030}
+                step={1}
+                inputMode="numeric"
+                className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+                style={{
+                  borderColor: "var(--color-border-strong)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--color-text)",
+                }}
+                placeholder="2023"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="sc-conversion-type" className="block font-sans-ui text-sm font-medium mb-1.5">
+                Use case <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+              </label>
+              <select
+                id="sc-conversion-type"
+                value={scConversionType}
+                onChange={(e) => setScConversionType(e.target.value)}
+                className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+                style={{
+                  borderColor: "var(--color-border-strong)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--color-text)",
+                }}
+              >
+                <option value="">—</option>
+                <option value="weekender">Weekender</option>
+                <option value="full_time">Full-time</option>
+                <option value="adventure">Adventure</option>
+                <option value="work_vehicle">Work vehicle</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label htmlFor="sc-description" className="block font-sans-ui text-sm font-medium mb-1.5">
+              Story <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional, up to 600 characters)</span>
+            </label>
+            <textarea
+              id="sc-description"
+              value={scDescription}
+              onChange={(e) => setScDescription(e.target.value)}
+              maxLength={600}
+              rows={4}
+              className="w-full px-4 py-3 font-sans-ui text-base border bg-white resize-y"
+              style={{
+                borderColor: "var(--color-border-strong)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--color-text)",
+              }}
+              placeholder="What makes this build special? Who's it for? What was the challenge?"
+            />
+            <p
+              className="mt-1 font-sans-ui text-xs text-right"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              {scDescription.length} / 600
+            </p>
+          </div>
+
+          {/* Specs */}
+          <div>
+            <label className="block font-sans-ui text-sm font-medium mb-1.5">
+              Key specs <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional, up to 8)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-3"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              Short, scannable details. Left column is the category, right is
+              the spec. e.g. <em>Electrical</em> → <em>400W solar / 200Ah lithium</em>.
+            </p>
+            {scSpecs.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {scSpecs.map((s, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={s.label}
+                      onChange={(e) => updateShowcaseSpec(i, "label", e.target.value)}
+                      maxLength={40}
+                      className="flex-1 px-3 py-2 font-sans-ui text-sm border bg-white"
+                      style={{
+                        borderColor: "var(--color-border-strong)",
+                        borderRadius: "var(--radius-md)",
+                        color: "var(--color-text)",
+                      }}
+                      placeholder="Label (e.g. Electrical)"
+                    />
+                    <input
+                      type="text"
+                      value={s.value}
+                      onChange={(e) => updateShowcaseSpec(i, "value", e.target.value)}
+                      maxLength={120}
+                      className="flex-[2] px-3 py-2 font-sans-ui text-sm border bg-white"
+                      style={{
+                        borderColor: "var(--color-border-strong)",
+                        borderRadius: "var(--radius-md)",
+                        color: "var(--color-text)",
+                      }}
+                      placeholder="Value (e.g. 400W solar / 200Ah lithium)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeShowcaseSpec(i)}
+                      className="px-3 font-sans-ui text-sm border"
+                      style={{
+                        borderColor: "var(--color-border-strong)",
+                        borderRadius: "var(--radius-md)",
+                        color: "var(--color-text-muted)",
+                        background: "transparent",
+                      }}
+                      aria-label={`Remove spec ${i + 1}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {scSpecs.length < 8 && (
+              <button
+                type="button"
+                onClick={addShowcaseSpec}
+                className="font-sans-ui text-sm px-4 py-2 border"
+                style={{
+                  borderColor: "var(--color-border-strong)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--color-text-muted)",
+                  background: "transparent",
+                }}
+              >
+                + Add spec
+              </button>
+            )}
+          </div>
+
+          {/* Gallery — up to 5 */}
+          <div>
+            <div className="flex items-baseline justify-between mb-1.5">
+              <label className="block font-sans-ui text-sm font-medium">
+                Gallery <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional, up to 5)</span>
+              </label>
+              <span className="font-sans-ui text-xs" style={{ color: "var(--color-text-muted)" }}>
+                {scGalleryUrls.length} / 5
+              </span>
+            </div>
+            {scGalleryUrls.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                {scGalleryUrls.map((url, i) => (
+                  <div key={i} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Featured build photo ${i + 1}`}
+                      className="w-full aspect-[4/3] object-cover rounded-lg"
+                      style={{ background: "var(--color-bg-alt)" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeShowcaseGalleryPhoto(i)}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ background: "rgba(0,0,0,0.6)" }}
+                      aria-label={`Remove photo ${i + 1}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {scGalleryUrls.length < 5 && (
+              <BuilderPhotoUpload
+                builderId={builder.id}
+                folder="build-showcase"
+                onUploaded={handleShowcaseGalleryUploaded}
+                label={`Upload gallery photo (${5 - scGalleryUrls.length} remaining)`}
+              />
+            )}
+          </div>
+
+          {/* Save / delete row */}
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <button
+              type="submit"
+              className="btn btn-accent"
+              disabled={scSaving || scDeleting}
+            >
+              {scSaving
+                ? "Saving..."
+                : showcasesById[builder.id]
+                  ? "Save featured build"
+                  : "Create featured build"}
+            </button>
+            {showcasesById[builder.id] && (
+              <button
+                type="button"
+                onClick={handleDeleteShowcase}
+                disabled={scSaving || scDeleting}
+                className="font-sans-ui text-sm underline"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                {scDeleting ? "Removing..." : "Remove featured build"}
+              </button>
+            )}
+            {scSaved && (
+              <span className="font-sans-ui text-sm" style={{ color: "var(--color-primary)" }}>
+                Featured build saved.
+              </span>
+            )}
+          </div>
+
+          {scError && (
+            <p className="font-sans-ui text-sm" style={{ color: "#b91c1c" }}>
+              {scError}
+            </p>
+          )}
+        </form>
+      </section>
 
       <p className="mt-8 font-sans-ui text-xs" style={{ color: "var(--color-text-subtle)" }}>
         Changes take effect immediately. Your public profile will reflect updates the next time the site rebuilds.
