@@ -70,6 +70,10 @@ const searchData = builders.map((b) => ({
   build_style: b.build_style,
   latitude: b.latitude,
   longitude: b.longitude,
+  // P1 directory filter fields. Null-safe — unfilled profiles are simply
+  // excluded when a filter is active, included when no filter is applied.
+  starting_price: b.starting_price,
+  conversion_types: b.conversion_types,
   profile_href: getShopProfileUrl(b, "/builders"),
 }));
 ---

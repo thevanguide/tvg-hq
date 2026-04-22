@@ -7,6 +7,58 @@ import { PLATFORM_GROUPS, SERVICE_GROUPS } from "../lib/taxonomy";
 
 const FREE_PHOTO_LIMIT = 3;
 
+/**
+ * Translate a Supabase/Postgres RPC error into something a builder can act on.
+ * Raw Postgres text ("column X is of type integer but expression is of type
+ * text") is useless to a shop owner. Known error shapes get friendly copy;
+ * unknown errors fall back to a generic message + a log hint.
+ */
+/**
+ * Accept any Instagram input format — full URL, handle, @handle — and
+ * return the bare handle for storage. Empty string for unparseable input.
+ * Stored handle is rendered back as https://instagram.com/{handle} on the
+ * profile page, so round-tripping through the URL form is lossless.
+ */
+function parseInstagramHandle(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return "";
+  // Try to pull a handle out of a URL first — handles instagram.com/foo,
+  // www.instagram.com/foo/, https://instagram.com/foo?utm=... etc.
+  const urlMatch = trimmed.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/([^\/\?#\s]+)/i);
+  if (urlMatch) return urlMatch[1];
+  // Fallback: strip a leading @ if the user typed a handle instead of URL.
+  return trimmed.replace(/^@/, "");
+}
+
+function toFriendlyError(err: { message?: string } | null | undefined): string {
+  const raw = err?.message ?? "";
+  if (!raw) return "Something went wrong. Please try again.";
+
+  // Photo / gallery
+  if (/gallery exceeds your photo limit/i.test(raw)) return raw; // already human
+  // Auth
+  if (/not authenticated/i.test(raw)) return "Your sign-in expired. Please reload the page and sign in again.";
+  if (/do not own this builder listing/i.test(raw)) return "You don't have permission to edit this listing.";
+  // Check constraints
+  if (/builders_starting_price_range_check/i.test(raw)) {
+    return "Starting price must be between $5,000 and $500,000.";
+  }
+  if (/builders_conversion_types_values_check/i.test(raw)) {
+    return "One of the conversion-type values isn't recognized. Try unchecking and re-checking, and save again.";
+  }
+  // Type mismatches (we shouldn't hit these once the RPC is patched, but keep
+  // a friendlier fallback in case another integer/bool field is added without
+  // updating the RPC's branch list).
+  if (/type integer but expression is of type text/i.test(raw)) {
+    return "There was a problem saving a numeric field. Please refresh and try again — if it keeps happening, let us know.";
+  }
+  if (/invalid input syntax for type integer/i.test(raw)) {
+    return "One of the numbers you entered isn't valid. Please check your starting price and try again.";
+  }
+  // Generic fallback — don't surface the raw SQL text to builders.
+  return "We couldn't save your changes. Please try again — if it keeps happening, reply to your welcome email and we'll look into it.";
+}
+
 const stateCodeToSlug: Record<string, string> = {
   AL: "alabama", AK: "alaska", AZ: "arizona", AR: "arkansas", CA: "california",
   CO: "colorado", CT: "connecticut", DE: "delaware", FL: "florida", GA: "georgia",
@@ -46,6 +98,13 @@ interface BuilderData {
   service_phone: string | null;
   service_emails: string[] | null;
   photo_limit: number | null;
+  // P1 fields — starting price, conversion type, and social links.
+  // starting_price is integer USD ($5k–$500k enforced by DB check constraint).
+  // conversion_types stores some combination of ["conversion_only", "full_build"].
+  starting_price: number | null;
+  conversion_types: string[] | null;
+  instagram_handle: string | null;
+  youtube_url: string | null;
 }
 
 interface PendingClaim {
@@ -100,6 +159,16 @@ function DashboardInner() {
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [services, setServices] = useState<string[]>([]);
 
+  // P1 fields. startingPrice is an empty string when unset so the input can
+  // render cleanly; it gets parsed to int (or null) at save time.
+  const [startingPrice, setStartingPrice] = useState<string>("");
+  const [conversionTypes, setConversionTypes] = useState<string[]>([]);
+  // Instagram input accepts any format (URL, handle, @handle). Stored as bare
+  // handle in the DB but rendered as the URL form in the input so users can
+  // see exactly what their link looks like.
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+
   // Service-side editable fields (only shown when shop is dual-tagged)
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceTagline, setServiceTagline] = useState("");
@@ -133,6 +202,12 @@ function DashboardInner() {
     setServicePhone(b.service_phone || "");
     setServiceEmailsStr((b.service_emails || []).join(", "));
     setServiceHeroUrl(b.service_hero_image_url || "");
+    setStartingPrice(b.starting_price != null ? String(b.starting_price) : "");
+    setConversionTypes(b.conversion_types || []);
+    // Render stored handle back as a full URL so the input label matches
+    // what the user sees. Empty stays empty.
+    setInstagramUrl(b.instagram_handle ? `https://instagram.com/${b.instagram_handle}` : "");
+    setYoutubeUrl(b.youtube_url || "");
   }
 
   // Does the form hold any unsaved changes against the currently selected
@@ -162,6 +237,20 @@ function DashboardInner() {
     const sortedServices = [...services].sort();
     const sortedBuilderServices = [...(builder.services || [])].sort();
     if (JSON.stringify(sortedServices) !== JSON.stringify(sortedBuilderServices)) return true;
+
+    // P1 fields. Price is stored as int but held as string in state; normalize
+    // both sides to int-or-null before comparing so "" and null are equal.
+    const currentPrice = startingPrice === "" ? null : parseInt(startingPrice, 10);
+    if (currentPrice !== (builder.starting_price ?? null)) return true;
+
+    const sortedConversionTypes = [...conversionTypes].sort();
+    const sortedBuilderConversionTypes = [...(builder.conversion_types || [])].sort();
+    if (JSON.stringify(sortedConversionTypes) !== JSON.stringify(sortedBuilderConversionTypes)) return true;
+
+    // Normalize both sides before comparing so typing a URL when the DB
+    // has a handle (or vice versa) doesn't falsely mark the form dirty.
+    if (parseInstagramHandle(instagramUrl) !== (builder.instagram_handle || "")) return true;
+    if (youtubeUrl !== (builder.youtube_url || "")) return true;
 
     if (builder.categories?.includes("service")) {
       if (serviceDescription !== (builder.service_description || "")) return true;
@@ -262,6 +351,35 @@ function DashboardInner() {
       changes.services = services;
     }
 
+    // P1 fields. Clamp + validate price client-side before sending so the DB
+    // check constraint never fires on a user typo. Empty string means "clear
+    // the field" and is sent as null.
+    const currentPrice = startingPrice === "" ? null : parseInt(startingPrice, 10);
+    if (currentPrice !== null && (isNaN(currentPrice) || currentPrice < 5000 || currentPrice > 500000)) {
+      setError("Starting price must be between $5,000 and $500,000.");
+      setSaving(false);
+      return;
+    }
+    if (currentPrice !== (builder.starting_price ?? null)) {
+      changes.starting_price = currentPrice;
+    }
+
+    const sortedConversionTypes = [...conversionTypes].sort();
+    const sortedBuilderConversionTypes = [...(builder.conversion_types || [])].sort();
+    if (JSON.stringify(sortedConversionTypes) !== JSON.stringify(sortedBuilderConversionTypes)) {
+      changes.conversion_types = conversionTypes;
+    }
+
+    // IG accepts any format (URL, handle, @handle) — normalize to a bare
+    // handle for storage. Empty input saves as "" which clears the column.
+    const normalizedIg = parseInstagramHandle(instagramUrl);
+    if (normalizedIg !== (builder.instagram_handle || "")) {
+      changes.instagram_handle = normalizedIg;
+    }
+    if (youtubeUrl.trim() !== (builder.youtube_url || "")) {
+      changes.youtube_url = youtubeUrl.trim();
+    }
+
     // Service-side fields — only diff them if the shop is dual-tagged.
     // This keeps the form and the payload symmetrical: fields that are hidden
     // in the UI are never sent, so a future untag would not accidentally
@@ -311,7 +429,7 @@ function DashboardInner() {
 
     if (rpcError) {
       console.error("[tvg] edit error:", rpcError.message || rpcError);
-      setError(rpcError.message || "Something went wrong. Please try again.");
+      setError(toFriendlyError(rpcError));
     } else {
       setSaved(true);
       // Optimistically merge the saved changes into the in-memory builder row
@@ -364,9 +482,7 @@ function DashboardInner() {
 
     if (rpcError) {
       console.error("[tvg] service toggle error:", rpcError.message || rpcError);
-      setServiceToggleError(
-        rpcError.message || "Something went wrong. Please try again.",
-      );
+      setServiceToggleError(toFriendlyError(rpcError));
       return;
     }
 
@@ -420,6 +536,12 @@ function DashboardInner() {
   function toggleService(value: string) {
     setServices((prev) =>
       prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
+    );
+  }
+
+  function toggleConversionType(value: string) {
+    setConversionTypes((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
     );
   }
 
@@ -665,6 +787,48 @@ function DashboardInner() {
                 color: "var(--color-text)",
               }}
               placeholder="https://"
+            />
+          </div>
+        </div>
+
+        {/* Social links — optional. Instagram and YouTube show up as icons
+            in the profile header next to website/phone. Handle only for IG
+            (without @); full URL for YouTube. */}
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div>
+            <label htmlFor="d-instagram" className="block font-sans-ui text-sm font-medium mb-1.5">
+              Instagram URL <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <input
+              type="url"
+              id="d-instagram"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+              style={{
+                borderColor: "var(--color-border-strong)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--color-text)",
+              }}
+              placeholder="https://instagram.com/yourshop"
+            />
+          </div>
+          <div>
+            <label htmlFor="d-youtube" className="block font-sans-ui text-sm font-medium mb-1.5">
+              YouTube URL <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <input
+              type="url"
+              id="d-youtube"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+              style={{
+                borderColor: "var(--color-border-strong)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--color-text)",
+              }}
+              placeholder="https://youtube.com/@yourshop"
             />
           </div>
         </div>
@@ -989,6 +1153,95 @@ function DashboardInner() {
             Missing something your shop offers? Reply to your welcome email
             and we'll add it to the list.
           </p>
+        </div>
+
+        {/* Pricing & conversion type — P1 directory enrichment. Starting price
+            is the "Starting at $X" figure that shows on the profile and feeds
+            the directory price filter. Conversion type controls the
+            "conversion only / full build / both" filter. Both are optional —
+            leave blank to hide from the profile. */}
+        <div className="space-y-5">
+          <div>
+            <label htmlFor="d-starting-price" className="block font-sans-ui text-sm font-medium mb-1.5">
+              Starting price <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-2"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              The lowest figure a customer could realistically commission a build
+              for from your shop. Shows on your profile as "Starting at $X".
+              Whole dollars, between $5,000 and $500,000.
+            </p>
+            <div className="flex items-center gap-2 max-w-xs">
+              <span className="font-sans-ui text-base" style={{ color: "var(--color-text-muted)" }}>$</span>
+              <input
+                type="number"
+                id="d-starting-price"
+                value={startingPrice}
+                onChange={(e) => setStartingPrice(e.target.value)}
+                min={5000}
+                max={500000}
+                step={500}
+                inputMode="numeric"
+                className="w-full px-4 py-3 font-sans-ui text-base border bg-white"
+                style={{
+                  borderColor: "var(--color-border-strong)",
+                  borderRadius: "var(--radius-md)",
+                  color: "var(--color-text)",
+                }}
+                placeholder="45000"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-sans-ui text-sm font-medium mb-1.5">
+              Conversion type <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-3"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              Do you convert a van the customer already owns, sell fully built
+              vans (van + conversion), or both? Check what applies.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: "conversion_only", label: "Conversion only (customer supplies van)" },
+                { value: "full_build", label: "Turnkey (van + conversion included)" },
+              ].map((opt) => {
+                const checked = conversionTypes.includes(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className="inline-flex items-center gap-2 px-3 py-2 font-sans-ui text-sm border cursor-pointer transition-colors"
+                    style={{
+                      borderColor: checked
+                        ? "var(--color-primary)"
+                        : "var(--color-border-strong)",
+                      borderRadius: "var(--radius-md)",
+                      background: checked
+                        ? "var(--color-bg-alt)"
+                        : "transparent",
+                      color: checked
+                        ? "var(--color-text)"
+                        : "var(--color-text-muted)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleConversionType(opt.value)}
+                      className="w-4 h-4"
+                      style={{ accentColor: "var(--color-primary)" }}
+                    />
+                    {opt.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Self-serve toggle: opt this shop into the Repairs & Services directory.

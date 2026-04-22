@@ -22,6 +22,10 @@ interface BuilderData {
   build_style: string | null;
   latitude: number | null;
   longitude: number | null;
+  // P1 filter fields. Nullable — unfilled profiles are excluded when a
+  // matching filter is active, included when no filter is applied.
+  starting_price?: number | null;
+  conversion_types?: string[] | null;
   /**
    * Pre-computed profile URL for this shop in the current listing context.
    * Parent Astro page calls getShopProfileUrl(shop, basePath) when building
@@ -74,6 +78,13 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   const [selectedStyle, setSelectedStyle] = useState(initParams.get("style") ?? "");
   const [selectedServices, setSelectedServices] = useState<Set<string>>(
     () => new Set(initParams.getAll("service")),
+  );
+  // P1 filters. maxPrice kept as string so the input can be empty; parsed
+  // to int at filter time. selectedConversionTypes mirrors the tier/platform
+  // Set pattern so URL param roundtripping stays consistent.
+  const [maxPrice, setMaxPrice] = useState<string>(initParams.get("max_price") ?? "");
+  const [selectedConversionTypes, setSelectedConversionTypes] = useState<Set<string>>(
+    () => new Set(initParams.getAll("conversion")),
   );
   const [sort, setSort] = useState<SortOption>(
     (initParams.get("sort") as SortOption) || "rating",
@@ -133,6 +144,8 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       style: string,
       services: Set<string>,
       sortVal: SortOption,
+      maxPriceVal: string,
+      conversionTypes: Set<string>,
     ) => {
       if (typeof window === "undefined") return;
       const params = new URLSearchParams();
@@ -142,6 +155,8 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       tiers.forEach((t) => params.append("tier", t));
       if (style) params.set("style", style);
       services.forEach((s) => params.append("service", s));
+      if (maxPriceVal) params.set("max_price", maxPriceVal);
+      conversionTypes.forEach((c) => params.append("conversion", c));
       if (sortVal !== "rating") params.set("sort", sortVal);
       const qs = params.toString();
       const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
@@ -151,8 +166,8 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   );
 
   useEffect(() => {
-    updateUrl(query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort);
-  }, [query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, updateUrl]);
+    updateUrl(query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, maxPrice, selectedConversionTypes);
+  }, [query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, maxPrice, selectedConversionTypes, updateUrl]);
 
   // Filter + sort
   const results = useMemo(() => {
@@ -197,6 +212,24 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
       );
     }
 
+    // P1 filters. Profiles with unfilled price/conversion are excluded when
+    // the respective filter is active — matches user expectation ("I asked
+    // for conversion-only, don't show me shops that didn't answer").
+    const maxPriceNum = maxPrice ? parseInt(maxPrice, 10) : null;
+    if (maxPriceNum != null && !isNaN(maxPriceNum)) {
+      filtered = filtered.filter(
+        (b) => b.starting_price != null && b.starting_price <= maxPriceNum,
+      );
+    }
+
+    if (selectedConversionTypes.size > 0) {
+      filtered = filtered.filter(
+        (b) =>
+          b.conversion_types != null &&
+          b.conversion_types.some((c) => selectedConversionTypes.has(c)),
+      );
+    }
+
     const sorted = [...filtered];
 
     if (sort === "distance" && userLocation) {
@@ -232,7 +265,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
     }
 
     return sorted;
-  }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, sort, userLocation]);
+  }, [builders, query, selectedState, selectedPlatforms, selectedTiers, selectedStyle, selectedServices, maxPrice, selectedConversionTypes, sort, userLocation]);
 
   // Distances from user (for display on cards)
   const distances = useMemo(() => {
@@ -334,7 +367,7 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
   }
 
   const hasActiveFilters =
-    query || selectedState || selectedPlatforms.size > 0 || selectedTiers.size > 0 || selectedStyle || selectedServices.size > 0;
+    query || selectedState || selectedPlatforms.size > 0 || selectedTiers.size > 0 || selectedStyle || selectedServices.size > 0 || maxPrice || selectedConversionTypes.size > 0;
 
   function clearAll() {
     setQuery("");
@@ -343,6 +376,8 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
     setSelectedTiers(new Set());
     setSelectedStyle("");
     setSelectedServices(new Set());
+    setMaxPrice("");
+    setSelectedConversionTypes(new Set());
     setSort("rating");
     setUserLocation(null);
   }
@@ -548,6 +583,68 @@ export default function BuilderSearch({ builders, basePath = "/builders" }: Prop
             </div>
           </>
         )}
+      </div>
+
+      {/* P1: Max starting price. Simple single-number input rather than a
+          range slider — the primary user intent is "what fits my budget". */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Max starting price
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm" style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}>$</span>
+          <input
+            type="number"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            min={5000}
+            max={500000}
+            step={5000}
+            inputMode="numeric"
+            placeholder="50000"
+            className="w-full px-3 py-2 text-sm border rounded-md"
+            style={{
+              borderColor: "var(--color-border-strong)",
+              background: "var(--color-bg)",
+              color: "var(--color-text)",
+              fontFamily: "var(--font-sans)",
+            }}
+          />
+        </div>
+        <p
+          className="text-xs mt-1.5"
+          style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-sans)" }}
+        >
+          Shops without a listed price are hidden.
+        </p>
+      </div>
+
+      {/* P1: Conversion type. Shops matching any selected value pass the
+          filter — "conversion_only" + "full_build" selected = both pools. */}
+      <div>
+        <div
+          className="text-xs font-semibold uppercase tracking-wider mb-2"
+          style={{ color: "var(--color-accent)", fontFamily: "var(--font-sans)" }}
+        >
+          Conversion type
+        </div>
+        <div className="space-y-1.5">
+          {[
+            { value: "conversion_only", label: "Conversion only" },
+            { value: "full_build", label: "Turnkey (van + conversion)" },
+          ].map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer"
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+              <input type="checkbox" checked={selectedConversionTypes.has(opt.value)}
+                onChange={() => setSelectedConversionTypes(toggleSet(selectedConversionTypes, opt.value))}
+                style={{ accentColor: "var(--color-primary)" }} />
+              {opt.label}
+            </label>
+          ))}
+        </div>
       </div>
 
       {hasActiveFilters && (

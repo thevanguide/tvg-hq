@@ -96,6 +96,18 @@ export type Builder = {
   verified: boolean;
   published: boolean;
   featured: boolean;
+  /**
+   * P1 directory enrichment fields. starting_price is the "Starting at $X"
+   * builder-supplied price floor (integer USD, 5000–500000, nullable).
+   * conversion_types is a multi-select: "conversion_only" (customer supplies
+   * van), "full_build" (van + conversion), or both elements for "both".
+   */
+  starting_price: number | null;
+  conversion_types: ("conversion_only" | "full_build")[] | null;
+  /** Instagram handle without the @ prefix, e.g. "emerycustombuilds". */
+  instagram_handle: string | null;
+  /** Full YouTube channel or page URL. */
+  youtube_url: string | null;
   created_at: string;
   updated_at: string;
 };
