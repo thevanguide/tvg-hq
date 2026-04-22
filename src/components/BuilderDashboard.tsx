@@ -55,6 +55,9 @@ function toFriendlyError(err: { message?: string } | null | undefined): string {
   if (/builders_warranty_months_range_check/i.test(raw)) {
     return "Warranty length must be between 0 and 120 months.";
   }
+  if (/builders_build_style_check/i.test(raw)) {
+    return "Build style value isn't recognized. Please pick one of the listed options and save again.";
+  }
   // Type mismatches (we shouldn't hit these once the RPC is patched, but keep
   // a friendlier fallback in case another integer/bool field is added without
   // updating the RPC's branch list).
@@ -120,6 +123,10 @@ interface BuilderData {
   engagement_types: string[] | null;
   lead_time: string | null;
   warranty_months: number | null;
+  // P2 PR 2 — build style (Bespoke / Semi-custom / Production). Legacy values
+  // Custom/Standard still exist on 7 pre-P2 claimed rows; the dashboard maps
+  // them to "" so the owner sees no selection and picks a new value.
+  build_style: string | null;
 }
 
 interface PendingClaim {
@@ -191,6 +198,11 @@ function DashboardInner() {
   const [leadTime, setLeadTime] = useState<string>("");
   const [warrantyMonths, setWarrantyMonths] = useState<string>("");
 
+  // P2 PR 2 — build style. "" means Unspecified. Legacy Custom/Standard
+  // values from pre-P2 scrape are mapped to "" on load so the owner is
+  // prompted to pick one of the 3 new values.
+  const [buildStyle, setBuildStyle] = useState<string>("");
+
   // Service-side editable fields (only shown when shop is dual-tagged)
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceTagline, setServiceTagline] = useState("");
@@ -233,6 +245,10 @@ function DashboardInner() {
     setEngagementTypes(b.engagement_types || []);
     setLeadTime(b.lead_time || "");
     setWarrantyMonths(b.warranty_months != null ? String(b.warranty_months) : "");
+    // Legacy Custom/Standard values collapse to "" so the owner picks a new
+    // value from the 3-value set. Clean DB values pass through unchanged.
+    const legacyStyles = new Set(["Custom", "Standard"]);
+    setBuildStyle(b.build_style && !legacyStyles.has(b.build_style) ? b.build_style : "");
   }
 
   // Does the form hold any unsaved changes against the currently selected
@@ -287,6 +303,13 @@ function DashboardInner() {
 
     const currentWarranty = warrantyMonths === "" ? null : parseInt(warrantyMonths, 10);
     if (currentWarranty !== (builder.warranty_months ?? null)) return true;
+
+    // Build style. Legacy Custom/Standard values render as "" in the form,
+    // so any save counts as a change (owner picking a new value overwrites
+    // the legacy one). Compare against the normalized form value.
+    const legacyStyles = new Set(["Custom", "Standard"]);
+    const normalizedBuilderStyle = builder.build_style && !legacyStyles.has(builder.build_style) ? builder.build_style : "";
+    if (buildStyle !== normalizedBuilderStyle) return true;
 
     if (builder.categories?.includes("service")) {
       if (serviceDescription !== (builder.service_description || "")) return true;
@@ -438,6 +461,14 @@ function DashboardInner() {
     }
     if (currentWarranty !== (builder.warranty_months ?? null)) {
       changes.warranty_months = currentWarranty;
+    }
+
+    // Build style. Send null when Unspecified is selected; otherwise the
+    // Title Case label is the DB value ("Bespoke" / "Semi-custom" / "Production").
+    const legacyStylesSave = new Set(["Custom", "Standard"]);
+    const normalizedBuilderStyleSave = builder.build_style && !legacyStylesSave.has(builder.build_style) ? builder.build_style : "";
+    if (buildStyle !== normalizedBuilderStyleSave) {
+      changes.build_style = buildStyle === "" ? null : buildStyle;
     }
 
     // Service-side fields — only diff them if the shop is dual-tagged.
@@ -1418,6 +1449,89 @@ function DashboardInner() {
                 );
               })}
             </div>
+          </div>
+
+          <div>
+            <label className="block font-sans-ui text-sm font-medium mb-1.5">
+              Build style <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+            </label>
+            <p
+              className="font-sans-ui text-xs mb-3"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              How customizable is your typical build? This powers the build
+              style filter in the directory. Pick the option that best
+              describes most of your work.
+            </p>
+            <div className="space-y-2">
+              {[
+                {
+                  value: "",
+                  label: "Unspecified",
+                  desc: "Hide this from your profile until you're ready.",
+                },
+                {
+                  value: "Bespoke",
+                  label: "Bespoke",
+                  desc: "One-of-one custom builds designed around each customer.",
+                },
+                {
+                  value: "Semi-custom",
+                  label: "Semi-custom",
+                  desc: "Template floorplan with customer-chosen finishes, systems, or upgrades.",
+                },
+                {
+                  value: "Production",
+                  label: "Production",
+                  desc: "Fixed floorplans built to spec with limited customization.",
+                },
+              ].map((opt) => {
+                const checked = buildStyle === opt.value;
+                return (
+                  <label
+                    key={opt.value || "unspecified"}
+                    className="flex items-start gap-3 px-3 py-2.5 font-sans-ui text-sm border cursor-pointer transition-colors"
+                    style={{
+                      borderColor: checked
+                        ? "var(--color-primary)"
+                        : "var(--color-border-strong)",
+                      borderRadius: "var(--radius-md)",
+                      background: checked
+                        ? "var(--color-bg-alt)"
+                        : "transparent",
+                      color: "var(--color-text)",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="d-build-style"
+                      checked={checked}
+                      onChange={() => setBuildStyle(opt.value)}
+                      className="mt-0.5 w-4 h-4 shrink-0"
+                      style={{ accentColor: "var(--color-primary)" }}
+                    />
+                    <span className="flex-1">
+                      <span className="block font-medium">{opt.label}</span>
+                      <span
+                        className="block text-xs mt-0.5"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        {opt.desc}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {builder.build_style && (builder.build_style === "Custom" || builder.build_style === "Standard") && (
+              <p
+                className="mt-2 font-sans-ui text-xs"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Your listing previously showed as &quot;{builder.build_style}&quot; — a legacy label.
+                Please pick one of the options above so your profile displays correctly.
+              </p>
+            )}
           </div>
 
           <div>
