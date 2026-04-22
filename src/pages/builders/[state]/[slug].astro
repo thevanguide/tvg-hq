@@ -130,6 +130,17 @@ function platformSlug(p: string): string {
         )}
 
         <div class="flex-1 min-w-0">
+          {/* Dual-directory eyebrow — sits above the name on dual-tagged
+              shops so viewers can jump to the repair & service profile
+              without the link competing with primary CTAs. */}
+          {builder.categories?.includes("service") && (
+            <a
+              href={`/services/${stateSlug}/${builder.slug}/`}
+              class="eyebrow text-xs no-underline hover:underline inline-block mb-2"
+            >
+              View repair &amp; service profile →
+            </a>
+          )}
           <div class="flex items-center gap-3 flex-wrap">
             <h1 class="text-3xl md:text-4xl leading-tight">{builder.name}</h1>
             {builder.verified && (
@@ -151,95 +162,6 @@ function platformSlug(p: string): string {
 
           <div class="mt-2 font-sans-ui text-sm" style="color: var(--color-text-muted);">
             {location}
-          </div>
-
-          {/* Platforms — their own row so they read as a single "what do they
-              build on" signal and don't get lost among commercial pills. */}
-          {builder.platforms.length > 0 && (
-            <div class="mt-4 flex flex-wrap gap-2">
-              {builder.platforms.map((p) => (
-                <a
-                  href={`/builders/platform/${platformSlug(p)}/`}
-                  class="text-xs font-sans-ui px-3 py-1 rounded-full border no-underline transition-colors hover:border-current"
-                  style="border-color: var(--color-border-strong); color: var(--color-text-muted);"
-                >
-                  {p}
-                </a>
-              ))}
-            </div>
-          )}
-
-          {/* Commercial / build-style pills — price, conversion type, build
-              style, tenure, cross-directory link. Kept on their own row so the
-              platform chips above stay scannable. */}
-          <div class="mt-2 flex flex-wrap gap-2">
-            {/* P1: builder-supplied starting price. Stronger visual weight than
-                the qualitative price_tier pill — this is a concrete number. */}
-            {builder.starting_price != null && (
-              <span
-                class="text-xs font-sans-ui font-semibold px-3 py-1 rounded-full"
-                style="background: var(--color-primary); color: var(--color-bg);"
-                title="Starting price reported by this shop"
-              >
-                Starting at ${builder.starting_price.toLocaleString("en-US")}
-              </span>
-            )}
-            {/* Tier pill is suppressed when the shop has supplied a concrete
-                starting_price — the specific number is always more useful than
-                the qualitative bucket, and showing both is just visual noise. */}
-            {builder.price_tier && builder.price_tier !== "Unknown" && builder.starting_price == null && (
-              <a
-                href={`/builders/tier/${builder.price_tier.toLowerCase()}/`}
-                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline"
-                style="background: var(--color-bg-alt); color: var(--color-primary);"
-              >
-                {builder.price_tier === "Budget" ? "$ Budget" : builder.price_tier === "Mid" ? "$$ Mid-range" : builder.price_tier === "Premium" ? "$$$ Premium" : builder.price_tier === "Luxury" ? "$$$$ Luxury" : builder.price_tier}
-              </a>
-            )}
-            {builder.conversion_types?.includes("full_build") && (
-              <span
-                class="text-xs font-sans-ui px-3 py-1 rounded-full"
-                style="background: var(--color-bg-alt); color: var(--color-text-muted);"
-                title="This shop sells fully built vans (van + conversion)"
-              >
-                Turnkey
-              </span>
-            )}
-            {builder.conversion_types?.includes("conversion_only") && (
-              <span
-                class="text-xs font-sans-ui px-3 py-1 rounded-full"
-                style="background: var(--color-bg-alt); color: var(--color-text-muted);"
-              >
-                Conversion only
-              </span>
-            )}
-            {builder.build_style === "Custom" && (
-              <a
-                href="/builders/style/custom/"
-                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline"
-                style="background: var(--color-bg-alt); color: var(--color-primary);"
-              >
-                Custom builds
-              </a>
-            )}
-            {yearsInBusiness != null && yearsInBusiness >= 5 && (
-              <span
-                class="text-xs font-sans-ui px-3 py-1 rounded-full"
-                style="background: var(--color-bg-alt); color: var(--color-text-muted);"
-              >
-                {yearsInBusiness}+ years
-              </span>
-            )}
-            {builder.categories?.includes("service") && (
-              <a
-                href={`/services/${stateSlug}/${builder.slug}/`}
-                class="text-xs font-sans-ui px-3 py-1 rounded-full no-underline transition-colors"
-                style="background: var(--color-bg-alt); color: var(--color-primary); border: 1px solid var(--color-primary);"
-                title="View this shop's repair & service profile"
-              >
-                View repair & service profile
-              </a>
-            )}
           </div>
 
           {/* CTAs — primary actions on the left, social links pushed to the
@@ -268,7 +190,7 @@ function platformSlug(p: string): string {
                 id="reveal-email-btn"
                 type="button"
               >
-                Contact
+                Email
               </button>
             )}
             {(builder.instagram_handle || builder.youtube_url) && (
@@ -315,6 +237,89 @@ function platformSlug(p: string): string {
       </div>
     </div>
   </section>
+
+  {/* Quick overview — spec-sheet style summary below the hero card. Each
+      fact is a label/value pair so it reads cleaner than a row of pills.
+      Only renders if the shop has at least one fact worth showing. */}
+  {(
+    builder.platforms.length > 0 ||
+    builder.starting_price != null ||
+    (builder.price_tier && builder.price_tier !== "Unknown") ||
+    (builder.conversion_types && builder.conversion_types.length > 0) ||
+    builder.build_style === "Custom" ||
+    (yearsInBusiness != null && yearsInBusiness >= 5)
+  ) && (
+    <section class="container-wide mb-8 md:mb-12">
+      <div
+        class="bg-white border rounded-lg px-5 md:px-8 py-4 md:py-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-4"
+        style="border-color: var(--color-border);"
+      >
+        {builder.platforms.length > 0 && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Platforms</div>
+            <div class="font-sans-ui text-sm leading-snug">
+              {builder.platforms.map((p, i) => (<Fragment><Fragment set:html={i > 0 ? ", " : ""} /><a href={`/builders/platform/${platformSlug(p)}/`} class="no-underline hover:underline" style="color: var(--color-text);">{p}</a></Fragment>))}
+            </div>
+          </div>
+        )}
+        {builder.starting_price != null && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Starts at</div>
+            <div class="font-sans-ui text-sm font-semibold" style="color: var(--color-text);">
+              ${builder.starting_price.toLocaleString("en-US")}
+            </div>
+          </div>
+        )}
+        {/* Tier shown only when a concrete starting_price isn't set — same
+            suppression rule as the original pill. */}
+        {builder.starting_price == null && builder.price_tier && builder.price_tier !== "Unknown" && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Price range</div>
+            <a
+              href={`/builders/tier/${builder.price_tier.toLowerCase()}/`}
+              class="font-sans-ui text-sm no-underline hover:underline"
+              style="color: var(--color-text);"
+            >
+              {builder.price_tier === "Budget" ? "$ Budget" : builder.price_tier === "Mid" ? "$$ Mid-range" : builder.price_tier === "Premium" ? "$$$ Premium" : builder.price_tier === "Luxury" ? "$$$$ Luxury" : builder.price_tier}
+            </a>
+          </div>
+        )}
+        {builder.conversion_types && builder.conversion_types.length > 0 && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Offers</div>
+            <div class="font-sans-ui text-sm" style="color: var(--color-text);">
+              {[
+                builder.conversion_types.includes("full_build") ? "Turnkey builds" : null,
+                builder.conversion_types.includes("conversion_only") ? "Conversion only" : null,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            </div>
+          </div>
+        )}
+        {builder.build_style === "Custom" && (
+          <div>
+            <div class="eyebrow text-xs mb-1">Build style</div>
+            <a
+              href="/builders/style/custom/"
+              class="font-sans-ui text-sm no-underline hover:underline"
+              style="color: var(--color-text);"
+            >
+              Custom
+            </a>
+          </div>
+        )}
+        {yearsInBusiness != null && yearsInBusiness >= 5 && (
+          <div>
+            <div class="eyebrow text-xs mb-1">In business</div>
+            <div class="font-sans-ui text-sm" style="color: var(--color-text);">
+              {yearsInBusiness}+ years
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )}
 
   {/* Claim banner — right below hero, above content */}
   {!builder.claimed && (
