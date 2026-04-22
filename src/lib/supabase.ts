@@ -548,3 +548,40 @@ export async function getNearbyServiceShops(
     .filter((b) => b.distance <= radiusMiles)
     .sort((a, b) => a.distance - b.distance);
 }
+
+// ---------------------------------------------------------------------------
+// Build Showcase fetch helpers (P3 PR B)
+// ---------------------------------------------------------------------------
+
+let _allBuildShowcasesCache: BuildShowcase[] | null = null;
+
+/**
+ * Fetch every showcase for a published builder in a single round-trip and
+ * cache for the duration of the build. RLS restricts this to showcases
+ * whose parent builder row is published, so the anon-key client sees
+ * exactly the set the profile pages need.
+ */
+async function fetchAllBuildShowcases(): Promise<BuildShowcase[]> {
+  if (_allBuildShowcasesCache) return _allBuildShowcasesCache;
+  const supabase = getSupabase();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("build_showcases").select("*");
+  if (error) {
+    console.warn("[supabase] build_showcases fetch failed:", error.message);
+    return [];
+  }
+  _allBuildShowcasesCache = (data ?? []) as BuildShowcase[];
+  return _allBuildShowcasesCache;
+}
+
+/**
+ * Look up the one showcase a builder has, or null if they haven't created
+ * one yet. Used by the builder profile page to decide whether to render
+ * the Featured Build section.
+ */
+export async function getBuildShowcaseByBuilderId(
+  builderId: string,
+): Promise<BuildShowcase | null> {
+  const all = await fetchAllBuildShowcases();
+  return all.find((s) => s.builder_id === builderId) ?? null;
+}

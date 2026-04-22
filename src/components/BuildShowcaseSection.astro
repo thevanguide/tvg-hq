@@ -1,0 +1,132 @@
+---
+import type { BuildShowcase } from "../lib/supabase";
+
+interface Props {
+  showcase: BuildShowcase;
+  builderName: string;
+}
+
+const { showcase, builderName } = Astro.props;
+
+const CONVERSION_TYPE_LABELS: Record<string, string> = {
+  weekender: "Weekender",
+  full_time: "Full-time",
+  adventure: "Adventure",
+  work_vehicle: "Work vehicle",
+};
+
+// Meta row items — render inline with middots between them. Only show items
+// the owner filled in so the row stays tight when partially populated.
+const metaItems: string[] = [];
+if (showcase.platform) metaItems.push(showcase.platform);
+if (showcase.year != null) metaItems.push(String(showcase.year));
+if (showcase.conversion_type && CONVERSION_TYPE_LABELS[showcase.conversion_type]) {
+  metaItems.push(CONVERSION_TYPE_LABELS[showcase.conversion_type]);
+}
+
+const heroSrc = `${showcase.hero_image_url}?width=1600&quality=80`;
+---
+
+<section class="mb-12" aria-labelledby="build-showcase-heading">
+  <div class="flex items-baseline justify-between mb-4">
+    <h2 id="build-showcase-heading" class="text-2xl">Featured build</h2>
+    <span
+      class="font-sans-ui text-xs uppercase tracking-wider"
+      style="color: var(--color-text-subtle, #888);"
+    >
+      From {builderName}
+    </span>
+  </div>
+
+  {/* Hero — the visual anchor. 16:9 aspect ratio matches the upload guidance
+      in the dashboard and keeps every showcase card consistent across the
+      directory. */}
+  <div
+    class="w-full rounded-lg border overflow-hidden mb-5"
+    style="border-color: var(--color-border); background: var(--color-bg-alt);"
+  >
+    <img
+      src={heroSrc}
+      alt={`${showcase.title} — featured build by ${builderName}`}
+      class="w-full object-cover block"
+      style="aspect-ratio: 16/9;"
+      width="1600"
+      height="900"
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+
+  {/* Title + meta row */}
+  <div class="mb-5">
+    <h3 class="text-xl md:text-2xl mb-1">{showcase.title}</h3>
+    {metaItems.length > 0 && (
+      <p class="font-sans-ui text-sm" style="color: var(--color-text-muted);">
+        {metaItems.join(" · ")}
+      </p>
+    )}
+  </div>
+
+  {/* Story — plain text, preserves line breaks via whitespace-pre-line.
+      Capped at 600 chars in the DB so it won't dominate the page. */}
+  {showcase.description && (
+    <div class="mb-6 max-w-2xl">
+      <p
+        class="font-sans-ui text-base leading-relaxed whitespace-pre-line"
+        style="color: var(--color-text);"
+      >
+        {showcase.description}
+      </p>
+    </div>
+  )}
+
+  {/* Specs grid — two columns on sm+ so labels line up with values. Each
+      entry is a label / value pair; the owner controls the pairing in the
+      dashboard. Nothing renders if there are zero specs. */}
+  {showcase.specs && showcase.specs.length > 0 && (
+    <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-3 mb-6 max-w-2xl">
+      {showcase.specs.map((spec) => (
+        <div
+          class="flex flex-col py-2 border-b"
+          style="border-color: var(--color-border);"
+        >
+          <dt
+            class="eyebrow text-xs mb-1"
+          >
+            {spec.label}
+          </dt>
+          <dd class="font-sans-ui text-sm" style="color: var(--color-text);">
+            {spec.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )}
+
+  {/* Gallery — 3-col grid on md+, 2-col on sm, stacked on mobile. Click
+      opens the image in a new tab; full lightbox is deferred — the directory
+      doesn't use one anywhere else yet, so this keeps the component in
+      scope with how galleries already work on the profile page. */}
+  {showcase.gallery_urls && showcase.gallery_urls.length > 0 && (
+    <div class="grid gap-3 grid-cols-2 md:grid-cols-3">
+      {showcase.gallery_urls.map((url, i) => (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block"
+        >
+          <img
+            src={`${url}?width=800&quality=80`}
+            alt={`${showcase.title} gallery photo ${i + 1}`}
+            class="w-full aspect-[4/3] object-cover rounded-lg border"
+            style="border-color: var(--color-border); background: var(--color-bg-alt);"
+            width="800"
+            height="600"
+            loading="lazy"
+          />
+        </a>
+      ))}
+    </div>
+  )}
+</section>
