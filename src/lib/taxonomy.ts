@@ -43,55 +43,22 @@ export const PLATFORM_GROUPS: { label: string; platforms: string[] }[] = [
   },
 ];
 
+/**
+ * 6 systems buckets — the P2 PR 3 cleaned taxonomy. `services` holds only
+ * systems values now; business-model values (rentals, parts, service/repair,
+ * new builds) live in `engagement_types` (separate dashboard section).
+ */
 export const SERVICE_GROUPS: { label: string; services: string[] }[] = [
   {
-    label: "Power & climate",
+    label: "Systems",
     services: [
-      "Electrical / wiring",
-      "Solar",
-      "Heating",
-      "Ventilation & A/C",
+      "Electrical / solar",
+      "Plumbing & water",
+      "HVAC / climate",
+      "Cabinetry, interior & layout",
+      "Suspension / 4x4 / off-road",
+      "Roof & exterior",
     ],
-  },
-  {
-    label: "Water",
-    services: ["Plumbing & water systems", "Shower install"],
-  },
-  {
-    label: "Interior",
-    services: [
-      "Insulation & soundproofing",
-      "Cabinetry & millwork",
-      "Beds & layout",
-      "Flooring",
-      "Seat installation / swivels",
-    ],
-  },
-  {
-    label: "Exterior",
-    services: [
-      "Window installation",
-      "Roof rack & awning",
-      "Pop-top / roof conversion",
-      "Exterior add-ons",
-    ],
-  },
-  {
-    label: "Off-road",
-    services: ["4x4 conversion", "Lift kits & suspension"],
-  },
-  {
-    label: "Service & repair",
-    services: [
-      "Vehicle maintenance",
-      "Electrical diagnostics & repair",
-      "Plumbing repair",
-      "HVAC service",
-    ],
-  },
-  {
-    label: "Other",
-    services: ["Full custom builds"],
   },
 ];
 
