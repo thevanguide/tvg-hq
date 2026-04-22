@@ -5,6 +5,9 @@ import { getAllBuilders, getShopProfileUrl, toUrlSlug } from "../../../lib/supab
 import { serviceMeta, itemListJsonLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
+  // Generate a hub page for each distinct service value present in the data.
+  // Legacy values (pre-P2 PR 3) are handled by public/_redirects, so we only
+  // build pages that correspond to the current 6-bucket taxonomy.
   const builders = await getAllBuilders();
   const services = new Set<string>();
   for (const b of builders) {
@@ -12,10 +15,6 @@ export async function getStaticPaths() {
       services.add(s);
     }
   }
-  // Seed common services so routes exist
-  ["Off-grid", "Solar", "Electrical", "Plumbing", "Full custom"].forEach((s) =>
-    services.add(s),
-  );
 
   return [...services].map((service) => ({
     params: { service: toUrlSlug(service) },

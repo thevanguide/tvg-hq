@@ -10,3 +10,66 @@
 /builders/style/custom /builders/?style=bespoke 301
 /builders/style/standard/ /builders/?style=production 301
 /builders/style/standard /builders/?style=production 301
+
+# Legacy service hub pages (P2 PR 3, Apr 2026) — replaced by the 6-bucket
+# systems taxonomy. Old URLs redirect to whichever new bucket the old value
+# rolled into, or to the engagement_types filter for business-model values.
+# Trailing-slash and no-slash variants both handled.
+/builders/service/solar/                          /builders/service/electrical-solar/ 301
+/builders/service/solar                           /builders/service/electrical-solar/ 301
+/builders/service/electrical/                     /builders/service/electrical-solar/ 301
+/builders/service/electrical                      /builders/service/electrical-solar/ 301
+/builders/service/electrical-wiring/              /builders/service/electrical-solar/ 301
+/builders/service/electrical-wiring               /builders/service/electrical-solar/ 301
+/builders/service/electrical-diagnostics-repair/  /builders/service/electrical-solar/ 301
+/builders/service/off-grid/                       /builders/service/electrical-solar/ 301
+/builders/service/off-grid                        /builders/service/electrical-solar/ 301
+/builders/service/off-grid-package/               /builders/service/electrical-solar/ 301
+
+/builders/service/plumbing/                       /builders/service/plumbing-water/ 301
+/builders/service/plumbing                        /builders/service/plumbing-water/ 301
+/builders/service/plumbing-water-systems/         /builders/service/plumbing-water/ 301
+/builders/service/plumbing-water-systems          /builders/service/plumbing-water/ 301
+/builders/service/plumbing-repair/                /builders/service/plumbing-water/ 301
+/builders/service/shower-install/                 /builders/service/plumbing-water/ 301
+
+/builders/service/heating/                        /builders/service/hvac-climate/ 301
+/builders/service/heating                         /builders/service/hvac-climate/ 301
+/builders/service/ventilation-a-c/                /builders/service/hvac-climate/ 301
+/builders/service/hvac-service/                   /builders/service/hvac-climate/ 301
+
+/builders/service/cabinetry-millwork/             /builders/service/cabinetry-interior-layout/ 301
+/builders/service/cabinetry-millwork              /builders/service/cabinetry-interior-layout/ 301
+/builders/service/beds-layout/                    /builders/service/cabinetry-interior-layout/ 301
+/builders/service/flooring/                       /builders/service/cabinetry-interior-layout/ 301
+/builders/service/seat-installation-swivels/      /builders/service/cabinetry-interior-layout/ 301
+/builders/service/storage/                        /builders/service/cabinetry-interior-layout/ 301
+
+/builders/service/4x4-conversion/                 /builders/service/suspension-4x4-off-road/ 301
+/builders/service/lift-kits-suspension/           /builders/service/suspension-4x4-off-road/ 301
+
+/builders/service/window-installation/            /builders/service/roof-exterior/ 301
+/builders/service/pop-top-roof-conversion/        /builders/service/roof-exterior/ 301
+/builders/service/roof-rack-awning/               /builders/service/roof-exterior/ 301
+/builders/service/exterior-add-ons/               /builders/service/roof-exterior/ 301
+
+# Business-model values moved to engagement_types filter
+/builders/service/rental/                         /builders/?engagement=rentals 301
+/builders/service/parts/                          /builders/?engagement=parts_kits 301
+/builders/service/diy-kits/                       /builders/?engagement=parts_kits 301
+/builders/service/repair/                         /builders/?engagement=service_repair 301
+/builders/service/vehicle-maintenance/            /builders/?engagement=service_repair 301
+/builders/service/full-custom/                    /builders/?engagement=new_build 301
+/builders/service/full-custom-builds/             /builders/?engagement=new_build 301
+/builders/service/builds/                         /builders/?engagement=new_build 301
+/builders/service/partial-upfit/                  /builders/?engagement=new_build 301
+
+# Dropped values — send to the full directory rather than 404
+/builders/service/build-consultation/             /builders/ 301
+/builders/service/consulting/                     /builders/ 301
+/builders/service/used-van-sales/                 /builders/ 301
+/builders/service/new-van-sales/                  /builders/ 301
+/builders/service/commercial-fleet/               /builders/ 301
+/builders/service/commercial-van-upfitting/       /builders/ 301
+/builders/service/insulation-soundproofing/       /builders/ 301
+/builders/service/wheelchair-accessible/          /builders/ 301
