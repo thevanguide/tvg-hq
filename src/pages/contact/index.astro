@@ -1,17 +1,18 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import EmailButton from "../../components/EmailButton.astro";
 ---
 
 <BaseLayout
   title="Contact"
-  description="Get in touch with The Van Guide — corrections, tips, builder listings, and press inquiries."
+  description="Get in touch with The Van Guide team. Submit corrections, pitch tips, claim a builder listing, or send press and partnership inquiries."
 >
   <section class="container-read py-10 md:py-24">
     <div class="eyebrow mb-4">Contact</div>
     <h1 class="text-3xl md:text-5xl leading-tight mb-6">Get in touch.</h1>
     <div class="prose">
       <p>
-        Email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> for any of the following. Expect a response within a few business days.
+        Email <EmailButton email="hello@thevanguide.com" reveal /> for any of the following. Expect a response within a few business days.
       </p>
       <h2>Corrections</h2>
       <p>

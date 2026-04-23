@@ -1,11 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import EmailButton from "../components/EmailButton.astro";
 const lastUpdated = "April 2026";
 ---
 
 <BaseLayout
   title="Terms of Use"
-  description="Terms for using The Van Guide — editorial content, directory listings, and user responsibilities."
+  description="Terms for The Van Guide: how editorial content and directory listings can be used, plus disclaimers, affiliate disclosures, and user responsibilities."
 >
   <section class="container-read py-10 md:py-24">
     <div class="eyebrow mb-4">Terms</div>
@@ -53,7 +54,7 @@ const lastUpdated = "April 2026";
 
       <h2>Contact</h2>
       <p>
-        Questions about these terms: <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a>.
+        Questions about these terms: <EmailButton email="hello@thevanguide.com" reveal />.
       </p>
     </div>
   </section>

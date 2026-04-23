@@ -1,0 +1,88 @@
+---
+/**
+ * Renders an email button/link with the address base64-encoded in
+ * `data-e64`. Cloudflare's Email Address Obfuscation scans HTML for
+ * `foo@bar.com` patterns and rewrites them to `/cdn-cgi/l/email-protection`
+ * (which 404s to crawlers and floods Ahrefs). Base64 is opaque to that
+ * scanner, so the raw email never appears in server-rendered HTML.
+ *
+ * Click opens `mailto:` after decoding. If `reveal` is set, the decoded
+ * email becomes the button text on mount (use for footer / "Email us at
+ * X" prose mentions). Otherwise a label is shown until click.
+ *
+ * Leaves no mailto: in the static HTML, so harvesters see nothing and
+ * Ahrefs sees no broken CF email-protection URL.
+ */
+interface Props {
+  email: string;
+  label?: string;
+  class?: string;
+  style?: string;
+  /** Reveal the decoded email as the button's visible text on mount. */
+  reveal?: boolean;
+}
+
+const {
+  email,
+  label,
+  class: className,
+  style,
+  reveal = false,
+} = Astro.props;
+
+const encoded = Buffer.from(email, "utf-8").toString("base64");
+---
+
+<button
+  type="button"
+  data-email-btn
+  data-e64={encoded}
+  data-reveal={reveal ? "true" : undefined}
+  class={className}
+  style={style}
+  aria-label={reveal ? "Email us" : (label ?? "Send email")}
+>
+  {label ?? (reveal ? "" : "Email")}
+</button>
+
+<script>
+  // Bundled + deduped by Astro across pages.
+  const decode = (el: HTMLElement) => {
+    try {
+      return atob(el.dataset.e64 || "");
+    } catch {
+      return "";
+    }
+  };
+  const init = () => {
+    document
+      .querySelectorAll<HTMLButtonElement>("[data-email-btn]:not([data-email-bound])")
+      .forEach((btn) => {
+        btn.setAttribute("data-email-bound", "true");
+        const showOnMount = btn.dataset.reveal === "true";
+        if (showOnMount) {
+          btn.textContent = decode(btn);
+        }
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const addr = decode(btn);
+          if (!addr) return;
+          // If the label is still a placeholder (not the email), swap to reveal
+          // the address so users can copy it — then a second click opens
+          // mailto. If the email is already on screen, open mailto immediately.
+          const current = btn.textContent?.trim() || "";
+          if (!showOnMount && current !== addr) {
+            btn.textContent = addr;
+            btn.setAttribute("data-revealed", "true");
+          } else {
+            window.location.href = "mailto:" + addr;
+          }
+        });
+      });
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+</script>

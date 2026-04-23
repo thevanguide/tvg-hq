@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import EmailButton from "../../../components/EmailButton.astro";
 ---
 
 <BaseLayout
@@ -15,7 +16,7 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
     </p>
     <p class="text-base leading-relaxed mb-10" style="color: var(--color-text-muted);">
       If you don't see it, check your spam folder. Still nothing? Email
-      <a href="mailto:hello@thevanguide.com" style="color: var(--color-accent);">hello@thevanguide.com</a>
+      <EmailButton email="hello@thevanguide.com" reveal class="email-link" style="color: var(--color-accent);" />
       and we'll sort it out.
     </p>
     <div class="pt-8 border-t" style="border-color: var(--color-border);">

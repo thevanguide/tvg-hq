@@ -1,11 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import EmailButton from "../components/EmailButton.astro";
 const lastUpdated = "April 2026";
 ---
 
 <BaseLayout
   title="Editorial Standards"
-  description="How The Van Guide researches, sources, and fact-checks every article and listing."
+  description="How The Van Guide researches, sources, and fact-checks articles and builder listings. Primary-source hierarchy, corrections policy, and disclosures."
 >
   <section class="container-read py-10 md:py-24">
     <div class="eyebrow mb-4">Editorial Standards</div>
@@ -62,7 +63,7 @@ const lastUpdated = "April 2026";
 
       <h2>Corrections</h2>
       <p>
-        If you find an error — a carrier rule that's changed, a statute that's been superseded, a date that's wrong — email <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a> with the URL and the specific claim. Corrections are made promptly and noted at the bottom of the affected article.
+        If you find an error — a carrier rule that's changed, a statute that's been superseded, a date that's wrong — email <EmailButton email="hello@thevanguide.com" reveal /> with the URL and the specific claim. Corrections are made promptly and noted at the bottom of the affected article.
       </p>
     </div>
   </section>

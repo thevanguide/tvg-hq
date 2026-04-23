@@ -1,11 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import EmailButton from "../components/EmailButton.astro";
 const lastUpdated = "April 2026";
 ---
 
 <BaseLayout
   title="Privacy Policy"
-  description="How The Van Guide handles visitor data — short, plain-English version."
+  description="How The Van Guide handles visitor data in plain English: what we collect, the third-party services we use, and your rights as a visitor or subscriber."
 >
   <section class="container-read py-10 md:py-24">
     <div class="eyebrow mb-4">Privacy</div>
@@ -38,7 +39,7 @@ const lastUpdated = "April 2026";
 
       <h2>Your rights</h2>
       <p>
-        You can request deletion of your newsletter subscription or any data we hold about you at any time by emailing <a href="mailto:hello@thevanguide.com">hello@thevanguide.com</a>. If you're in California, the EU, or the UK, this request is processed within the timelines required by applicable law.
+        You can request deletion of your newsletter subscription or any data we hold about you at any time by emailing <EmailButton email="hello@thevanguide.com" reveal />. If you're in California, the EU, or the UK, this request is processed within the timelines required by applicable law.
       </p>
 
       <h2>Changes</h2>
