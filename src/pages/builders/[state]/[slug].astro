@@ -431,13 +431,6 @@ const buildShowcase = await getBuildShowcaseByBuilderId(builder.id);
   )}
 
   <div class="container-wide py-12 md:py-16 max-w-4xl">
-    {/* Featured build — P3. Appears only when the claimed owner has created
-        a showcase via the dashboard. Sits at the top of the content column
-        so it's the first thing visitors see below the profile card. */}
-    {buildShowcase && (
-      <BuildShowcaseSection showcase={buildShowcase} builderName={builder.name} />
-    )}
-
     {/* About section. `description` may be legacy plain text or HTML emitted
         by the dashboard rich-text editor; toRenderHtml sanitizes + wraps
         plain text in <p> so the prose container styles both consistently. */}
@@ -451,6 +444,14 @@ const buildShowcase = await getBuildShowcaseByBuilderId(builder.id);
           </p>
         )}
       </section>
+    )}
+
+    {/* Featured build — P3. Appears only when the claimed owner has created
+        a showcase via the dashboard. Sits between About and Shop photos so
+        visitors read who the shop is first, then see the standout build,
+        then the broader portfolio. */}
+    {buildShowcase && (
+      <BuildShowcaseSection showcase={buildShowcase} builderName={builder.name} />
     )}
 
     {/* Gallery — only show if photos exist */}
