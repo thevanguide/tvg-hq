@@ -1,11 +1,13 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import Breadcrumbs from "../../../components/Breadcrumbs.astro";
+import BuildShowcaseSection from "../../../components/BuildShowcaseSection.astro";
 import BuilderCard from "../../../components/BuilderCard.astro";
 import BuilderMap from "../../../components/BuilderMap";
 import EditListingLink from "../../../components/EditListingLink";
 import EmailButton from "../../../components/EmailButton.astro";
 import {
+  getBuildShowcaseByBuilderId,
   getBuilderProfileShops,
   getNearbyBuilders,
   getShopProfileUrl,
@@ -109,6 +111,11 @@ const BUILD_STYLE_FILTER_PARAMS: Record<string, string> = {
 };
 
 const isNewBuildStyle = builder.build_style != null && builder.build_style in BUILD_STYLE_DESCRIPTIONS;
+
+// P3 PR B — the one featured build the claimed owner has opted to highlight.
+// Null when the owner hasn't created one yet; the section render is gated
+// on this so unclaimed and unpopulated listings show nothing new.
+const buildShowcase = await getBuildShowcaseByBuilderId(builder.id);
 ---
 
 <BaseLayout title={meta.title} description={meta.description}>
@@ -431,6 +438,14 @@ const isNewBuildStyle = builder.build_style != null && builder.build_style in BU
           </p>
         )}
       </section>
+    )}
+
+    {/* Featured build — P3. Appears only when the claimed owner has created
+        a showcase via the dashboard. Sits between About and Shop photos so
+        visitors read who the shop is first, then see the standout build,
+        then the broader portfolio. */}
+    {buildShowcase && (
+      <BuildShowcaseSection showcase={buildShowcase} builderName={builder.name} />
     )}
 
     {/* Gallery — only show if photos exist */}
