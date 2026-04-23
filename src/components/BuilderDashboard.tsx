@@ -8,6 +8,19 @@ import { PLATFORM_GROUPS, SERVICE_GROUPS } from "../lib/taxonomy";
 
 const FREE_PHOTO_LIMIT = 3;
 
+// P3 PR A (revised) — fixed category taxonomy for Build Showcase spec rows.
+// Enforced server-side in upsert_build_showcase; mirrored here so the
+// dashboard select shows the same options and pre-validates before saving.
+const SHOWCASE_SPEC_LABELS = [
+  "Electrical",
+  "Water",
+  "HVAC",
+  "Seating & Sleeping",
+  "Living",
+  "Exterior",
+  "Other",
+] as const;
+
 /**
  * Translate a Supabase/Postgres RPC error into something a builder can act on.
  * Raw Postgres text ("column X is of type integer but expression is of type
@@ -71,6 +84,9 @@ function toFriendlyError(err: { message?: string } | null | undefined): string {
   if (/build_showcases_specs_shape/i.test(raw)) return "Specs list is too long — max 8 entries.";
   if (/each spec must be a \{label, value\} object/i.test(raw)) return "Each spec needs both a label and a value.";
   if (/specs can have at most/i.test(raw)) return "Specs list can have at most 8 entries.";
+  if (/spec label ".+" is not one of the allowed categories/i.test(raw)) {
+    return "One of your spec categories isn't on the list. Pick from Electrical, Water, HVAC, Seating & Sleeping, Living, Exterior, or Other.";
+  }
   // Type mismatches (we shouldn't hit these once the RPC is patched, but keep
   // a friendlier fallback in case another integer/bool field is added without
   // updating the RPC's branch list).
@@ -686,6 +702,23 @@ function DashboardInner() {
     const trimmedSpecs = scSpecs
       .map((s) => ({ label: s.label.trim(), value: s.value.trim() }))
       .filter((s) => s.label || s.value);
+
+    // Both sides of a spec are required once the row has any content, and the
+    // label has to be one of the 7 fixed categories (enforced server-side too).
+    for (const s of trimmedSpecs) {
+      if (!s.label) {
+        setScError("Pick a category for each spec row — or remove the row.");
+        return;
+      }
+      if (!(SHOWCASE_SPEC_LABELS as readonly string[]).includes(s.label)) {
+        setScError(`"${s.label}" isn't one of the allowed spec categories.`);
+        return;
+      }
+      if (!s.value) {
+        setScError("Each spec row needs a value next to the category.");
+        return;
+      }
+    }
 
     // Optional integer year. Empty input = omit field; bad numbers fail fast.
     let parsedYear: number | null = null;
@@ -2260,26 +2293,32 @@ function DashboardInner() {
               className="font-sans-ui text-xs mb-3"
               style={{ color: "var(--color-text-muted)" }}
             >
-              Short, scannable details. Left column is the category, right is
-              the spec. e.g. <em>Electrical</em> → <em>400W solar / 200Ah lithium</em>.
+              Short, scannable details. Pick a category on the left and write
+              the detail on the right. e.g. <em>Electrical</em> →{" "}
+              <em>400W solar / 200Ah lithium</em>. You can repeat a category if
+              you need two rows for it.
             </p>
             {scSpecs.length > 0 && (
               <div className="space-y-2 mb-3">
                 {scSpecs.map((s, i) => (
                   <div key={i} className="flex gap-2">
-                    <input
-                      type="text"
+                    <select
                       value={s.label}
                       onChange={(e) => updateShowcaseSpec(i, "label", e.target.value)}
-                      maxLength={40}
                       className="flex-1 px-3 py-2 font-sans-ui text-sm border bg-white"
                       style={{
                         borderColor: "var(--color-border-strong)",
                         borderRadius: "var(--radius-md)",
                         color: "var(--color-text)",
                       }}
-                      placeholder="Label (e.g. Electrical)"
-                    />
+                    >
+                      <option value="">Pick a category…</option>
+                      {SHOWCASE_SPEC_LABELS.map((label) => (
+                        <option key={label} value={label}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       type="text"
                       value={s.value}
