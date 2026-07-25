@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../../../components/Breadcrumbs.astro";
+import ApprovalQueue from "../../../../components/ApprovalQueue";
+
+const breadcrumbs = [
+  { label: "Home", href: "/" },
+  { label: "Builders", href: "/builders/" },
+  { label: "Admin", href: "/builders/admin/" },
+  { label: "Queue", href: "/builders/admin/queue/" },
+];
+---
+
+<BaseLayout
+  title="Approval Queue"
+  description="Review and decide items queued by automated loops."
+  noindex
+>
+  <section class="border-b" style="border-color: var(--color-border); background: var(--color-surface);">
+    <div class="container-wide py-8 md:py-12 max-w-3xl">
+      <Breadcrumbs items={breadcrumbs} />
+      <h1 class="text-3xl md:text-4xl leading-tight mb-2">Approval Queue</h1>
+      <p class="text-base leading-relaxed" style="color: var(--color-text-muted);">
+        Items waiting on your decision. Approvals are executed by the next loop run.
+      </p>
+    </div>
+  </section>
+
+  <div class="container-wide py-8 md:py-12 max-w-3xl">
+    <ApprovalQueue client:idle />
+  </div>
+</BaseLayout>

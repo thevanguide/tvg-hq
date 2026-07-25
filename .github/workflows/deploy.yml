@@ -34,3 +34,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=thevanguide --branch=main
+
+      - name: Ping IndexNow
+        run: node scripts/indexnow-ping.mjs --live
