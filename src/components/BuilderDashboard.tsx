@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getAuthClient } from "../lib/supabase-auth";
 import type { BuildShowcase } from "../lib/supabase";
 import BuilderAuth from "./BuilderAuth";
+import BuilderBadge from "./BuilderBadge";
 import BuilderPhotoUpload from "./BuilderPhotoUpload";
 import RichTextEditor from "./RichTextEditor";
 import { PLATFORM_GROUPS, SERVICE_GROUPS } from "../lib/taxonomy";
@@ -1064,6 +1065,7 @@ function DashboardInner() {
         </div>
       </div>
 
+      <BuilderBadge profileHref={profileHref} builderName={builder.name} />
 
       <form onSubmit={handleSaveEdits} className="space-y-5">
         <div>
